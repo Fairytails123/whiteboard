@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fairy Tails K9 Centre - Staff Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #00acee;
+            --brand-blue-dark: #007ba8;
+            --brand-gradient: linear-gradient(135deg, #00acee 0%, #007ba8 100%);
+            --success-green: #22c55e;
+            --warning-amber: #f59e0b;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .current-time {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .mode-toggle-btn {
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mode-toggle-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+            transform: scale(1.02);
+        }
+
+        /* Whiteboard mode: Button shows "Edit Mode" option with live indicator */
+        body.tv-mode .mode-toggle-btn {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+        
+        /* Live indicator dot */
+        .live-indicator {
+            display: none;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+        
+        body.tv-mode .live-indicator {
+            display: inline-block;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+        
+        /* TV mode: much larger toggle button for remote clicking */
+        body.tv-mode .mode-toggle-btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+        }
+        
+        body.tv-mode .current-time {
+            font-size: 1.75rem;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: var(--bg-white);
+            border-bottom: 2px solid var(--border-light);
+            padding: 0 1rem;
+        }
+
+        .tab-btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--brand-blue);
+        }
+
+        .tab-btn.active {
+            color: var(--brand-blue);
+            border-bottom-color: var(--brand-blue);
+        }
+
+        .tab-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--brand-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-light);
+            color: var(--text-dark);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--brand-blue);
+            color: var(--brand-blue);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            padding: 1rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Staging Area */
+        .staging-area {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid var(--border-light);
+        }
+
+        .staging-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .staging-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .staging-count {
+            background: var(--brand-blue);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .staging-input-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .staging-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .staging-input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .staging-dogs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 50px;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px dashed var(--border-light);
+        }
+
+        .staging-dogs:empty::before {
+            content: 'No dogs added yet — type a name above and press Enter or click Add';
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .staged-dog {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            animation: popIn 0.2s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .staged-dog-remove {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .staged-dog-remove:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .staging-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: flex-end;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.dogs { background: #dbeafe; }
+        .stat-icon.photos { background: #dcfce7; }
+        .stat-icon.walks { background: #fef3c7; }
+        .stat-icon.vans { background: #f3e8ff; }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Van Legend */
+        .van-legend {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-white);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .van-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .van-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .van-badge.bv { background: #dbeafe; color: #1d4ed8; }
+        .van-badge.dv { background: #fef3c7; color: #b45309; }
+        .van-badge.sv { background: #dcfce7; color: #15803d; }
+
+        .van-time-select {
+            padding: 0.3rem 0.5rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+        }
+
+        .van-time-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        /* Board Container - Dynamic Columns */
+        .board-container {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .board-container.cols-1 { grid-template-columns: 1fr; }
+        .board-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .board-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .board-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        /* Mobile: Stack columns vertically for comfortable editing */
+        @media (max-width: 1400px) {
+            .board-container.cols-4,
+            .board-container.cols-5,
+            .board-container.cols-6 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 1100px) {
+            .board-container.cols-3,
+            .board-container.cols-4,
+            .board-container.cols-5,
+            .board-container.cols-6 { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .board-container.cols-2,
+            .board-container.cols-3,
+            .board-container.cols-4,
+            .board-container.cols-5,
+            .board-container.cols-6 { grid-template-columns: 1fr; }
+            
+            /* Mobile: Optimized editing experience */
+            .dog-rows {
+                max-height: none; /* Allow full page scroll on mobile */
+                overflow-y: visible;
+            }
+            
+            /* Mobile: Larger touch targets */
+            .dog-row {
+                padding: 0.75rem;
+                gap: 0.5rem;
+                grid-template-columns: 1.5fr 45px 70px 80px 1fr 36px;
+            }
+            
+            .table-header {
+                grid-template-columns: 1.5fr 45px 70px 80px 1fr 36px;
+            }
+            
+            .photo-checkbox {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .walk-select,
+            .vp-select,
+            .stop-input,
+            .notes-input {
+                font-size: 1rem;
+                padding: 0.5rem;
+            }
+            
+            .delete-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .staging-input {
+                font-size: 1.1rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Mobile: Compact header */
+            .header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .header-title {
+                font-size: 1.2rem;
+            }
+            
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            /* Mobile: Stack stats */
+            .stats-bar {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stat-card {
+                padding: 0.75rem 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            /* Mobile: Wrap van legend */
+            .van-legend {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: flex-start;
+            }
+            
+            .van-item {
+                justify-content: flex-start;
+                width: 100%;
+            }
+            
+            .van-time-select {
+                font-size: 1rem;
+                padding: 0.5rem;
+            }
+            
+            /* Mobile: Tab navigation */
+            .tab-nav {
+                flex-wrap: wrap;
+                padding: 0.5rem;
+            }
+            
+            .tab-btn {
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+            }
+            
+            .tab-actions {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+                padding-top: 0.5rem;
+            }
+            
+            /* Mobile: Mode toggle button */
+            .mode-toggle-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Board Column */
+        .board-column {
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+
+        .column-header {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-count {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        /* Table Header */
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 50px 80px 90px 1.5fr 32px;
+            gap: 0.25rem;
+            padding: 0.5rem 0.75rem;
+            background: #f1f5f9;
+            font-weight: 700;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        /* Dog Row */
+        .dog-rows {
+            /* Normal mode: Allow scrolling for comfortable editing */
+            max-height: calc(100vh - 450px);
+            overflow-y: auto;
+        }
+        
+        /* TV Mode: No scrolling - all content visible */
+        body.tv-mode .dog-rows {
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .dog-row {
+            display: grid;
+            grid-template-columns: 2fr 50px 80px 90px 1.5fr 32px;
+            gap: 0.25rem;
+            padding: 0.4rem 0.75rem;
+            border-bottom: 1px solid var(--border-light);
+            align-items: center;
+            transition: background 0.15s ease;
+        }
+
+        .dog-row:hover {
+            background: #f8fafc;
+        }
+
+        .dog-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Dog Name Display */
+        .dog-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            padding: 0.4rem 0;
+        }
+
+        /* Form Controls */
+        .photo-check {
+            display: flex;
+            justify-content: center;
+        }
+
+        .photo-checkbox {
+            width: 28px;
+            height: 28px;
+            appearance: none;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .photo-checkbox:checked {
+            background: var(--success-green);
+            border-color: var(--success-green);
+        }
+
+        .photo-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        /* Walk Select */
+        .walk-select {
+            width: 100%;
+            padding: 0.4rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+        }
+
+        .walk-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .walk-select.walk-booked {
+            background: #fef3c7;
+            border-color: var(--warning-amber);
+        }
+
+        .walk-select.walk-transferred {
+            background: #dcfce7;
+            border-color: var(--success-green);
+        }
+
+        /* V/P Control */
+        .vp-control {
+            display: flex;
+            gap: 2px;
+        }
+
+        .vp-select {
+            width: 44px;
+            padding: 0.35rem 0.2rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px 0 0 6px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            background: white;
+        }
+
+        .vp-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .vp-select.parent-pickup {
+            background: #f3e8ff;
+            border-color: #a855f7;
+        }
+
+        .stop-input {
+            width: 36px;
+            padding: 0.35rem 0.2rem;
+            border: 2px solid var(--border-light);
+            border-left: none;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .stop-input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .stop-input:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        /* Notes Input */
+        .notes-input {
+            width: 100%;
+            padding: 0.4rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .notes-input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .notes-input:not(:placeholder-shown) {
+            background: #fffbeb;
+            border-color: var(--warning-amber);
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #fee2e2;
+            color: #ef4444;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Empty Board State */
+        .empty-board {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-board-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-board-text {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-board-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .modal-text {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: var(--text-dark);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .toast.success { background: var(--success-green); }
+        .toast.error { background: #ef4444; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* TV Mode - View-only whiteboard display */
+        body.tv-mode .header-title { font-size: 2rem; }
+        body.tv-mode .header-subtitle { font-size: 1rem; }
+        body.tv-mode .current-time { font-size: 1.5rem; }
+        
+        /* TV Mode: Hide all editing UI */
+        body.tv-mode .staging-area { display: none !important; }
+        body.tv-mode .tab-actions { display: none !important; }
+        body.tv-mode .delete-btn { display: none !important; }
+        
+        /* TV Mode: Style tabs to look better */
+        body.tv-mode .tab-nav {
+            background: var(--brand-gradient);
+            border-bottom: none;
+        }
+        
+        body.tv-mode .tab-btn {
+            color: rgba(255,255,255,0.7);
+            border-bottom-color: transparent;
+        }
+        
+        body.tv-mode .tab-btn.active {
+            color: white;
+            border-bottom-color: white;
+        }
+        
+        body.tv-mode .tab-btn:hover {
+            color: white;
+        }
+        
+        /* TV Mode: Force horizontal columns - override all media queries */
+        body.tv-mode .board-container.cols-1 { grid-template-columns: 1fr !important; }
+        body.tv-mode .board-container.cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+        body.tv-mode .board-container.cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+        body.tv-mode .board-container.cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+        body.tv-mode .board-container.cols-5 { grid-template-columns: repeat(5, 1fr) !important; }
+        body.tv-mode .board-container.cols-6 { grid-template-columns: repeat(6, 1fr) !important; }
+        
+        /* TV Mode: Larger stats for visibility */
+        body.tv-mode .stat-value { font-size: 2.5rem; }
+        body.tv-mode .stat-card { padding: 1.25rem 2rem; }
+        body.tv-mode .stat-icon { width: 56px; height: 56px; font-size: 1.75rem; }
+        body.tv-mode .stat-label { font-size: 1rem; }
+        
+        /* TV Mode: Larger legend */
+        body.tv-mode .van-legend { font-size: 1.1rem; padding: 1rem 1.5rem; }
+        body.tv-mode .van-badge { font-size: 1rem; padding: 0.4rem 1rem; }
+        body.tv-mode .van-time-select {
+            border: none;
+            background: transparent;
+            pointer-events: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        /* TV Mode: Column headers */
+        body.tv-mode .column-header { font-size: 1.2rem; padding: 0.75rem 1rem; }
+        body.tv-mode .column-count { font-size: 1rem; }
+        
+        /* TV Mode: Table header */
+        body.tv-mode .table-header { font-size: 0.8rem; padding: 0.5rem 1rem; }
+        
+        /* TV Mode: Whiteboard row styling - read-only appearance */
+        body.tv-mode .dog-row {
+            grid-template-columns: 2fr 60px 100px 100px 1.5fr;
+            padding: 0.5rem 1rem;
+        }
+        
+        body.tv-mode .dog-name { font-size: 1.1rem; }
+        
+        /* TV Mode: Replace inputs with display-only elements */
+        body.tv-mode .photo-checkbox {
+            pointer-events: none;
+            width: 32px;
+            height: 32px;
+        }
+        
+        body.tv-mode .walk-select,
+        body.tv-mode .notes-input {
+            border: none;
+            background: transparent;
+            pointer-events: none;
+            font-size: 1rem;
+            padding: 0.4rem;
+        }
+        
+        body.tv-mode .walk-select.walk-booked {
+            background: #fef3c7;
+            border-radius: 6px;
+        }
+        
+        body.tv-mode .walk-select.walk-transferred {
+            background: #dcfce7;
+            border-radius: 6px;
+        }
+        
+        body.tv-mode .notes-input:not(:placeholder-shown) {
+            background: #fffbeb;
+            border-radius: 6px;
+        }
+        
+        body.tv-mode .vp-control {
+            pointer-events: none;
+        }
+        
+        body.tv-mode .vp-select,
+        body.tv-mode .stop-input {
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            padding: 0.4rem;
+        }
+        
+        body.tv-mode .vp-select.parent-pickup {
+            background: #f3e8ff;
+            border-radius: 6px 0 0 6px;
+        }
+        
+        body.tv-mode .stop-input:not(:disabled) {
+            background: #dbeafe;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        /* Dynamic font scaling for TV whiteboard - fit all dogs on screen */
+        body.tv-mode .board-container.scale-90 .dog-row { padding: 0.4rem 0.75rem; }
+        body.tv-mode .board-container.scale-90 .dog-name { font-size: 0.95rem; }
+        body.tv-mode .board-container.scale-90 .table-header { font-size: 0.7rem; padding: 0.4rem 0.75rem; }
+        body.tv-mode .board-container.scale-90 .walk-select,
+        body.tv-mode .board-container.scale-90 .vp-select,
+        body.tv-mode .board-container.scale-90 .stop-input,
+        body.tv-mode .board-container.scale-90 .notes-input { font-size: 0.85rem; }
+        body.tv-mode .board-container.scale-90 .photo-checkbox { width: 26px; height: 26px; }
+        body.tv-mode .board-container.scale-90 .column-header { padding: 0.5rem 0.75rem; font-size: 1rem; }
+        
+        body.tv-mode .board-container.scale-80 .dog-row { padding: 0.35rem 0.6rem; }
+        body.tv-mode .board-container.scale-80 .dog-name { font-size: 0.85rem; }
+        body.tv-mode .board-container.scale-80 .table-header { font-size: 0.6rem; padding: 0.35rem 0.6rem; }
+        body.tv-mode .board-container.scale-80 .walk-select,
+        body.tv-mode .board-container.scale-80 .vp-select,
+        body.tv-mode .board-container.scale-80 .stop-input,
+        body.tv-mode .board-container.scale-80 .notes-input { font-size: 0.75rem; }
+        body.tv-mode .board-container.scale-80 .photo-checkbox { width: 22px; height: 22px; }
+        body.tv-mode .board-container.scale-80 .photo-checkbox:checked::after { font-size: 0.85rem; }
+        body.tv-mode .board-container.scale-80 .column-header { padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+        
+        body.tv-mode .board-container.scale-70 .dog-row { padding: 0.3rem 0.5rem; }
+        body.tv-mode .board-container.scale-70 .dog-name { font-size: 0.78rem; }
+        body.tv-mode .board-container.scale-70 .table-header { font-size: 0.55rem; padding: 0.3rem 0.5rem; }
+        body.tv-mode .board-container.scale-70 .walk-select,
+        body.tv-mode .board-container.scale-70 .vp-select,
+        body.tv-mode .board-container.scale-70 .stop-input,
+        body.tv-mode .board-container.scale-70 .notes-input { font-size: 0.68rem; }
+        body.tv-mode .board-container.scale-70 .photo-checkbox { width: 20px; height: 20px; }
+        body.tv-mode .board-container.scale-70 .photo-checkbox:checked::after { font-size: 0.75rem; }
+        body.tv-mode .board-container.scale-70 .column-header { padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+        body.tv-mode .board-container.scale-70 .column-count { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+        
+        /* Additional column options */
+        .board-container.cols-5 { grid-template-columns: repeat(5, 1fr); }
+        .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <img src="https://i.ibb.co/whdBKp0L/Logo-1.jpg" alt="Fairy Tails" class="logo">
+            <div>
+                <div class="header-title">Staff Board</div>
+                <div class="header-subtitle">Fairy Tails K9 Centre</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="current-time" id="currentTime">--:--</div>
+            <button class="btn mode-toggle-btn" id="modeToggleBtn" onclick="toggleMode()">
+                <span class="live-indicator"></span>
+                <span id="modeButtonText">📺 Whiteboard Mode</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
+            📅 TODAY
+        </button>
+        <button class="tab-btn" data-tab="tomorrow" onclick="switchTab('tomorrow')">
+            📆 TOMORROW
+        </button>
+        <div class="tab-actions">
+            <button class="btn btn-success" onclick="transferToToday()">
+                ⬅️ Transfer Tomorrow → Today
+            </button>
+            <button class="btn btn-primary" onclick="saveBoard()">
+                💾 Save
+            </button>
+        </div>
+    </nav>
+
+    <!-- Today Tab -->
+    <div class="tab-content active" id="today-tab">
+        <!-- Staging Area -->
+        <div class="staging-area">
+            <div class="staging-header">
+                <div class="staging-title">
+                    🐕 Add Dogs
+                    <span class="staging-count" id="today-staging-count">0</span>
+                </div>
+                <div>
+                    <button class="btn btn-outline btn-small" onclick="clearStaging('today')">Clear Staging</button>
+                </div>
+            </div>
+            <div class="staging-input-row">
+                <input type="text" class="staging-input" id="today-staging-input" 
+                       placeholder="Type dog name and press Enter..." 
+                       onkeypress="handleStagingKeypress(event, 'today')">
+                <button class="btn btn-primary" onclick="addToStaging('today')">+ Add</button>
+            </div>
+            <div class="staging-dogs" id="today-staging-dogs"></div>
+            <div class="staging-actions">
+                <button class="btn btn-success" onclick="addStagedToBoard('today')">
+                    ✅ Add to Board
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon dogs">🐕</div>
+                <div>
+                    <div class="stat-value" id="today-dog-count">0</div>
+                    <div class="stat-label">Dogs Today</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon photos">📸</div>
+                <div>
+                    <div class="stat-value" id="today-photo-count">0</div>
+                    <div class="stat-label">Photos Done</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon walks">🚶</div>
+                <div>
+                    <div class="stat-value" id="today-walk-count">0</div>
+                    <div class="stat-label">Walks Booked</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon vans">🚐</div>
+                <div>
+                    <div class="stat-value" id="today-van-count">0</div>
+                    <div class="stat-label">Van Pickups</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Van Legend -->
+        <div class="van-legend">
+            <div class="van-item">
+                <span class="van-badge bv">BV</span>
+                <span>Big Van</span>
+                <select class="van-time-select" id="today-bv-time" onchange="updateVanTime('today', 'BV', this.value)">
+                </select>
+            </div>
+            <div class="van-item">
+                <span class="van-badge dv">DV</span>
+                <span>Dispatch Van</span>
+                <select class="van-time-select" id="today-dv-time" onchange="updateVanTime('today', 'DV', this.value)">
+                </select>
+            </div>
+            <div class="van-item">
+                <span class="van-badge sv">SV</span>
+                <span>Small Van</span>
+                <select class="van-time-select" id="today-sv-time" onchange="updateVanTime('today', 'SV', this.value)">
+                </select>
+            </div>
+            <div class="van-item" style="margin-left: auto;">
+                <span style="color: var(--warning-amber);">Walk📆 = Booked</span>
+                <span style="color: var(--success-green); margin-left: 1rem;">Walk✅ = On Walking Board</span>
+            </div>
+        </div>
+
+        <!-- Board -->
+        <div class="board-container cols-1" id="today-board">
+            <div class="empty-board">
+                <div class="empty-board-icon">🐾</div>
+                <div class="empty-board-text">No dogs on the board yet</div>
+                <div class="empty-board-hint">Add dogs using the staging area above</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tomorrow Tab -->
+    <div class="tab-content" id="tomorrow-tab">
+        <!-- Staging Area -->
+        <div class="staging-area">
+            <div class="staging-header">
+                <div class="staging-title">
+                    🐕 Add Dogs
+                    <span class="staging-count" id="tomorrow-staging-count">0</span>
+                </div>
+                <div>
+                    <button class="btn btn-outline btn-small" onclick="clearStaging('tomorrow')">Clear Staging</button>
+                </div>
+            </div>
+            <div class="staging-input-row">
+                <input type="text" class="staging-input" id="tomorrow-staging-input" 
+                       placeholder="Type dog name and press Enter..." 
+                       onkeypress="handleStagingKeypress(event, 'tomorrow')">
+                <button class="btn btn-primary" onclick="addToStaging('tomorrow')">+ Add</button>
+            </div>
+            <div class="staging-dogs" id="tomorrow-staging-dogs"></div>
+            <div class="staging-actions">
+                <button class="btn btn-success" onclick="addStagedToBoard('tomorrow')">
+                    ✅ Add to Board
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon dogs">🐕</div>
+                <div>
+                    <div class="stat-value" id="tomorrow-dog-count">0</div>
+                    <div class="stat-label">Dogs Tomorrow</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon walks">🚶</div>
+                <div>
+                    <div class="stat-value" id="tomorrow-walk-count">0</div>
+                    <div class="stat-label">Walks Booked</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon vans">🚐</div>
+                <div>
+                    <div class="stat-value" id="tomorrow-van-count">0</div>
+                    <div class="stat-label">Van Pickups</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Van Legend -->
+        <div class="van-legend">
+            <div class="van-item">
+                <span class="van-badge bv">BV</span>
+                <span>Big Van</span>
+                <select class="van-time-select" id="tomorrow-bv-time" onchange="updateVanTime('tomorrow', 'BV', this.value)">
+                </select>
+            </div>
+            <div class="van-item">
+                <span class="van-badge dv">DV</span>
+                <span>Dispatch Van</span>
+                <select class="van-time-select" id="tomorrow-dv-time" onchange="updateVanTime('tomorrow', 'DV', this.value)">
+                </select>
+            </div>
+            <div class="van-item">
+                <span class="van-badge sv">SV</span>
+                <span>Small Van</span>
+                <select class="van-time-select" id="tomorrow-sv-time" onchange="updateVanTime('tomorrow', 'SV', this.value)">
+                </select>
+            </div>
+        </div>
+
+        <!-- Board -->
+        <div class="board-container cols-1" id="tomorrow-board">
+            <div class="empty-board">
+                <div class="empty-board-icon">🐾</div>
+                <div class="empty-board-text">No dogs on the board yet</div>
+                <div class="empty-board-hint">Add dogs using the staging area above</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Confirmation Modal -->
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ Transfer Tomorrow to Today?</div>
+            <div class="modal-text">
+                This will replace all of Today's data with Tomorrow's data, and clear Tomorrow's board. This action cannot be undone.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmTransfer()">Yes, Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // =====================
+        // Configuration
+        // =====================
+        const CONFIG = {
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzqXD9OCM5oSNFdy3OF7pOG0PRcpy4dgkEYWJBVh40CFHJgjvSpPn6SE-mNjloo-GKw/exec',
+            USE_GOOGLE_SHEETS: true,  // Set to false to use localStorage only
+            MAX_ROWS_PER_COLUMN: 15
+        };
+
+        // =====================
+        // State Management
+        // =====================
+        let state = {
+            today: { 
+                dogs: [], 
+                staging: [],
+                vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
+            },
+            tomorrow: { 
+                dogs: [], 
+                staging: [],
+                vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
+            },
+            currentTab: 'today',
+            tvMode: false
+        };
+
+        // =====================
+        // Time Options Generator
+        // =====================
+        function generateTimeOptions() {
+            const options = [];
+            for (let hour = 0; hour < 24; hour++) {
+                for (let minute = 0; minute < 60; minute += 15) {
+                    const h = hour.toString().padStart(2, '0');
+                    const m = minute.toString().padStart(2, '0');
+                    options.push(`${h}:${m}`);
+                }
+            }
+            return options;
+        }
+
+        function populateVanTimeDropdowns() {
+            const timeOptions = generateTimeOptions();
+            const optionsHTML = timeOptions.map(t => `<option value="${t}">${t}</option>`).join('');
+            
+            // Populate all van time selects
+            ['today', 'tomorrow'].forEach(tab => {
+                ['bv', 'dv', 'sv'].forEach(van => {
+                    const select = document.getElementById(`${tab}-${van}-time`);
+                    if (select) {
+                        select.innerHTML = optionsHTML;
+                        select.value = state[tab].vanTimes[van.toUpperCase()] || '08:00';
+                    }
+                });
+            });
+        }
+
+        function updateVanTime(tab, van, time) {
+            state[tab].vanTimes[van] = time;
+            autoSave();
+        }
+
+        // =====================
+        // Utility Functions
+        // =====================
+        function generateId() {
+            return 'dog_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // =====================
+        // Tab Management
+        // =====================
+        function switchTab(tab) {
+            state.currentTab = tab;
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        // =====================
+        // Staging Area
+        // =====================
+        function handleStagingKeypress(event, tab) {
+            if (event.key === 'Enter') {
+                addToStaging(tab);
+            }
+        }
+
+        function addToStaging(tab) {
+            const input = document.getElementById(`${tab}-staging-input`);
+            const name = input.value.trim();
+            
+            if (!name) return;
+            
+            state[tab].staging.push(name);
+            input.value = '';
+            input.focus();
+            
+            renderStaging(tab);
+        }
+
+        function removeFromStaging(tab, index) {
+            state[tab].staging.splice(index, 1);
+            renderStaging(tab);
+        }
+
+        function clearStaging(tab) {
+            state[tab].staging = [];
+            renderStaging(tab);
+        }
+
+        function renderStaging(tab) {
+            const container = document.getElementById(`${tab}-staging-dogs`);
+            const countEl = document.getElementById(`${tab}-staging-count`);
+            const staging = state[tab].staging;
+            
+            countEl.textContent = staging.length;
+            
+            if (staging.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = staging.map((name, index) => `
+                <div class="staged-dog">
+                    <span>${name}</span>
+                    <button class="staged-dog-remove" onclick="removeFromStaging('${tab}', ${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addStagedToBoard(tab) {
+            const staging = state[tab].staging;
+            
+            if (staging.length === 0) {
+                showToast('No dogs to add — enter some names first', 'error');
+                return;
+            }
+            
+            // Create dog objects from staged names
+            const newDogs = staging.map(name => ({
+                id: generateId(),
+                name: name,
+                photo: false,
+                walk: '',
+                vp: '',
+                stop: '',
+                notes: ''
+            }));
+            
+            // Add to existing dogs
+            state[tab].dogs = [...state[tab].dogs, ...newDogs];
+            
+            // Clear staging
+            state[tab].staging = [];
+            renderStaging(tab);
+            
+            // Re-render board
+            renderBoard(tab);
+            
+            showToast(`✅ Added ${newDogs.length} dog${newDogs.length > 1 ? 's' : ''} to the board`, 'success');
+        }
+
+        // =====================
+        // Layout Algorithm
+        // =====================
+        function calculateLayout(dogCount) {
+            if (dogCount === 0) return { columns: 1, rowsPerColumn: 0, scale: '' };
+            
+            // TV MODE: Fit all dogs on screen without scrolling (whiteboard view)
+            if (state.tvMode) {
+                return calculateTVLayout(dogCount);
+            }
+            
+            // NORMAL MODE: Comfortable editing layout with scrolling allowed
+            return calculateEditingLayout(dogCount);
+        }
+        
+        // TV Mode: Calculate layout to fit ALL dogs on screen without scrolling
+        function calculateTVLayout(dogCount) {
+            // Estimate available height for the board area
+            // TV mode hides staging area, so more space available
+            const viewportHeight = window.innerHeight;
+            const reservedHeight = 250; // Header, tabs, stats, legend
+            const availableHeight = viewportHeight - reservedHeight;
+            
+            // Row heights at different scales
+            const rowHeights = {
+                normal: 42,
+                scale90: 36,
+                scale80: 30,
+                scale70: 26
+            };
+            
+            // Column header + table header height
+            const headerHeight = 70;
+            
+            // Calculate max rows per column at each scale
+            function maxRowsAtScale(scale) {
+                return Math.floor((availableHeight - headerHeight) / rowHeights[scale]);
+            }
+            
+            // Try to find optimal layout
+            // Priority: fewer columns > larger font > more columns > smaller font
+            const scales = ['normal', 'scale90', 'scale80', 'scale70'];
+            const maxColumns = 6;
+            
+            for (const scale of scales) {
+                const maxRows = maxRowsAtScale(scale);
+                
+                for (let cols = 1; cols <= maxColumns; cols++) {
+                    const rowsNeeded = Math.ceil(dogCount / cols);
+                    
+                    if (rowsNeeded <= maxRows) {
+                        return {
+                            columns: cols,
+                            rowsPerColumn: rowsNeeded,
+                            scale: scale === 'normal' ? '' : scale.replace('scale', 'scale-')
+                        };
+                    }
+                }
+            }
+            
+            // Fallback: maximum columns with smallest scale
+            return {
+                columns: maxColumns,
+                rowsPerColumn: Math.ceil(dogCount / maxColumns),
+                scale: 'scale-70'
+            };
+        }
+        
+        // Normal Mode: Comfortable editing layout (scrolling is fine)
+        function calculateEditingLayout(dogCount) {
+            // Simple layout optimized for editing comfort
+            // Scrolling is allowed, so we just need sensible column distribution
+            
+            if (dogCount <= 12) {
+                return { columns: 1, rowsPerColumn: dogCount, scale: '' };
+            }
+            if (dogCount <= 24) {
+                return { columns: 2, rowsPerColumn: Math.ceil(dogCount / 2), scale: '' };
+            }
+            if (dogCount <= 45) {
+                return { columns: 3, rowsPerColumn: Math.ceil(dogCount / 3), scale: '' };
+            }
+            
+            // For larger numbers, use 4 columns
+            return { columns: 4, rowsPerColumn: Math.ceil(dogCount / 4), scale: '' };
+        }
+
+        // Recalculate layout on window resize (important for whiteboard mode)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                renderBoard('today');
+                renderBoard('tomorrow');
+            }, 250);
+        });
+
+        // =====================
+        // Board Rendering
+        // =====================
+        function createDogRow(dog) {
+            const { id, name, photo, walk, vp, stop, notes } = dog;
+
+            return `
+                <div class="dog-row" data-id="${id}">
+                    <div class="dog-name">${name}</div>
+                    
+                    <div class="photo-check">
+                        <input type="checkbox" class="photo-checkbox" 
+                               ${photo ? 'checked' : ''} 
+                               onchange="updateDog('${id}', 'photo', this.checked)">
+                    </div>
+                    
+                    <select class="walk-select ${walk === 'booked' ? 'walk-booked' : walk === 'transferred' ? 'walk-transferred' : ''}" 
+                            onchange="updateDog('${id}', 'walk', this.value); updateWalkStyle(this)">
+                        <option value="">None</option>
+                        <option value="booked" ${walk === 'booked' ? 'selected' : ''}>Walk📆</option>
+                        <option value="transferred" ${walk === 'transferred' ? 'selected' : ''}>Walk✅</option>
+                    </select>
+                    
+                    <div class="vp-control">
+                        <select class="vp-select ${vp === 'P' ? 'parent-pickup' : ''}" 
+                                onchange="updateDog('${id}', 'vp', this.value); updateVPStyle(this)">
+                            <option value="">--</option>
+                            <option value="P" ${vp === 'P' ? 'selected' : ''}>P</option>
+                            <option value="BV" ${vp === 'BV' ? 'selected' : ''}>BV</option>
+                            <option value="DV" ${vp === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="SV" ${vp === 'SV' ? 'selected' : ''}>SV</option>
+                        </select>
+                        <input type="number" class="stop-input" min="1" max="20" 
+                               value="${stop}" placeholder="#"
+                               ${vp === 'P' || !vp ? 'disabled' : ''}
+                               onchange="updateDog('${id}', 'stop', this.value)">
+                    </div>
+                    
+                    <input type="text" class="notes-input" placeholder="Notes..." 
+                           value="${notes}" onchange="updateDog('${id}', 'notes', this.value)">
+                    
+                    <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
+                </div>
+            `;
+        }
+
+        function renderBoard(tab) {
+            const board = document.getElementById(`${tab}-board`);
+            const dogs = state[tab].dogs;
+            
+            // Empty state
+            if (dogs.length === 0) {
+                board.className = 'board-container cols-1';
+                board.innerHTML = `
+                    <div class="empty-board">
+                        <div class="empty-board-icon">🐾</div>
+                        <div class="empty-board-text">No dogs on the board yet</div>
+                        <div class="empty-board-hint">Add dogs using the staging area above</div>
+                    </div>
+                `;
+                updateStats(tab);
+                return;
+            }
+            
+            // Calculate layout (columns and scale to fit all dogs on screen)
+            const layout = calculateLayout(dogs.length);
+            
+            // Apply column count and scale classes
+            let classNames = `board-container cols-${layout.columns}`;
+            if (layout.scale) {
+                classNames += ` ${layout.scale}`;
+            }
+            board.className = classNames;
+            
+            // Distribute dogs across columns
+            let html = '';
+            for (let col = 0; col < layout.columns; col++) {
+                const startIdx = col * layout.rowsPerColumn;
+                const endIdx = Math.min(startIdx + layout.rowsPerColumn, dogs.length);
+                const columnDogs = dogs.slice(startIdx, endIdx);
+                
+                if (columnDogs.length === 0) continue;
+
+                html += `
+                    <div class="board-column">
+                        <div class="column-header">
+                            <span>Column ${col + 1}</span>
+                            <span class="column-count">${columnDogs.length} dogs</span>
+                        </div>
+                        <div class="table-header">
+                            <span>Name</span>
+                            <span>Photo</span>
+                            <span>Walk</span>
+                            <span>V/P</span>
+                            <span>Notes</span>
+                            <span></span>
+                        </div>
+                        <div class="dog-rows">
+                            ${columnDogs.map(dog => createDogRow(dog)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            board.innerHTML = html;
+            updateStats(tab);
+        }
+
+        function updateStats(tab) {
+            const dogs = state[tab].dogs;
+            
+            document.getElementById(`${tab}-dog-count`).textContent = dogs.length;
+            
+            if (tab === 'today') {
+                document.getElementById(`${tab}-photo-count`).textContent = 
+                    dogs.filter(d => d.photo).length;
+            }
+            
+            document.getElementById(`${tab}-walk-count`).textContent = 
+                dogs.filter(d => d.walk).length;
+            
+            document.getElementById(`${tab}-van-count`).textContent = 
+                dogs.filter(d => d.vp && d.vp !== 'P').length;
+        }
+
+        // =====================
+        // Dog Management
+        // =====================
+        function updateDog(id, field, value) {
+            const tab = state.currentTab;
+            const dog = state[tab].dogs.find(d => d.id === id);
+            if (dog) {
+                dog[field] = value;
+                updateStats(tab);
+                autoSave(); // Save changes immediately
+            }
+        }
+
+        function updateWalkStyle(select) {
+            select.classList.remove('walk-booked', 'walk-transferred');
+            if (select.value === 'booked') select.classList.add('walk-booked');
+            if (select.value === 'transferred') select.classList.add('walk-transferred');
+        }
+
+        function updateVPStyle(select) {
+            const row = select.closest('.dog-row');
+            const stopInput = row.querySelector('.stop-input');
+            
+            select.classList.toggle('parent-pickup', select.value === 'P');
+            stopInput.disabled = select.value === 'P' || !select.value;
+            if (select.value === 'P' || !select.value) {
+                stopInput.value = '';
+                const id = row.dataset.id;
+                updateDog(id, 'stop', '');
+            }
+        }
+
+        function deleteDog(id) {
+            const tab = state.currentTab;
+            const dog = state[tab].dogs.find(d => d.id === id);
+            const dogName = dog ? dog.name : 'Dog';
+            
+            state[tab].dogs = state[tab].dogs.filter(d => d.id !== id);
+            renderBoard(tab);
+            autoSave();
+            showToast(`🗑️ ${dogName} removed from board`, 'info');
+        }
+
+        // =====================
+        // Transfer & Clear
+        // =====================
+        function transferToToday() {
+            if (state.tomorrow.dogs.length === 0) {
+                showToast('Tomorrow\'s board is empty — nothing to transfer', 'error');
+                return;
+            }
+            document.getElementById('transferModal').classList.add('active');
+        }
+
+        async function confirmTransfer() {
+            // Try to use Google Sheets transfer endpoint
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const response = await fetch(CONFIG.SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ action: 'transfer' })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Reload data from server
+                        await loadBoard();
+                        closeModal();
+                        showToast(`✅ Transferred ${result.transferred} dogs to Today!`, 'success');
+                        switchTab('today');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Failed to transfer via Google Sheets:', error);
+                    // Fall through to local transfer
+                }
+            }
+            
+            // Local transfer fallback
+            state.today.dogs = JSON.parse(JSON.stringify(state.tomorrow.dogs));
+            state.today.vanTimes = JSON.parse(JSON.stringify(state.tomorrow.vanTimes));
+            
+            // Reset photo status and notes for today (fresh day)
+            state.today.dogs.forEach(dog => {
+                dog.photo = false;
+                dog.notes = '';
+                if (dog.walk === 'transferred') {
+                    dog.walk = 'booked';
+                }
+            });
+            
+            // Clear tomorrow
+            state.tomorrow.dogs = [];
+            state.tomorrow.staging = [];
+            state.tomorrow.vanTimes = { BV: '07:30', DV: '08:00', SV: '08:30' };
+            
+            // Re-render
+            populateVanTimeDropdowns();
+            renderBoard('today');
+            renderBoard('tomorrow');
+            renderStaging('tomorrow');
+            
+            closeModal();
+            showToast('✅ Tomorrow transferred to Today successfully!', 'success');
+            
+            // Switch to Today tab
+            switchTab('today');
+            
+            saveBoard();
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        // =====================
+        // Mode Management (localStorage-based)
+        // =====================
+        function getStoredMode() {
+            return localStorage.getItem('fairyTailsDisplayMode') || 'edit';
+        }
+
+        function setStoredMode(mode) {
+            localStorage.setItem('fairyTailsDisplayMode', mode);
+        }
+
+        function initMode() {
+            const mode = getStoredMode();
+            state.tvMode = (mode === 'whiteboard');
+            
+            // Apply mode to body
+            document.body.classList.toggle('tv-mode', state.tvMode);
+            
+            // Update toggle button
+            updateModeButton();
+            
+            if (state.tvMode) {
+                // Start auto-refresh for whiteboard mode
+                startWhiteboardRefresh();
+            }
+        }
+
+        function toggleMode() {
+            state.tvMode = !state.tvMode;
+            
+            // Save preference
+            setStoredMode(state.tvMode ? 'whiteboard' : 'edit');
+            
+            // Apply mode to body
+            document.body.classList.toggle('tv-mode', state.tvMode);
+            
+            // Update button
+            updateModeButton();
+            
+            // Re-render boards for new layout
+            renderBoard('today');
+            renderBoard('tomorrow');
+            
+            if (state.tvMode) {
+                // Start auto-refresh
+                startWhiteboardRefresh();
+                showToast('📺 Whiteboard mode — auto-refreshing every 5 seconds', 'success');
+            } else {
+                // Stop auto-refresh
+                stopWhiteboardRefresh();
+                showToast('✏️ Edit mode — make your changes', 'success');
+            }
+        }
+
+        function updateModeButton() {
+            const btnText = document.getElementById('modeButtonText');
+            if (state.tvMode) {
+                btnText.textContent = '✏️ Switch to Edit Mode';
+            } else {
+                btnText.textContent = '📺 Whiteboard Mode';
+            }
+        }
+
+        // =====================
+        // Whiteboard Auto-Refresh
+        // =====================
+        let refreshInterval = null;
+
+        function startWhiteboardRefresh() {
+            // Stop any existing interval first
+            stopWhiteboardRefresh();
+            
+            // Refresh data every 5 seconds to pick up changes from editors
+            refreshInterval = setInterval(() => {
+                loadBoardSilent();
+            }, 5000);
+        }
+
+        function stopWhiteboardRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        async function loadBoardSilent() {
+            // Load without showing toast (for background refresh)
+            let data = null;
+            
+            // Try Google Sheets first
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        data = result.data;
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh from Google Sheets:', error);
+                }
+            }
+            
+            // Fall back to localStorage
+            if (!data) {
+                const saved = localStorage.getItem('fairyTailsStaffBoard');
+                if (saved) {
+                    try {
+                        data = JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Failed to parse localStorage:', e);
+                        return;
+                    }
+                }
+            }
+            
+            if (!data) return;
+            
+            // Check if data has changed
+            const currentData = JSON.stringify({
+                today: state.today,
+                tomorrow: state.tomorrow
+            });
+            
+            const newToday = {
+                dogs: data.today?.dogs || [],
+                staging: data.today?.staging || [],
+                vanTimes: data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
+            };
+            const newTomorrow = {
+                dogs: data.tomorrow?.dogs || [],
+                staging: data.tomorrow?.staging || [],
+                vanTimes: data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
+            };
+            
+            const newData = JSON.stringify({
+                today: newToday,
+                tomorrow: newTomorrow
+            });
+            
+            // Only re-render if data has changed
+            if (currentData !== newData) {
+                state.today = newToday;
+                state.tomorrow = newTomorrow;
+                
+                populateVanTimeDropdowns();
+                renderStaging('today');
+                renderStaging('tomorrow');
+                renderBoard('today');
+                renderBoard('tomorrow');
+                
+                // Flash button to show update received
+                const btn = document.getElementById('modeToggleBtn');
+                btn.style.background = '#3b82f6';
+                setTimeout(() => {
+                    btn.style.background = '#22c55e';
+                }, 300);
+            }
+        }
+
+        // =====================
+        // Data Persistence (Google Sheets + localStorage fallback)
+        // =====================
+        
+        async function saveBoard() {
+            const dataToSave = {
+                action: 'save',
+                today: { 
+                    dogs: state.today.dogs, 
+                    staging: state.today.staging,
+                    vanTimes: state.today.vanTimes
+                },
+                tomorrow: { 
+                    dogs: state.tomorrow.dogs, 
+                    staging: state.tomorrow.staging,
+                    vanTimes: state.tomorrow.vanTimes
+                }
+            };
+            
+            // Always save to localStorage as backup
+            localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
+            
+            // Save to Google Sheets if enabled
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const response = await fetch(CONFIG.SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Google Apps Script requires this
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(dataToSave)
+                    });
+                    showToast('💾 Saved to cloud', 'success');
+                } catch (error) {
+                    console.error('Failed to save to Google Sheets:', error);
+                    showToast('💾 Saved locally (cloud sync failed)', 'warning');
+                }
+            } else {
+                showToast('💾 Board saved', 'success');
+            }
+        }
+
+        async function loadBoard() {
+            let loaded = false;
+            
+            // Try to load from Google Sheets first
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        state.today.dogs = result.data.today?.dogs || [];
+                        state.today.staging = result.data.today?.staging || [];
+                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
+                        state.tomorrow.staging = result.data.tomorrow?.staging || [];
+                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        loaded = true;
+                        console.log('Loaded from Google Sheets:', result.data);
+                    }
+                } catch (error) {
+                    console.error('Failed to load from Google Sheets:', error);
+                }
+            }
+            
+            // Fall back to localStorage if Google Sheets failed
+            if (!loaded) {
+                const saved = localStorage.getItem('fairyTailsStaffBoard');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        state.today.dogs = data.today?.dogs || [];
+                        state.today.staging = data.today?.staging || [];
+                        state.today.vanTimes = data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.dogs = data.tomorrow?.dogs || [];
+                        state.tomorrow.staging = data.tomorrow?.staging || [];
+                        state.tomorrow.vanTimes = data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        console.log('Loaded from localStorage');
+                    } catch (e) {
+                        console.error('Failed to load saved data:', e);
+                    }
+                }
+            }
+            
+            // Populate van time dropdowns
+            populateVanTimeDropdowns();
+            
+            renderStaging('today');
+            renderStaging('tomorrow');
+            renderBoard('today');
+            renderBoard('tomorrow');
+        }
+
+        // Auto-save on changes (to both localStorage and Google Sheets)
+        async function autoSave() {
+            const dataToSave = {
+                action: 'save',
+                today: { 
+                    dogs: state.today.dogs, 
+                    staging: state.today.staging,
+                    vanTimes: state.today.vanTimes
+                },
+                tomorrow: { 
+                    dogs: state.tomorrow.dogs, 
+                    staging: state.tomorrow.staging,
+                    vanTimes: state.tomorrow.vanTimes
+                }
+            };
+            
+            // Always save to localStorage
+            localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
+            
+            // Save to Google Sheets if enabled
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    await fetch(CONFIG.SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(dataToSave)
+                    });
+                } catch (error) {
+                    console.error('Auto-save to Google Sheets failed:', error);
+                }
+            }
+        }
+
+        // Save periodically
+        setInterval(autoSave, 30000); // Every 30 seconds
+
+        // =====================
+        // Initialization
+        // =====================
+        function init() {
+            // Set mode first (before loading data)
+            initMode();
+            
+            // Update clock
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Load saved data
+            loadBoard();
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
