@@ -110,23 +110,28 @@
         }
 
         .refresh-btn {
-            padding: 0.6rem 0.8rem;
+            padding: 0.6rem 0.9rem;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
+            border: 2px solid #fbbf24;
+            background: #f59e0b;
             color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .refresh-btn:hover {
-            background: rgba(255,255,255,0.25);
+            background: #d97706;
+            border-color: #d97706;
             transform: rotate(180deg);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         .refresh-btn.refreshing {
             animation: spin 1s linear infinite;
+            background: #3b82f6;
+            border-color: #3b82f6;
         }
 
         @keyframes spin {
@@ -568,9 +573,9 @@
                 padding: 0.3rem 0.1rem;
             }
             
-            .stop-input {
-                width: 28px;
-                font-size: 0.75rem;
+            .stop-select {
+                width: 30px;
+                font-size: 0.7rem;
                 padding: 0.3rem 0.1rem;
             }
             
@@ -945,41 +950,46 @@
             color: #7c3aed;
         }
 
-        /* Stop inputs - AM on left, PM on right */
-        .stop-input {
-            width: 32px;
-            padding: 0.35rem 0.15rem;
+        /* Stop selects - AM on left, PM on right (dropdown 1-20) */
+        .stop-select {
+            width: 36px;
+            padding: 0.3rem 0.1rem;
             border: 2px solid var(--border-light);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-family: inherit;
             font-weight: 700;
             text-align: center;
             background: white;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
         }
 
-        .stop-input.stop-am {
+        .stop-select.stop-am {
             border-radius: 6px 0 0 6px;
         }
 
-        .stop-input.stop-pm {
+        .stop-select.stop-pm {
             border-radius: 0 6px 6px 0;
             border-left: none;
         }
 
-        .stop-input:focus {
+        .stop-select:focus {
             outline: none;
             border-color: var(--brand-blue);
             z-index: 1;
         }
 
-        .stop-input:disabled {
+        .stop-select:disabled {
             background: #f1f5f9;
             color: #94a3b8;
+            cursor: not-allowed;
         }
 
-        .stop-input:not(:disabled):not([value=""]) {
+        .stop-select.has-value:not(:disabled) {
             background: #dbeafe;
             border-color: #3b82f6;
+            color: #1e40af;
         }
 
         /* Notes Input */
@@ -1227,7 +1237,7 @@
         }
         
         body.tv-mode .vp-select,
-        body.tv-mode .stop-input {
+        body.tv-mode .stop-select {
             border: none;
             background: transparent;
             font-size: 1rem;
@@ -1255,7 +1265,7 @@
             border-radius: 4px;
         }
         
-        body.tv-mode .stop-input:not(:disabled):not([value=""]) {
+        body.tv-mode .stop-select.has-value:not(:disabled) {
             background: #dbeafe;
             border-radius: 4px;
         }
@@ -1284,7 +1294,7 @@
         body.tv-mode .board-container.scale-90 .table-header { font-size: 0.7rem; padding: 0.4rem 0.75rem; }
         body.tv-mode .board-container.scale-90 .walk-select,
         body.tv-mode .board-container.scale-90 .vp-select,
-        body.tv-mode .board-container.scale-90 .stop-input,
+        body.tv-mode .board-container.scale-90 .stop-select,
         body.tv-mode .board-container.scale-90 .notes-input { font-size: 0.85rem; }
         body.tv-mode .board-container.scale-90 .photo-checkbox { width: 26px; height: 26px; }
         body.tv-mode .board-container.scale-90 .column-header { padding: 0.5rem 0.75rem; font-size: 1rem; }
@@ -1294,7 +1304,7 @@
         body.tv-mode .board-container.scale-80 .table-header { font-size: 0.6rem; padding: 0.35rem 0.6rem; }
         body.tv-mode .board-container.scale-80 .walk-select,
         body.tv-mode .board-container.scale-80 .vp-select,
-        body.tv-mode .board-container.scale-80 .stop-input,
+        body.tv-mode .board-container.scale-80 .stop-select,
         body.tv-mode .board-container.scale-80 .notes-input { font-size: 0.75rem; }
         body.tv-mode .board-container.scale-80 .photo-checkbox { width: 22px; height: 22px; }
         body.tv-mode .board-container.scale-80 .photo-checkbox:checked::after { font-size: 0.85rem; }
@@ -1305,7 +1315,7 @@
         body.tv-mode .board-container.scale-70 .table-header { font-size: 0.55rem; padding: 0.3rem 0.5rem; }
         body.tv-mode .board-container.scale-70 .walk-select,
         body.tv-mode .board-container.scale-70 .vp-select,
-        body.tv-mode .board-container.scale-70 .stop-input,
+        body.tv-mode .board-container.scale-70 .stop-select,
         body.tv-mode .board-container.scale-70 .notes-input { font-size: 0.68rem; }
         body.tv-mode .board-container.scale-70 .photo-checkbox { width: 20px; height: 20px; }
         body.tv-mode .board-container.scale-70 .photo-checkbox:checked::after { font-size: 0.75rem; }
@@ -1874,10 +1884,20 @@
             const vpAMClass = getVPClass(vpAM);
             const vpPMClass = getVPClass(vpPM);
             
-            // Disable stop inputs based on van/parent selection
+            // Disable stop selects based on van/parent selection
             const vanOptions = ['V', 'BV', 'SV', 'DV'];
             const stopAMDisabled = !vanOptions.includes(vpAM);
             const stopPMDisabled = !vanOptions.includes(vpPM);
+            
+            // Generate stop number options (1-20)
+            const generateStopOptions = (selectedValue) => {
+                let options = '<option value="">-</option>';
+                for (let i = 1; i <= 20; i++) {
+                    const selected = String(selectedValue) === String(i) ? 'selected' : '';
+                    options += `<option value="${i}" ${selected}>${i}</option>`;
+                }
+                return options;
+            };
 
             return `
                 <div class="dog-row section-row ${sectionClass}" data-id="${id}">
@@ -1897,11 +1917,12 @@
                     </select>
                     
                     <div class="vp-control">
-                        <input type="number" class="stop-input stop-am" min="1" max="20" 
-                               value="${stopAM || ''}" placeholder="#"
+                        <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
                                ${stopAMDisabled ? 'disabled' : ''}
-                               onchange="updateDog('${id}', 'stopAM', this.value)"
+                               onchange="updateDog('${id}', 'stopAM', this.value); updateStopStyle(this)"
                                title="AM Stop Number">
+                            ${generateStopOptions(stopAM)}
+                        </select>
                         <select class="vp-select vp-am ${vpAMClass}" 
                                 onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
                                 title="Morning pickup">
@@ -1922,11 +1943,12 @@
                             <option value="SV" ${vpPM === 'SV' ? 'selected' : ''}>SV</option>
                             <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
                         </select>
-                        <input type="number" class="stop-input stop-pm" min="1" max="20" 
-                               value="${stop || ''}" placeholder="#"
+                        <select class="stop-select stop-pm ${stop ? 'has-value' : ''}" 
                                ${stopPMDisabled ? 'disabled' : ''}
-                               onchange="updateDog('${id}', 'stop', this.value)"
+                               onchange="updateDog('${id}', 'stop', this.value); updateStopStyle(this)"
                                title="PM Stop Number">
+                            ${generateStopOptions(stop)}
+                        </select>
                     </div>
                     
                     <input type="text" class="notes-input" placeholder="Notes..." 
@@ -2086,8 +2108,8 @@
 
         function updateVPStyle(select) {
             const row = select.closest('.dog-row');
-            const stopAMInput = row.querySelector('.stop-am');
-            const stopPMInput = row.querySelector('.stop-pm');
+            const stopAMSelect = row.querySelector('.stop-am');
+            const stopPMSelect = row.querySelector('.stop-pm');
             const vpAMSelect = row.querySelector('.vp-am');
             const vpPMSelect = row.querySelector('.vp-pm');
             
@@ -2098,25 +2120,36 @@
             if (select.value === 'DV') select.classList.add('van-dv');
             if (select.value === 'P') select.classList.add('parent-pickup');
             
-            // Van options that enable stop inputs
+            // Van options that enable stop selects
             const vanOptions = ['V', 'BV', 'SV', 'DV'];
             
-            // Enable/disable AM stop input based on AM selection
+            // Enable/disable AM stop select based on AM selection
             const isAMVan = vanOptions.includes(vpAMSelect.value);
-            stopAMInput.disabled = !isAMVan;
+            stopAMSelect.disabled = !isAMVan;
             if (!isAMVan) {
-                stopAMInput.value = '';
+                stopAMSelect.value = '';
+                stopAMSelect.classList.remove('has-value');
                 const id = row.dataset.id;
                 updateDog(id, 'stopAM', '');
             }
             
-            // Enable/disable PM stop input based on PM selection
+            // Enable/disable PM stop select based on PM selection
             const isPMVan = vanOptions.includes(vpPMSelect.value);
-            stopPMInput.disabled = !isPMVan;
+            stopPMSelect.disabled = !isPMVan;
             if (!isPMVan) {
-                stopPMInput.value = '';
+                stopPMSelect.value = '';
+                stopPMSelect.classList.remove('has-value');
                 const id = row.dataset.id;
                 updateDog(id, 'stop', '');
+            }
+        }
+
+        function updateStopStyle(select) {
+            // Toggle has-value class based on selection
+            if (select.value) {
+                select.classList.add('has-value');
+            } else {
+                select.classList.remove('has-value');
             }
         }
 
