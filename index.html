@@ -306,6 +306,23 @@
             border-color: var(--brand-blue);
         }
 
+        .service-type-select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .service-type-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
         .staging-dogs {
             display: flex;
             flex-wrap: wrap;
@@ -611,6 +628,80 @@
             border-radius: 16px;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
+
+        /* Service Type Sections */
+        .service-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .service-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            font-weight: 800;
+            font-size: 1rem;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+
+        .section-header .section-icon {
+            margin-right: 0.5rem;
+        }
+
+        .section-header .section-count {
+            background: rgba(255,255,255,0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* Half Day AM - Orange/Amber theme */
+        .section-header.half-day-am {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .section-row.half-day-am {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+        }
+
+        /* Full Day - Blue theme (default) */
+        .section-header.full-day {
+            background: var(--brand-gradient);
+            color: white;
+        }
+
+        .section-row.full-day {
+            background: white;
+            border-left: 4px solid var(--brand-blue);
+        }
+
+        /* Boarding - Purple theme */
+        .section-header.boarding {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .section-row.boarding {
+            background: #f5f3ff;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        /* Section content wrapper */
+        .section-content {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
             overflow: hidden;
         }
 
@@ -1088,6 +1179,24 @@
             border-radius: 0 6px 6px 0;
         }
         
+        /* TV Mode: Service sections */
+        body.tv-mode .service-section {
+            margin-bottom: 1rem;
+        }
+        
+        body.tv-mode .section-header {
+            padding: 0.5rem 1rem;
+            font-size: 1.1rem;
+        }
+        
+        body.tv-mode .section-content {
+            border: none;
+        }
+        
+        body.tv-mode .section-row {
+            border-left-width: 6px;
+        }
+        
         /* Dynamic font scaling for TV whiteboard - fit all dogs on screen */
         body.tv-mode .board-container.scale-90 .dog-row { padding: 0.4rem 0.75rem; }
         body.tv-mode .board-container.scale-90 .dog-name { font-size: 0.95rem; }
@@ -1181,6 +1290,11 @@
                 <input type="text" class="staging-input" id="today-staging-input" 
                        placeholder="Type dog name and press Enter..." 
                        onkeypress="handleStagingKeypress(event, 'today')">
+                <select class="service-type-select" id="today-service-type">
+                    <option value="Full Day">☀️ Full Day</option>
+                    <option value="Half Day AM">🌅 Half Day</option>
+                    <option value="Boarding">🏠 Boarding</option>
+                </select>
                 <button class="btn btn-primary" onclick="addToStaging('today')">+ Add</button>
             </div>
             <div class="staging-dogs" id="today-staging-dogs"></div>
@@ -1276,6 +1390,11 @@
                 <input type="text" class="staging-input" id="tomorrow-staging-input" 
                        placeholder="Type dog name and press Enter..." 
                        onkeypress="handleStagingKeypress(event, 'tomorrow')">
+                <select class="service-type-select" id="tomorrow-service-type">
+                    <option value="Full Day">☀️ Full Day</option>
+                    <option value="Half Day AM">🌅 Half Day</option>
+                    <option value="Boarding">🏠 Boarding</option>
+                </select>
                 <button class="btn btn-primary" onclick="addToStaging('tomorrow')">+ Add</button>
             </div>
             <div class="staging-dogs" id="tomorrow-staging-dogs"></div>
@@ -1522,7 +1641,11 @@
                 return;
             }
             
-            // Create dog objects from staged names
+            // Get selected service type
+            const serviceTypeSelect = document.getElementById(`${tab}-service-type`);
+            const serviceType = serviceTypeSelect ? serviceTypeSelect.value : 'Full Day';
+            
+            // Create dog objects from staged names with selected service type
             const newDogs = staging.map(name => ({
                 id: generateId(),
                 name: name,
@@ -1531,7 +1654,8 @@
                 vpAM: '',
                 vpPM: '',
                 stop: '',
-                notes: ''
+                notes: '',
+                serviceType: serviceType
             }));
             
             // Add to existing dogs
@@ -1544,7 +1668,10 @@
             // Re-render board
             renderBoard(tab);
             
-            showToast(`✅ Added ${newDogs.length} dog${newDogs.length > 1 ? 's' : ''} to the board`, 'success');
+            // Auto-save
+            autoSave();
+            
+            showToast(`✅ Added ${newDogs.length} dog${newDogs.length > 1 ? 's' : ''} to ${serviceType}`, 'success');
         }
 
         // =====================
@@ -1647,7 +1774,7 @@
         // =====================
         // Board Rendering
         // =====================
-        function createDogRow(dog) {
+        function createDogRow(dog, sectionClass = '') {
             const { id, name, photo, walk, vpAM, vpPM, stop, notes } = dog;
             
             // Determine styling classes for VP selects
@@ -1658,7 +1785,7 @@
             const stopDisabled = (vpAM === 'P' || !vpAM) && (vpPM === 'P' || !vpPM);
 
             return `
-                <div class="dog-row" data-id="${id}">
+                <div class="dog-row section-row ${sectionClass}" data-id="${id}">
                     <div class="dog-name">${name}</div>
                     
                     <div class="photo-check">
@@ -1721,41 +1848,88 @@
                 return;
             }
             
-            // Calculate layout (columns and scale to fit all dogs on screen)
+            // Group dogs by service type
+            const serviceGroups = {
+                'Half Day AM': [],
+                'Full Day': [],
+                'Boarding': []
+            };
+            
+            dogs.forEach(dog => {
+                const type = dog.serviceType || 'Full Day';
+                if (type.includes('Half Day')) {
+                    serviceGroups['Half Day AM'].push(dog);
+                } else if (type.includes('Boarding')) {
+                    serviceGroups['Boarding'].push(dog);
+                } else {
+                    serviceGroups['Full Day'].push(dog);
+                }
+            });
+            
+            // Service type configuration
+            const serviceConfig = {
+                'Half Day AM': { 
+                    icon: '🌅', 
+                    label: 'Half Day (Leave ~12pm)', 
+                    class: 'half-day-am',
+                    order: 1
+                },
+                'Full Day': { 
+                    icon: '☀️', 
+                    label: 'Full Day (Leave ~5pm)', 
+                    class: 'full-day',
+                    order: 2
+                },
+                'Boarding': { 
+                    icon: '🏠', 
+                    label: 'Boarding', 
+                    class: 'boarding',
+                    order: 3
+                }
+            };
+            
+            // Calculate layout
             const layout = calculateLayout(dogs.length);
             
             // Apply column count and scale classes
-            let classNames = `board-container cols-${layout.columns}`;
+            let classNames = `board-container cols-1`; // Sections are full width
             if (layout.scale) {
                 classNames += ` ${layout.scale}`;
             }
             board.className = classNames;
             
-            // Distribute dogs across columns
+            // Build HTML for each section
             let html = '';
-            for (let col = 0; col < layout.columns; col++) {
-                const startIdx = col * layout.rowsPerColumn;
-                const endIdx = Math.min(startIdx + layout.rowsPerColumn, dogs.length);
-                const columnDogs = dogs.slice(startIdx, endIdx);
+            
+            // Render sections in order: Half Day AM first, then Full Day, then Boarding
+            const orderedTypes = Object.keys(serviceGroups).sort((a, b) => 
+                serviceConfig[a].order - serviceConfig[b].order
+            );
+            
+            for (const serviceType of orderedTypes) {
+                const sectionDogs = serviceGroups[serviceType];
+                if (sectionDogs.length === 0) continue;
                 
-                if (columnDogs.length === 0) continue;
-
+                const config = serviceConfig[serviceType];
+                
                 html += `
-                    <div class="board-column">
-                        <div class="column-header">
-                            <span>Column ${col + 1}</span>
-                            <span class="column-count">${columnDogs.length} dogs</span>
+                    <div class="service-section">
+                        <div class="section-header ${config.class}">
+                            <span><span class="section-icon">${config.icon}</span>${config.label}</span>
+                            <span class="section-count">${sectionDogs.length} dog${sectionDogs.length !== 1 ? 's' : ''}</span>
                         </div>
-                        <div class="table-header">
-                            <span>Name</span>
-                            <span>Photo</span>
-                            <span>Walk</span>
-                            <span>AM/PM</span>
-                            <span>Notes</span>
-                            <span></span>
-                        </div>
-                        <div class="dog-rows">
-                            ${columnDogs.map(dog => createDogRow(dog)).join('')}
+                        <div class="section-content">
+                            <div class="table-header">
+                                <span>Name</span>
+                                <span>Photo</span>
+                                <span>Walk</span>
+                                <span>AM/PM</span>
+                                <span>Notes</span>
+                                <span></span>
+                            </div>
+                            <div class="dog-rows">
+                                ${sectionDogs.map(dog => createDogRow(dog, config.class)).join('')}
+                            </div>
                         </div>
                     </div>
                 `;
