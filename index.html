@@ -746,22 +746,40 @@
             border-color: var(--success-green);
         }
 
-        /* V/P Control */
+        /* V/P Control - AM/PM */
         .vp-control {
             display: flex;
-            gap: 2px;
+            align-items: center;
+            gap: 1px;
+        }
+
+        .vp-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            padding: 0 2px;
         }
 
         .vp-select {
-            width: 44px;
-            padding: 0.35rem 0.2rem;
+            width: 32px;
+            padding: 0.3rem 0.1rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px 0 0 6px;
-            font-size: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-family: inherit;
             font-weight: 700;
             cursor: pointer;
             background: white;
+            text-align: center;
+        }
+
+        .vp-select.vp-am {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .vp-select.vp-pm {
+            border-radius: 0;
+            border-left: none;
         }
 
         .vp-select:focus {
@@ -769,9 +787,16 @@
             border-color: var(--brand-blue);
         }
 
+        .vp-select.van-pickup {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
         .vp-select.parent-pickup {
             background: #f3e8ff;
             border-color: #a855f7;
+            color: #7c3aed;
         }
 
         .stop-input {
@@ -1048,9 +1073,14 @@
             padding: 0.4rem;
         }
         
+        body.tv-mode .vp-select.van-pickup {
+            background: #dbeafe;
+            border-radius: 4px;
+        }
+        
         body.tv-mode .vp-select.parent-pickup {
             background: #f3e8ff;
-            border-radius: 6px 0 0 6px;
+            border-radius: 4px;
         }
         
         body.tv-mode .stop-input:not(:disabled) {
@@ -1498,7 +1528,8 @@
                 name: name,
                 photo: false,
                 walk: '',
-                vp: '',
+                vpAM: '',
+                vpPM: '',
                 stop: '',
                 notes: ''
             }));
@@ -1617,7 +1648,14 @@
         // Board Rendering
         // =====================
         function createDogRow(dog) {
-            const { id, name, photo, walk, vp, stop, notes } = dog;
+            const { id, name, photo, walk, vpAM, vpPM, stop, notes } = dog;
+            
+            // Determine styling classes for VP selects
+            const vpAMClass = vpAM === 'V' ? 'van-pickup' : vpAM === 'P' ? 'parent-pickup' : '';
+            const vpPMClass = vpPM === 'V' ? 'van-pickup' : vpPM === 'P' ? 'parent-pickup' : '';
+            
+            // Disable stop input if both are parent pickup
+            const stopDisabled = (vpAM === 'P' || !vpAM) && (vpPM === 'P' || !vpPM);
 
             return `
                 <div class="dog-row" data-id="${id}">
@@ -1637,22 +1675,28 @@
                     </select>
                     
                     <div class="vp-control">
-                        <select class="vp-select ${vp === 'P' ? 'parent-pickup' : ''}" 
-                                onchange="updateDog('${id}', 'vp', this.value); updateVPStyle(this)">
-                            <option value="">--</option>
-                            <option value="P" ${vp === 'P' ? 'selected' : ''}>P</option>
-                            <option value="BV" ${vp === 'BV' ? 'selected' : ''}>BV</option>
-                            <option value="DV" ${vp === 'DV' ? 'selected' : ''}>DV</option>
-                            <option value="SV" ${vp === 'SV' ? 'selected' : ''}>SV</option>
+                        <select class="vp-select vp-am ${vpAMClass}" 
+                                onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
+                                title="Morning pickup">
+                            <option value="">-</option>
+                            <option value="V" ${vpAM === 'V' ? 'selected' : ''}>V</option>
+                            <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
+                        </select>
+                        <select class="vp-select vp-pm ${vpPMClass}" 
+                                onchange="updateDog('${id}', 'vpPM', this.value); updateVPStyle(this)"
+                                title="Evening dropoff">
+                            <option value="">-</option>
+                            <option value="V" ${vpPM === 'V' ? 'selected' : ''}>V</option>
+                            <option value="P" ${vpPM === 'P' ? 'selected' : ''}>P</option>
                         </select>
                         <input type="number" class="stop-input" min="1" max="20" 
-                               value="${stop}" placeholder="#"
-                               ${vp === 'P' || !vp ? 'disabled' : ''}
+                               value="${stop || ''}" placeholder="#"
+                               ${stopDisabled ? 'disabled' : ''}
                                onchange="updateDog('${id}', 'stop', this.value)">
                     </div>
                     
                     <input type="text" class="notes-input" placeholder="Notes..." 
-                           value="${notes}" onchange="updateDog('${id}', 'notes', this.value)">
+                           value="${notes || ''}" onchange="updateDog('${id}', 'notes', this.value)">
                     
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
@@ -1706,7 +1750,7 @@
                             <span>Name</span>
                             <span>Photo</span>
                             <span>Walk</span>
-                            <span>V/P</span>
+                            <span>AM/PM</span>
                             <span>Notes</span>
                             <span></span>
                         </div>
@@ -1735,7 +1779,7 @@
                 dogs.filter(d => d.walk).length;
             
             document.getElementById(`${tab}-van-count`).textContent = 
-                dogs.filter(d => d.vp && d.vp !== 'P').length;
+                dogs.filter(d => d.vpAM === 'V' || d.vpPM === 'V').length;
         }
 
         // =====================
@@ -1760,10 +1804,20 @@
         function updateVPStyle(select) {
             const row = select.closest('.dog-row');
             const stopInput = row.querySelector('.stop-input');
+            const vpAMSelect = row.querySelector('.vp-am');
+            const vpPMSelect = row.querySelector('.vp-pm');
             
-            select.classList.toggle('parent-pickup', select.value === 'P');
-            stopInput.disabled = select.value === 'P' || !select.value;
-            if (select.value === 'P' || !select.value) {
+            // Update class for styling
+            select.classList.remove('van-pickup', 'parent-pickup');
+            if (select.value === 'V') select.classList.add('van-pickup');
+            if (select.value === 'P') select.classList.add('parent-pickup');
+            
+            // Disable stop input if both are parent or empty
+            const isAMParent = vpAMSelect.value === 'P' || !vpAMSelect.value;
+            const isPMParent = vpPMSelect.value === 'P' || !vpPMSelect.value;
+            stopInput.disabled = isAMParent && isPMParent;
+            
+            if (stopInput.disabled) {
                 stopInput.value = '';
                 const id = row.dataset.id;
                 updateDog(id, 'stop', '');
