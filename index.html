@@ -574,8 +574,8 @@
             }
             
             .stop-select {
-                width: 30px;
-                font-size: 0.7rem;
+                width: 28px;
+                font-size: 0.75rem;
                 padding: 0.3rem 0.1rem;
             }
             
@@ -1265,7 +1265,7 @@
             border-radius: 4px;
         }
         
-        body.tv-mode .stop-select.has-value:not(:disabled) {
+        body.tv-mode .stop-select:not(:disabled):not([value=""]) {
             background: #dbeafe;
             border-radius: 4px;
         }
@@ -1598,7 +1598,8 @@
                 vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
             },
             currentTab: 'today',
-            tvMode: false
+            tvMode: false,
+            initialLoadComplete: false  // Prevents autoSave until data is loaded
         };
 
         // =====================
@@ -2510,9 +2511,9 @@
         }
 
         async function loadBoard() {
-            let loaded = false;
+            let loadedFromSheets = false;
             
-            // Try to load from Google Sheets first
+            // Try to load from Google Sheets first (source of truth)
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
@@ -2525,16 +2526,21 @@
                         state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
                         state.tomorrow.staging = result.data.tomorrow?.staging || [];
                         state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
-                        loaded = true;
-                        console.log('Loaded from Google Sheets:', result.data);
+                        loadedFromSheets = true;
+                        console.log('✅ Loaded from Google Sheets:', {
+                            today: state.today.dogs.length,
+                            tomorrow: state.tomorrow.dogs.length
+                        });
                     }
                 } catch (error) {
-                    console.error('Failed to load from Google Sheets:', error);
+                    console.error('❌ Failed to load from Google Sheets:', error);
                 }
             }
             
-            // Fall back to localStorage if Google Sheets failed
-            if (!loaded) {
+            // Fall back to localStorage ONLY if Google Sheets failed
+            // But we need to be careful not to use stale localStorage data
+            if (!loadedFromSheets) {
+                console.warn('⚠️ Google Sheets unavailable - using localStorage (read-only mode until Sheets connects)');
                 const saved = localStorage.getItem('fairyTailsStaffBoard');
                 if (saved) {
                     try {
@@ -2545,11 +2551,14 @@
                         state.tomorrow.dogs = data.tomorrow?.dogs || [];
                         state.tomorrow.staging = data.tomorrow?.staging || [];
                         state.tomorrow.vanTimes = data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
-                        console.log('Loaded from localStorage');
+                        console.log('📦 Loaded from localStorage (temporary)');
                     } catch (e) {
                         console.error('Failed to load saved data:', e);
                     }
                 }
+                
+                // Show warning that we're in offline mode
+                showToast('⚠️ Could not connect to Google Sheets - changes may not save', 'error');
             }
             
             // Populate van time dropdowns
@@ -2559,11 +2568,79 @@
             renderStaging('tomorrow');
             renderBoard('today');
             renderBoard('tomorrow');
+            
+            // CRITICAL: Only enable autoSave if we successfully loaded from Google Sheets
+            // This prevents stale localStorage from overwriting fresh Sheet data
+            if (loadedFromSheets) {
+                state.initialLoadComplete = true;
+                console.log('✅ Initial load complete - autoSave now enabled');
+            } else {
+                state.initialLoadComplete = false;
+                console.warn('⚠️ AutoSave DISABLED - waiting for Google Sheets connection');
+                
+                // Retry loading from Sheets every 10 seconds until successful
+                setTimeout(retryLoadFromSheets, 10000);
+            }
+        }
+        
+        // Retry loading from Google Sheets if initial load failed
+        async function retryLoadFromSheets() {
+            if (state.initialLoadComplete) return; // Already loaded
+            
+            console.log('🔄 Retrying Google Sheets connection...');
+            
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        // Check if remote has more data than local (prefer remote)
+                        const remoteToday = result.data.today?.dogs?.length || 0;
+                        const remoteTomorrow = result.data.tomorrow?.dogs?.length || 0;
+                        const localToday = state.today.dogs.length;
+                        const localTomorrow = state.tomorrow.dogs.length;
+                        
+                        // Use remote data if it has more dogs (more likely to be correct)
+                        if (remoteToday >= localToday || remoteTomorrow >= localTomorrow) {
+                            state.today.dogs = result.data.today?.dogs || [];
+                            state.today.staging = result.data.today?.staging || [];
+                            state.today.vanTimes = result.data.today?.vanTimes || state.today.vanTimes;
+                            state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
+                            state.tomorrow.staging = result.data.tomorrow?.staging || [];
+                            state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || state.tomorrow.vanTimes;
+                            
+                            populateVanTimeDropdowns();
+                            renderStaging('today');
+                            renderStaging('tomorrow');
+                            renderBoard('today');
+                            renderBoard('tomorrow');
+                        }
+                        
+                        state.initialLoadComplete = true;
+                        showToast('✅ Connected to Google Sheets', 'success');
+                        console.log('✅ Reconnected to Google Sheets - autoSave now enabled');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Retry failed:', error);
+                }
+            }
+            
+            // Still not connected, retry again
+            setTimeout(retryLoadFromSheets, 10000);
         }
 
         // Auto-save on changes (to both localStorage and Google Sheets)
         // SMART SAVE: Prevents overwriting remote data with empty local data
         async function autoSave(forceLocalOnly = false) {
+            // CRITICAL: Never save until initial data load is complete
+            // This prevents empty local state from overwriting remote data on page load
+            if (!state.initialLoadComplete) {
+                console.log('Initial load not complete - skipping save to prevent data loss');
+                return;
+            }
+            
             // NEVER save to Google Sheets in TV/Whiteboard mode - it's read-only
             if (state.tvMode) {
                 console.log('TV mode active - skipping cloud save (read-only)');
@@ -2593,38 +2670,50 @@
             // Save to Google Sheets if enabled
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
-                    // SMART SAVE: Check if we're about to overwrite remote data with empty data
+                    // SMART SAVE: Check if we're about to overwrite remote data with less data
                     const localTodayCount = state.today.dogs.length;
                     const localTomorrowCount = state.tomorrow.dogs.length;
+                    const localTotal = localTodayCount + localTomorrowCount;
                     
-                    // If BOTH tabs are empty, check remote first before potentially deleting data
-                    if (localTodayCount === 0 && localTomorrowCount === 0) {
-                        console.log('Both tabs empty - checking remote before saving...');
+                    // ALWAYS check remote first to prevent data loss
+                    // This adds one extra request but prevents catastrophic data loss
+                    console.log(`Checking remote before saving (local: Today=${localTodayCount}, Tomorrow=${localTomorrowCount})...`);
+                    
+                    try {
+                        const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                        const result = await response.json();
                         
-                        try {
-                            const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
-                            const result = await response.json();
+                        if (result.success && result.data) {
+                            const remoteTodayCount = result.data.today?.dogs?.length || 0;
+                            const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
+                            const remoteTotal = remoteTodayCount + remoteTomorrowCount;
                             
-                            if (result.success && result.data) {
-                                const remoteTodayCount = result.data.today?.dogs?.length || 0;
-                                const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
+                            // PROTECTION: If remote has MORE dogs than local, don't overwrite!
+                            // This catches race conditions where remote was updated but local is stale
+                            if (remoteTotal > localTotal) {
+                                console.warn(`⚠️ BLOCKED SAVE: Remote has more data (${remoteTotal}) than local (${localTotal})`);
+                                console.warn(`   Remote: Today=${remoteTodayCount}, Tomorrow=${remoteTomorrowCount}`);
+                                console.warn(`   Local:  Today=${localTodayCount}, Tomorrow=${localTomorrowCount}`);
                                 
-                                // If remote has data but local is empty, DON'T save (would delete remote data)
-                                if (remoteTodayCount > 0 || remoteTomorrowCount > 0) {
-                                    console.log(`Remote has data (Today: ${remoteTodayCount}, Tomorrow: ${remoteTomorrowCount}) - NOT overwriting with empty local data`);
-                                    
-                                    // Instead, reload the remote data
-                                    loadBoardSilent();
-                                    return;
-                                }
+                                // Reload remote data instead of saving
+                                showToast('🔄 Syncing newer data from cloud...', 'info');
+                                await loadBoardSilent();
+                                return;
                             }
-                        } catch (checkError) {
-                            console.error('Could not check remote state, skipping save to be safe:', checkError);
-                            return; // Don't save if we can't verify remote state
+                            
+                            // PROTECTION: If both are empty locally but remote has data, don't save
+                            if (localTotal === 0 && remoteTotal > 0) {
+                                console.warn(`⚠️ BLOCKED SAVE: Local is empty but remote has ${remoteTotal} dogs`);
+                                await loadBoardSilent();
+                                return;
+                            }
                         }
+                    } catch (checkError) {
+                        console.error('Could not verify remote state - skipping save to be safe:', checkError);
+                        return; // Don't save if we can't verify remote state
                     }
                     
-                    // Safe to save - local has data OR remote is also empty
+                    // Safe to save - local has same or more data than remote
                     await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -2634,7 +2723,7 @@
                         body: JSON.stringify(dataToSave)
                     });
                     
-                    console.log(`Auto-saved to Google Sheets (Today: ${localTodayCount}, Tomorrow: ${localTomorrowCount})`);
+                    console.log(`✅ Saved to Google Sheets (Today: ${localTodayCount}, Tomorrow: ${localTomorrowCount})`);
                     
                 } catch (error) {
                     console.error('Auto-save to Google Sheets failed:', error);
