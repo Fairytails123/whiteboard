@@ -109,6 +109,31 @@
             transform: scale(1.02);
         }
 
+        .refresh-btn {
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: rotate(180deg);
+        }
+
+        .refresh-btn.refreshing {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* Whiteboard mode: Button shows "Edit Mode" option with live indicator */
         body.tv-mode .mode-toggle-btn {
             background: #22c55e;
@@ -1248,6 +1273,9 @@
         </div>
         <div class="header-right">
             <div class="current-time" id="currentTime">--:--</div>
+            <button class="btn refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
+                🔄
+            </button>
             <button class="btn mode-toggle-btn" id="modeToggleBtn" onclick="toggleMode()">
                 <span class="live-indicator"></span>
                 <span id="modeButtonText">📺 Whiteboard Mode</span>
@@ -2163,6 +2191,51 @@
             }, 5000);
         }
 
+        // Manual refresh from cloud (for when you want to pull latest data)
+        async function manualRefresh() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('refreshing');
+            
+            try {
+                if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data) {
+                        const oldTodayCount = state.today.dogs.length;
+                        const oldTomorrowCount = state.tomorrow.dogs.length;
+                        
+                        state.today.dogs = result.data.today?.dogs || [];
+                        state.today.staging = result.data.today?.staging || [];
+                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
+                        state.tomorrow.staging = result.data.tomorrow?.staging || [];
+                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        
+                        populateVanTimeDropdowns();
+                        renderStaging('today');
+                        renderStaging('tomorrow');
+                        renderBoard('today');
+                        renderBoard('tomorrow');
+                        
+                        const newTodayCount = state.today.dogs.length;
+                        const newTomorrowCount = state.tomorrow.dogs.length;
+                        
+                        showToast(`☁️ Refreshed from cloud (Today: ${newTodayCount}, Tomorrow: ${newTomorrowCount})`, 'success');
+                    } else {
+                        showToast('⚠️ No data received from cloud', 'error');
+                    }
+                } else {
+                    showToast('⚠️ Google Sheets not configured', 'error');
+                }
+            } catch (error) {
+                console.error('Manual refresh failed:', error);
+                showToast('❌ Failed to refresh from cloud', 'error');
+            } finally {
+                btn.classList.remove('refreshing');
+            }
+        }
+
         function stopWhiteboardRefresh() {
             if (refreshInterval) {
                 clearInterval(refreshInterval);
@@ -2227,6 +2300,12 @@
             
             // Only re-render if data has changed
             if (currentData !== newData) {
+                // Calculate what changed
+                const oldTodayCount = state.today.dogs.length;
+                const oldTomorrowCount = state.tomorrow.dogs.length;
+                const newTodayCount = newToday.dogs.length;
+                const newTomorrowCount = newTomorrow.dogs.length;
+                
                 state.today = newToday;
                 state.tomorrow = newTomorrow;
                 
@@ -2242,6 +2321,21 @@
                 setTimeout(() => {
                     btn.style.background = '#22c55e';
                 }, 300);
+                
+                // Show notification about data changes (helpful for seeing n8n imports)
+                if (state.tvMode) {
+                    // In TV mode, show subtle notification about data refresh
+                    const todayChange = newTodayCount - oldTodayCount;
+                    const tomorrowChange = newTomorrowCount - oldTomorrowCount;
+                    
+                    if (tomorrowChange > 0) {
+                        showToast(`📥 ${tomorrowChange} new dog${tomorrowChange > 1 ? 's' : ''} added to Tomorrow`, 'success');
+                    } else if (todayChange > 0) {
+                        showToast(`📥 ${todayChange} new dog${todayChange > 1 ? 's' : ''} added to Today`, 'success');
+                    }
+                }
+                
+                console.log(`Data refreshed - Today: ${oldTodayCount}→${newTodayCount}, Tomorrow: ${oldTomorrowCount}→${newTomorrowCount}`);
             }
         }
 
@@ -2341,7 +2435,14 @@
         }
 
         // Auto-save on changes (to both localStorage and Google Sheets)
-        async function autoSave() {
+        // SMART SAVE: Prevents overwriting remote data with empty local data
+        async function autoSave(forceLocalOnly = false) {
+            // NEVER save to Google Sheets in TV/Whiteboard mode - it's read-only
+            if (state.tvMode) {
+                console.log('TV mode active - skipping cloud save (read-only)');
+                return;
+            }
+            
             const dataToSave = {
                 action: 'save',
                 today: { 
@@ -2359,9 +2460,44 @@
             // Always save to localStorage
             localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
             
+            // Skip Google Sheets save if forced local only
+            if (forceLocalOnly) return;
+            
             // Save to Google Sheets if enabled
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
+                    // SMART SAVE: Check if we're about to overwrite remote data with empty data
+                    const localTodayCount = state.today.dogs.length;
+                    const localTomorrowCount = state.tomorrow.dogs.length;
+                    
+                    // If BOTH tabs are empty, check remote first before potentially deleting data
+                    if (localTodayCount === 0 && localTomorrowCount === 0) {
+                        console.log('Both tabs empty - checking remote before saving...');
+                        
+                        try {
+                            const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                            const result = await response.json();
+                            
+                            if (result.success && result.data) {
+                                const remoteTodayCount = result.data.today?.dogs?.length || 0;
+                                const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
+                                
+                                // If remote has data but local is empty, DON'T save (would delete remote data)
+                                if (remoteTodayCount > 0 || remoteTomorrowCount > 0) {
+                                    console.log(`Remote has data (Today: ${remoteTodayCount}, Tomorrow: ${remoteTomorrowCount}) - NOT overwriting with empty local data`);
+                                    
+                                    // Instead, reload the remote data
+                                    loadBoardSilent();
+                                    return;
+                                }
+                            }
+                        } catch (checkError) {
+                            console.error('Could not check remote state, skipping save to be safe:', checkError);
+                            return; // Don't save if we can't verify remote state
+                        }
+                    }
+                    
+                    // Safe to save - local has data OR remote is also empty
                     await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -2370,13 +2506,16 @@
                         },
                         body: JSON.stringify(dataToSave)
                     });
+                    
+                    console.log(`Auto-saved to Google Sheets (Today: ${localTodayCount}, Tomorrow: ${localTomorrowCount})`);
+                    
                 } catch (error) {
                     console.error('Auto-save to Google Sheets failed:', error);
                 }
             }
         }
 
-        // Save periodically
+        // Periodic auto-save (only runs when NOT in TV mode due to check in autoSave)
         setInterval(autoSave, 30000); // Every 30 seconds
 
         // =====================
