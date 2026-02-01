@@ -70,8 +70,8 @@
             transform: scale(0.9);
         }
 
-        /* Ensure smooth momentum scrolling on iOS */
-        .dog-rows, .staging-dogs {
+        /* Ensure smooth momentum scrolling on iOS for staging list */
+        .staging-dogs {
             -webkit-overflow-scrolling: touch;
         }
 
@@ -877,7 +877,7 @@
             border-radius: 16px;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-light);
-            overflow: hidden;
+            overflow: clip;
         }
 
         /* Service Type Sections */
@@ -951,7 +951,8 @@
             border: 1px solid var(--border-light);
             border-top: none;
             border-radius: 0 0 12px 12px;
-            overflow: hidden;
+            /* overflow:clip rounds corners without creating a scroll container */
+            overflow: clip;
         }
 
         .column-header {
@@ -988,7 +989,10 @@
 
         /* Dog Row */
         .dog-rows {
-            /* No max-height — all dogs visible, page scrolls naturally between sections */
+            /* Force all dogs visible — no mini scroll within sections */
+            max-height: none !important;
+            overflow: visible !important;
+            height: auto !important;
         }
 
         .dog-row {
