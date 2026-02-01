@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Fairy Tails K9 Centre - Staff Board</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +36,43 @@
             color: var(--text-dark);
             min-height: 100vh;
             overflow-x: hidden;
+            /* Safe area padding for notched phones */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* ===== Global Touch-Friendly Styles ===== */
+
+        /* Remove tap highlight flash on Android/iOS */
+        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Reduce 300ms tap delay on all interactive elements (all platforms) */
+        button, select, input, a, label, .tab-btn, .btn {
+            touch-action: manipulation;
+        }
+
+        /* Touch feedback — pressed state for buttons */
+        .btn:active, .tab-btn:active, .refresh-btn:active {
+            transform: scale(0.95) !important;
+            opacity: 0.85;
+        }
+
+        .delete-btn:active {
+            transform: scale(0.9);
+            background: #ef4444;
+            color: white;
+        }
+
+        .photo-checkbox:active {
+            transform: scale(0.9);
+        }
+
+        /* Ensure smooth momentum scrolling on iOS */
+        .dog-rows, .staging-dogs {
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Header */
@@ -87,27 +124,7 @@
             font-weight: 700;
         }
 
-        .mode-toggle-btn {
-            padding: 0.6rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
 
-        .mode-toggle-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: rgba(255,255,255,0.5);
-            transform: scale(1.02);
-        }
 
         .refresh-btn {
             padding: 0.6rem 0.9rem;
@@ -139,40 +156,7 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Whiteboard mode: Button shows "Edit Mode" option with live indicator */
-        body.tv-mode .mode-toggle-btn {
-            background: #22c55e;
-            border-color: #22c55e;
-        }
-        
-        /* Live indicator dot */
-        .live-indicator {
-            display: none;
-            width: 10px;
-            height: 10px;
-            background: white;
-            border-radius: 50%;
-            animation: pulse-dot 1.5s infinite;
-        }
-        
-        body.tv-mode .live-indicator {
-            display: inline-block;
-        }
 
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-        
-        /* TV mode: much larger toggle button for remote clicking */
-        body.tv-mode .mode-toggle-btn {
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
-        }
-        
-        body.tv-mode .current-time {
-            font-size: 1.75rem;
-        }
 
         /* Tab Navigation */
         .tab-nav {
@@ -392,15 +376,26 @@
             background: rgba(255,255,255,0.2);
             border: none;
             color: white;
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 0.875rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: background 0.2s ease;
+            /* Expand touch target beyond visual size */
+            position: relative;
+        }
+
+        .staged-dog-remove::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
         }
 
         .staged-dog-remove:hover {
@@ -530,6 +525,33 @@
             .board-container.cols-4,
             .board-container.cols-5,
             .board-container.cols-6 { grid-template-columns: repeat(2, 1fr); }
+            
+            /* Tablet: Ensure touch targets meet 44px minimum */
+            .photo-checkbox {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .delete-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .vp-select {
+                min-height: 38px;
+            }
+            
+            .stop-select {
+                min-height: 38px;
+            }
+            
+            .walk-select {
+                min-height: 38px;
+            }
+            
+            .notes-input {
+                min-height: 38px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -539,69 +561,192 @@
             .board-container.cols-5,
             .board-container.cols-6 { grid-template-columns: 1fr; }
             
-            /* Mobile: Optimized editing experience */
+            /* ===== Mobile Dog Rows: Two-row card layout ===== */
+            /* Row 1: Name | Photo ✓ | Walk | Delete × */
+            /* Row 2: VP Controls (AM/PM) | Notes */
+            
             .dog-rows {
-                max-height: none; /* Allow full page scroll on mobile */
+                max-height: none;
                 overflow-y: visible;
             }
             
-            /* Mobile: Adjusted columns for VP control with stop inputs */
-            .dog-row {
-                padding: 0.6rem 0.5rem;
-                gap: 0.35rem;
-                grid-template-columns: 1.3fr 40px 60px 130px 1fr 32px;
+            /* Hide table header — card layout is self-explanatory */
+            .table-header {
+                display: none;
             }
             
-            .table-header {
-                grid-template-columns: 1.3fr 40px 60px 130px 1fr 32px;
-                font-size: 0.6rem;
+            .dog-row {
+                display: grid;
+                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+                grid-template-rows: auto auto;
+                gap: 0.4rem 0.35rem;
+                padding: 0.75rem;
+                border-bottom: 2px solid var(--border-light);
             }
+            
+            /* Row 1 placement */
+            .dog-row .dog-name {
+                grid-column: 1;
+                grid-row: 1;
+                font-size: 1rem;
+                align-self: center;
+            }
+            
+            .dog-row .photo-check {
+                grid-column: 2;
+                grid-row: 1;
+                align-self: center;
+                justify-self: center;
+            }
+            
+            .dog-row .walk-select {
+                grid-column: 3;
+                grid-row: 1;
+                align-self: center;
+            }
+            
+            .dog-row .delete-btn {
+                grid-column: 4;
+                grid-row: 1;
+                justify-self: center;
+                align-self: center;
+            }
+            
+            /* Row 2 placement */
+            .dog-row .vp-control {
+                grid-column: 1 / 3;
+                grid-row: 2;
+                padding-top: 0.25rem;
+                border-top: 1px dashed var(--border-light);
+            }
+            
+            .dog-row .notes-input {
+                grid-column: 3 / 5;
+                grid-row: 2;
+                padding-top: 0.25rem;
+                border-top: 1px dashed var(--border-light);
+                align-self: center;
+            }
+            
+            /* ===== Touch Targets: Minimum 44px ===== */
             
             .photo-checkbox {
-                width: 32px;
-                height: 32px;
+                width: 44px;
+                height: 44px;
             }
             
-            .walk-select {
-                font-size: 0.85rem;
-                padding: 0.4rem;
-            }
-            
-            .vp-select {
-                width: 30px;
-                font-size: 0.7rem;
-                padding: 0.3rem 0.1rem;
-            }
-            
-            .stop-select {
-                width: 28px;
-                font-size: 0.75rem;
-                padding: 0.3rem 0.1rem;
-            }
-            
-            .notes-input {
-                font-size: 0.85rem;
-                padding: 0.4rem;
+            .photo-checkbox:checked::after {
+                font-size: 1.3rem;
             }
             
             .delete-btn {
-                width: 32px;
-                height: 32px;
+                width: 44px;
+                height: 44px;
+                font-size: 1.3rem;
+                border-radius: 8px;
+            }
+            
+            /* Walk select — full touch height, prevent iOS zoom */
+            .walk-select {
+                font-size: 16px;
+                min-height: 44px;
+                padding: 0.5rem 0.4rem;
+                border-radius: 8px;
+            }
+            
+            /* VP selects — enlarged for fingers */
+            .vp-select {
+                width: 44px;
+                min-height: 44px;
+                font-size: 16px;
+                padding: 0.4rem 0.15rem;
+                border-radius: 0;
+            }
+            
+            .vp-select.vp-am {
+                border-left: 2px solid var(--border-light);
+            }
+            
+            /* Stop selects — enlarged for fingers */
+            .stop-select {
+                width: 40px;
+                min-height: 44px;
+                font-size: 16px;
+                padding: 0.4rem 0.15rem;
+            }
+            
+            .stop-select.stop-am {
+                border-radius: 8px 0 0 8px;
+            }
+            
+            .stop-select.stop-pm {
+                border-radius: 0 8px 8px 0;
+            }
+            
+            /* Notes input — full touch height, prevent iOS zoom */
+            .notes-input {
+                font-size: 16px;
+                min-height: 44px;
+                padding: 0.5rem;
+                border-radius: 8px;
             }
             
             .dog-name {
-                font-size: 0.85rem;
-            }
-            
-            .staging-input {
                 font-size: 1rem;
             }
             
-            .btn {
-                padding: 0.6rem 0.8rem;
+            /* ===== Staging Area: Stacked for touch ===== */
+            
+            .staging-input-row {
+                flex-wrap: wrap;
             }
             
-            /* Mobile: Compact header */
+            .staging-input {
+                flex: 1 1 100%;
+                font-size: 16px;
+                min-height: 48px;
+                margin-bottom: 0.25rem;
+            }
+            
+            .service-type-select {
+                flex: 1 1 auto;
+                font-size: 16px;
+                min-height: 48px;
+                min-width: 120px;
+            }
+            
+            .staging-area .btn {
+                min-height: 48px;
+                font-size: 1rem;
+            }
+            
+            /* Staged dog tags — touch-friendly sizing */
+            .staged-dog {
+                padding: 0.6rem 0.85rem;
+                font-size: 1rem;
+            }
+            
+            .staged-dog-remove {
+                width: 32px;
+                height: 32px;
+                font-size: 1.1rem;
+            }
+            
+            /* ===== Buttons: Touch-friendly minimums ===== */
+            
+            .btn {
+                min-height: 44px;
+                padding: 0.6rem 1rem;
+                font-size: 0.95rem;
+            }
+            
+            .btn-small {
+                min-height: 40px;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            /* ===== Compact Header ===== */
+            
             .header {
                 padding: 0.75rem 1rem;
             }
@@ -615,7 +760,16 @@
                 height: 40px;
             }
             
-            /* Mobile: Stack stats */
+            .refresh-btn {
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* ===== Stats: 2×2 Grid ===== */
+            
             .stats-bar {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
@@ -629,7 +783,8 @@
                 font-size: 1.5rem;
             }
             
-            /* Mobile: Wrap van legend */
+            /* ===== Van Legend: Stacked ===== */
+            
             .van-legend {
                 flex-direction: column;
                 gap: 0.75rem;
@@ -642,11 +797,13 @@
             }
             
             .van-time-select {
-                font-size: 1rem;
+                font-size: 16px;
+                min-height: 44px;
                 padding: 0.5rem;
             }
             
-            /* Mobile: Tab navigation */
+            /* ===== Tab Navigation ===== */
+            
             .tab-nav {
                 flex-wrap: wrap;
                 padding: 0.5rem;
@@ -655,6 +812,7 @@
             .tab-btn {
                 padding: 0.75rem 1rem;
                 font-size: 1rem;
+                min-height: 44px;
             }
             
             .tab-actions {
@@ -662,12 +820,52 @@
                 justify-content: center;
                 flex-wrap: wrap;
                 padding-top: 0.5rem;
+                gap: 0.5rem;
             }
             
-            /* Mobile: Mode toggle button */
-            .mode-toggle-btn {
+            .tab-actions .btn {
+                flex: 1;
+                min-width: 0;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+        
+        /* ===== Very Small Phones (< 400px) ===== */
+        @media (max-width: 400px) {
+            .dog-row {
+                grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
+                padding: 0.6rem 0.5rem;
+            }
+            
+            .dog-name {
+                font-size: 0.9rem;
+            }
+            
+            .vp-select {
+                width: 40px;
+            }
+            
+            .stop-select {
+                width: 36px;
+            }
+            
+            .header-left .header-subtitle {
+                display: none;
+            }
+            
+            .stat-card {
                 padding: 0.5rem 0.75rem;
-                font-size: 0.8rem;
+            }
+            
+            .stat-value {
+                font-size: 1.25rem;
+            }
+            
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
             }
         }
 
@@ -788,15 +986,8 @@
 
         /* Dog Row */
         .dog-rows {
-            /* Normal mode: Allow scrolling for comfortable editing */
             max-height: calc(100vh - 450px);
             overflow-y: auto;
-        }
-        
-        /* TV Mode: No scrolling - all content visible */
-        body.tv-mode .dog-rows {
-            max-height: none;
-            overflow-y: visible;
         }
 
         .dog-row {
@@ -1131,197 +1322,6 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* TV Mode - View-only whiteboard display */
-        body.tv-mode .header-title { font-size: 2rem; }
-        body.tv-mode .header-subtitle { font-size: 1rem; }
-        body.tv-mode .current-time { font-size: 1.5rem; }
-        
-        /* TV Mode: Hide all editing UI */
-        body.tv-mode .staging-area { display: none !important; }
-        body.tv-mode .tab-actions { display: none !important; }
-        body.tv-mode .delete-btn { display: none !important; }
-        
-        /* TV Mode: Style tabs to look better */
-        body.tv-mode .tab-nav {
-            background: var(--brand-gradient);
-            border-bottom: none;
-        }
-        
-        body.tv-mode .tab-btn {
-            color: rgba(255,255,255,0.7);
-            border-bottom-color: transparent;
-        }
-        
-        body.tv-mode .tab-btn.active {
-            color: white;
-            border-bottom-color: white;
-        }
-        
-        body.tv-mode .tab-btn:hover {
-            color: white;
-        }
-        
-        /* TV Mode: Force horizontal columns - override all media queries */
-        body.tv-mode .board-container.cols-1 { grid-template-columns: 1fr !important; }
-        body.tv-mode .board-container.cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
-        body.tv-mode .board-container.cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
-        body.tv-mode .board-container.cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
-        body.tv-mode .board-container.cols-5 { grid-template-columns: repeat(5, 1fr) !important; }
-        body.tv-mode .board-container.cols-6 { grid-template-columns: repeat(6, 1fr) !important; }
-        
-        /* TV Mode: Larger stats for visibility */
-        body.tv-mode .stat-value { font-size: 2.5rem; }
-        body.tv-mode .stat-card { padding: 1.25rem 2rem; }
-        body.tv-mode .stat-icon { width: 56px; height: 56px; font-size: 1.75rem; }
-        body.tv-mode .stat-label { font-size: 1rem; }
-        
-        /* TV Mode: Larger legend */
-        body.tv-mode .van-legend { font-size: 1.1rem; padding: 1rem 1.5rem; }
-        body.tv-mode .van-badge { font-size: 1rem; padding: 0.4rem 1rem; }
-        body.tv-mode .van-time-select {
-            border: none;
-            background: transparent;
-            pointer-events: none;
-            font-size: 1.1rem;
-            font-weight: 700;
-        }
-        
-        /* TV Mode: Column headers */
-        body.tv-mode .column-header { font-size: 1.2rem; padding: 0.75rem 1rem; }
-        body.tv-mode .column-count { font-size: 1rem; }
-        
-        /* TV Mode: Table header */
-        body.tv-mode .table-header { font-size: 0.8rem; padding: 0.5rem 1rem; }
-        
-        /* TV Mode: Whiteboard row styling - read-only appearance */
-        body.tv-mode .dog-row {
-            grid-template-columns: 2fr 60px 100px 100px 1.5fr;
-            padding: 0.5rem 1rem;
-        }
-        
-        body.tv-mode .dog-name { font-size: 1.1rem; }
-        
-        /* TV Mode: Replace inputs with display-only elements */
-        body.tv-mode .photo-checkbox {
-            pointer-events: none;
-            width: 32px;
-            height: 32px;
-        }
-        
-        body.tv-mode .walk-select,
-        body.tv-mode .notes-input {
-            border: none;
-            background: transparent;
-            pointer-events: none;
-            font-size: 1rem;
-            padding: 0.4rem;
-        }
-        
-        body.tv-mode .walk-select.walk-booked {
-            background: #fef3c7;
-            border-radius: 6px;
-        }
-        
-        body.tv-mode .walk-select.walk-transferred {
-            background: #dcfce7;
-            border-radius: 6px;
-        }
-        
-        body.tv-mode .notes-input:not(:placeholder-shown) {
-            background: #fffbeb;
-            border-radius: 6px;
-        }
-        
-        body.tv-mode .vp-control {
-            pointer-events: none;
-        }
-        
-        body.tv-mode .vp-select,
-        body.tv-mode .stop-select {
-            border: none;
-            background: transparent;
-            font-size: 1rem;
-            padding: 0.4rem;
-        }
-        
-        body.tv-mode .vp-select.van-pickup,
-        body.tv-mode .vp-select.van-bv {
-            background: #dbeafe;
-            border-radius: 4px;
-        }
-        
-        body.tv-mode .vp-select.van-sv {
-            background: #d1fae5;
-            border-radius: 4px;
-        }
-        
-        body.tv-mode .vp-select.van-dv {
-            background: #fef3c7;
-            border-radius: 4px;
-        }
-        
-        body.tv-mode .vp-select.parent-pickup {
-            background: #f3e8ff;
-            border-radius: 4px;
-        }
-        
-        body.tv-mode .stop-select:not(:disabled):not([value=""]) {
-            background: #dbeafe;
-            border-radius: 4px;
-        }
-        
-        /* TV Mode: Service sections */
-        body.tv-mode .service-section {
-            margin-bottom: 1rem;
-        }
-        
-        body.tv-mode .section-header {
-            padding: 0.5rem 1rem;
-            font-size: 1.1rem;
-        }
-        
-        body.tv-mode .section-content {
-            border: none;
-        }
-        
-        body.tv-mode .section-row {
-            border-left-width: 6px;
-        }
-        
-        /* Dynamic font scaling for TV whiteboard - fit all dogs on screen */
-        body.tv-mode .board-container.scale-90 .dog-row { padding: 0.4rem 0.75rem; }
-        body.tv-mode .board-container.scale-90 .dog-name { font-size: 0.95rem; }
-        body.tv-mode .board-container.scale-90 .table-header { font-size: 0.7rem; padding: 0.4rem 0.75rem; }
-        body.tv-mode .board-container.scale-90 .walk-select,
-        body.tv-mode .board-container.scale-90 .vp-select,
-        body.tv-mode .board-container.scale-90 .stop-select,
-        body.tv-mode .board-container.scale-90 .notes-input { font-size: 0.85rem; }
-        body.tv-mode .board-container.scale-90 .photo-checkbox { width: 26px; height: 26px; }
-        body.tv-mode .board-container.scale-90 .column-header { padding: 0.5rem 0.75rem; font-size: 1rem; }
-        
-        body.tv-mode .board-container.scale-80 .dog-row { padding: 0.35rem 0.6rem; }
-        body.tv-mode .board-container.scale-80 .dog-name { font-size: 0.85rem; }
-        body.tv-mode .board-container.scale-80 .table-header { font-size: 0.6rem; padding: 0.35rem 0.6rem; }
-        body.tv-mode .board-container.scale-80 .walk-select,
-        body.tv-mode .board-container.scale-80 .vp-select,
-        body.tv-mode .board-container.scale-80 .stop-select,
-        body.tv-mode .board-container.scale-80 .notes-input { font-size: 0.75rem; }
-        body.tv-mode .board-container.scale-80 .photo-checkbox { width: 22px; height: 22px; }
-        body.tv-mode .board-container.scale-80 .photo-checkbox:checked::after { font-size: 0.85rem; }
-        body.tv-mode .board-container.scale-80 .column-header { padding: 0.4rem 0.6rem; font-size: 0.9rem; }
-        
-        body.tv-mode .board-container.scale-70 .dog-row { padding: 0.3rem 0.5rem; }
-        body.tv-mode .board-container.scale-70 .dog-name { font-size: 0.78rem; }
-        body.tv-mode .board-container.scale-70 .table-header { font-size: 0.55rem; padding: 0.3rem 0.5rem; }
-        body.tv-mode .board-container.scale-70 .walk-select,
-        body.tv-mode .board-container.scale-70 .vp-select,
-        body.tv-mode .board-container.scale-70 .stop-select,
-        body.tv-mode .board-container.scale-70 .notes-input { font-size: 0.68rem; }
-        body.tv-mode .board-container.scale-70 .photo-checkbox { width: 20px; height: 20px; }
-        body.tv-mode .board-container.scale-70 .photo-checkbox:checked::after { font-size: 0.75rem; }
-        body.tv-mode .board-container.scale-70 .column-header { padding: 0.35rem 0.5rem; font-size: 0.85rem; }
-        body.tv-mode .board-container.scale-70 .column-count { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
-        
         /* Additional column options */
         .board-container.cols-5 { grid-template-columns: repeat(5, 1fr); }
         .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
@@ -1341,10 +1341,6 @@
             <div class="current-time" id="currentTime">--:--</div>
             <button class="btn refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
                 🔄
-            </button>
-            <button class="btn mode-toggle-btn" id="modeToggleBtn" onclick="toggleMode()">
-                <span class="live-indicator"></span>
-                <span id="modeButtonText">📺 Whiteboard Mode</span>
             </button>
         </div>
     </header>
@@ -1598,7 +1594,6 @@
                 vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
             },
             currentTab: 'today',
-            tvMode: false,
             initialLoadComplete: false  // Prevents autoSave until data is loaded
         };
 
@@ -1776,73 +1771,7 @@
         function calculateLayout(dogCount) {
             if (dogCount === 0) return { columns: 1, rowsPerColumn: 0, scale: '' };
             
-            // TV MODE: Fit all dogs on screen without scrolling (whiteboard view)
-            if (state.tvMode) {
-                return calculateTVLayout(dogCount);
-            }
-            
-            // NORMAL MODE: Comfortable editing layout with scrolling allowed
-            return calculateEditingLayout(dogCount);
-        }
-        
-        // TV Mode: Calculate layout to fit ALL dogs on screen without scrolling
-        function calculateTVLayout(dogCount) {
-            // Estimate available height for the board area
-            // TV mode hides staging area, so more space available
-            const viewportHeight = window.innerHeight;
-            const reservedHeight = 250; // Header, tabs, stats, legend
-            const availableHeight = viewportHeight - reservedHeight;
-            
-            // Row heights at different scales
-            const rowHeights = {
-                normal: 42,
-                scale90: 36,
-                scale80: 30,
-                scale70: 26
-            };
-            
-            // Column header + table header height
-            const headerHeight = 70;
-            
-            // Calculate max rows per column at each scale
-            function maxRowsAtScale(scale) {
-                return Math.floor((availableHeight - headerHeight) / rowHeights[scale]);
-            }
-            
-            // Try to find optimal layout
-            // Priority: fewer columns > larger font > more columns > smaller font
-            const scales = ['normal', 'scale90', 'scale80', 'scale70'];
-            const maxColumns = 6;
-            
-            for (const scale of scales) {
-                const maxRows = maxRowsAtScale(scale);
-                
-                for (let cols = 1; cols <= maxColumns; cols++) {
-                    const rowsNeeded = Math.ceil(dogCount / cols);
-                    
-                    if (rowsNeeded <= maxRows) {
-                        return {
-                            columns: cols,
-                            rowsPerColumn: rowsNeeded,
-                            scale: scale === 'normal' ? '' : scale.replace('scale', 'scale-')
-                        };
-                    }
-                }
-            }
-            
-            // Fallback: maximum columns with smallest scale
-            return {
-                columns: maxColumns,
-                rowsPerColumn: Math.ceil(dogCount / maxColumns),
-                scale: 'scale-70'
-            };
-        }
-        
-        // Normal Mode: Comfortable editing layout (scrolling is fine)
-        function calculateEditingLayout(dogCount) {
-            // Simple layout optimized for editing comfort
-            // Scrolling is allowed, so we just need sensible column distribution
-            
+            // Comfortable editing layout with scrolling allowed
             if (dogCount <= 12) {
                 return { columns: 1, rowsPerColumn: dogCount, scale: '' };
             }
@@ -1857,7 +1786,7 @@
             return { columns: 4, rowsPerColumn: Math.ceil(dogCount / 4), scale: '' };
         }
 
-        // Recalculate layout on window resize (important for whiteboard mode)
+        // Recalculate layout on window resize
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
@@ -2242,82 +2171,8 @@
         }
 
         // =====================
-        // Mode Management (localStorage-based)
+        // Background Data Sync
         // =====================
-        function getStoredMode() {
-            return localStorage.getItem('fairyTailsDisplayMode') || 'edit';
-        }
-
-        function setStoredMode(mode) {
-            localStorage.setItem('fairyTailsDisplayMode', mode);
-        }
-
-        function initMode() {
-            const mode = getStoredMode();
-            state.tvMode = (mode === 'whiteboard');
-            
-            // Apply mode to body
-            document.body.classList.toggle('tv-mode', state.tvMode);
-            
-            // Update toggle button
-            updateModeButton();
-            
-            if (state.tvMode) {
-                // Start auto-refresh for whiteboard mode
-                startWhiteboardRefresh();
-            }
-        }
-
-        function toggleMode() {
-            state.tvMode = !state.tvMode;
-            
-            // Save preference
-            setStoredMode(state.tvMode ? 'whiteboard' : 'edit');
-            
-            // Apply mode to body
-            document.body.classList.toggle('tv-mode', state.tvMode);
-            
-            // Update button
-            updateModeButton();
-            
-            // Re-render boards for new layout
-            renderBoard('today');
-            renderBoard('tomorrow');
-            
-            if (state.tvMode) {
-                // Start auto-refresh
-                startWhiteboardRefresh();
-                showToast('📺 Whiteboard mode — auto-refreshing every 5 seconds', 'success');
-            } else {
-                // Stop auto-refresh
-                stopWhiteboardRefresh();
-                showToast('✏️ Edit mode — make your changes', 'success');
-            }
-        }
-
-        function updateModeButton() {
-            const btnText = document.getElementById('modeButtonText');
-            if (state.tvMode) {
-                btnText.textContent = '✏️ Switch to Edit Mode';
-            } else {
-                btnText.textContent = '📺 Whiteboard Mode';
-            }
-        }
-
-        // =====================
-        // Whiteboard Auto-Refresh
-        // =====================
-        let refreshInterval = null;
-
-        function startWhiteboardRefresh() {
-            // Stop any existing interval first
-            stopWhiteboardRefresh();
-            
-            // Refresh data every 5 seconds to pick up changes from editors
-            refreshInterval = setInterval(() => {
-                loadBoardSilent();
-            }, 5000);
-        }
 
         // Manual refresh from cloud (for when you want to pull latest data)
         async function manualRefresh() {
@@ -2361,13 +2216,6 @@
                 showToast('❌ Failed to refresh from cloud', 'error');
             } finally {
                 btn.classList.remove('refreshing');
-            }
-        }
-
-        function stopWhiteboardRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
             }
         }
 
@@ -2442,26 +2290,6 @@
                 renderStaging('tomorrow');
                 renderBoard('today');
                 renderBoard('tomorrow');
-                
-                // Flash button to show update received
-                const btn = document.getElementById('modeToggleBtn');
-                btn.style.background = '#3b82f6';
-                setTimeout(() => {
-                    btn.style.background = '#22c55e';
-                }, 300);
-                
-                // Show notification about data changes (helpful for seeing n8n imports)
-                if (state.tvMode) {
-                    // In TV mode, show subtle notification about data refresh
-                    const todayChange = newTodayCount - oldTodayCount;
-                    const tomorrowChange = newTomorrowCount - oldTomorrowCount;
-                    
-                    if (tomorrowChange > 0) {
-                        showToast(`📥 ${tomorrowChange} new dog${tomorrowChange > 1 ? 's' : ''} added to Tomorrow`, 'success');
-                    } else if (todayChange > 0) {
-                        showToast(`📥 ${todayChange} new dog${todayChange > 1 ? 's' : ''} added to Today`, 'success');
-                    }
-                }
                 
                 console.log(`Data refreshed - Today: ${oldTodayCount}→${newTodayCount}, Tomorrow: ${oldTomorrowCount}→${newTomorrowCount}`);
             }
@@ -2641,12 +2469,6 @@
                 return;
             }
             
-            // NEVER save to Google Sheets in TV/Whiteboard mode - it's read-only
-            if (state.tvMode) {
-                console.log('TV mode active - skipping cloud save (read-only)');
-                return;
-            }
-            
             const dataToSave = {
                 action: 'save',
                 today: { 
@@ -2731,16 +2553,17 @@
             }
         }
 
-        // Periodic auto-save (only runs when NOT in TV mode due to check in autoSave)
-        setInterval(autoSave, 30000); // Every 30 seconds
+        // Periodic outbound save (website → Sheets) every 94 seconds
+        setInterval(autoSave, 94000);
+
+        // Periodic inbound refresh (Sheets → website) every 93 seconds
+        // Offset from outbound to minimise read/write clashes on Google Sheets
+        setInterval(loadBoardSilent, 93000);
 
         // =====================
         // Initialization
         // =====================
         function init() {
-            // Set mode first (before loading data)
-            initMode();
-            
             // Update clock
             updateTime();
             setInterval(updateTime, 1000);
