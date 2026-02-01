@@ -565,11 +565,6 @@
             /* Row 1: Name | Photo ✓ | Walk | Delete × */
             /* Row 2: VP Controls (AM/PM) | Notes */
             
-            .dog-rows {
-                max-height: none;
-                overflow-y: visible;
-            }
-            
             /* Hide table header — card layout is self-explanatory */
             .table-header {
                 display: none;
@@ -993,8 +988,7 @@
 
         /* Dog Row */
         .dog-rows {
-            max-height: calc(100vh - 450px);
-            overflow-y: auto;
+            /* No max-height — all dogs visible, page scrolls naturally between sections */
         }
 
         .dog-row {
