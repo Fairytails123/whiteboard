@@ -561,9 +561,10 @@
             .board-container.cols-5,
             .board-container.cols-6 { grid-template-columns: 1fr; }
             
-            /* ===== Mobile Dog Rows: Two-row card layout ===== */
+            /* ===== Mobile Dog Rows: Card layout ===== */
             /* Row 1: Name | Photo ✓ | Walk | Delete × */
-            /* Row 2: VP Controls (AM/PM) | Notes */
+            /* Row 2: VP Controls (AM/PM) | Notes toggle 📝 */
+            /* Row 3 (conditional): Full-width notes text input */
             
             /* Hide table header — card layout has inline labels */
             .table-header {
@@ -573,7 +574,7 @@
             .dog-row {
                 display: grid;
                 grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
-                grid-template-rows: auto auto;
+                grid-template-rows: auto auto 0fr;
                 gap: 0.4rem 0.35rem;
                 padding: 0.75rem 0.75rem 0.65rem;
                 margin: 0.5rem 0.4rem;
@@ -581,6 +582,12 @@
                 border-width: 2px;
                 border-left-width: 6px;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                transition: grid-template-rows 0.25s ease, all 0.2s ease;
+            }
+            
+            /* When notes expanded, row 3 opens up */
+            .dog-row.notes-expanded {
+                grid-template-rows: auto auto 1fr;
             }
             
             /* Row 1 placement */
@@ -625,7 +632,7 @@
                 align-self: center;
             }
             
-            /* ===== Row 2: VP + Notes with clear separator ===== */
+            /* ===== Row 2: VP Controls + Notes Toggle ===== */
             
             .dog-row .vp-control {
                 grid-column: 1 / 4;
@@ -665,13 +672,154 @@
                 flex-shrink: 0;
             }
             
-            .dog-row .notes-input {
-                grid-column: 4 / 5;
+            /* Notes toggle switch — visible on mobile */
+            .notes-toggle {
+                display: flex !important;
+                grid-column: 4;
                 grid-row: 2;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                justify-self: center;
+                align-self: center;
+                gap: 3px;
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .notes-toggle-label {
+                font-size: 0.65rem;
+                line-height: 1;
+            }
+            
+            /* The pill-shaped track */
+            .toggle-track {
+                width: 40px;
+                height: 22px;
+                background: #cbd5e1;
+                border-radius: 11px;
+                position: relative;
+                transition: background 0.25s ease;
+                flex-shrink: 0;
+            }
+            
+            /* The sliding circle knob */
+            .toggle-knob {
+                width: 18px;
+                height: 18px;
+                background: white;
+                border-radius: 50%;
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                transition: transform 0.25s ease;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            }
+            
+            .notes-toggle:active .toggle-knob {
+                width: 22px;
+                border-radius: 9px;
+            }
+            
+            /* ON state — green track, knob slides right */
+            .dog-row.notes-expanded .toggle-track {
+                background: #22c55e;
+            }
+            
+            .dog-row.notes-expanded .toggle-knob {
+                transform: translateX(18px);
+            }
+            
+            .dog-row.notes-expanded .notes-toggle:active .toggle-knob {
+                transform: translateX(14px);
+            }
+            
+            /* Has notes content but panel is closed — amber track */
+            .notes-toggle.has-notes .toggle-track {
+                background: #f59e0b;
+            }
+            
+            /* When expanded, green overrides amber */
+            .dog-row.notes-expanded .notes-toggle.has-notes .toggle-track {
+                background: #22c55e;
+            }
+            
+            /* ===== Row 3: Notes input (conditional) ===== */
+            
+            .dog-row .notes-input {
+                grid-column: 1 / 5;
+                grid-row: 3;
+                font-size: 16px;
+                min-height: 44px;
+                padding: 0.5rem;
+                border-radius: 8px;
+                overflow: hidden;
+                opacity: 0;
+                min-height: 0;
+                padding: 0;
+                margin: 0;
+                border-width: 0;
+                transition: all 0.25s ease;
+            }
+            
+            /* Expanded state — notes input visible */
+            .dog-row.notes-expanded .notes-input {
+                opacity: 1;
+                min-height: 44px;
+                padding: 0.5rem;
+                margin-top: 0.25rem;
+                border-width: 2px;
+            }
+            
+            /* ===== Boarding Mobile: AM only + Crate ===== */
+            /* Row 1: Name | Photo | Walk | Delete */
+            /* Row 2: AM VP | Crate | Notes toggle */
+            /* Row 3 (conditional): Notes input */
+            
+            .dog-row.boarding {
+                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+            }
+            
+            .dog-row.boarding .vp-control-am {
+                grid-column: 1 / 2;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+            }
+            
+            .dog-row.boarding .crate-select {
+                grid-column: 2 / 3;
+                grid-row: 2;
+                align-self: center;
+                justify-self: center;
+                width: 52px;
+                min-height: 44px;
+                font-size: 16px;
+                padding: 0.3rem 0.1rem;
                 margin-top: 0.25rem;
                 border-top: 2px solid var(--border-light);
                 padding-top: 0.5rem;
-                align-self: end;
+                border-radius: 8px;
+            }
+            
+            .dog-row.boarding .walk-select {
+                grid-column: 3;
+                grid-row: 1;
+            }
+            
+            .dog-row.boarding .notes-toggle {
+                grid-column: 3;
+                grid-row: 2;
+                justify-self: center;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                padding-top: 0.5rem;
+            }
+            
+            .dog-row.boarding .notes-input {
+                grid-column: 1 / 5;
+                grid-row: 3;
             }
             
             /* ===== Touch Targets: Minimum 44px ===== */
@@ -727,18 +875,6 @@
             
             .stop-select.stop-pm {
                 border-radius: 0 8px 8px 0;
-            }
-            
-            /* Notes input — full touch height, prevent iOS zoom */
-            .notes-input {
-                font-size: 16px;
-                min-height: 44px;
-                padding: 0.5rem;
-                border-radius: 8px;
-            }
-            
-            .dog-name {
-                font-size: 1rem;
             }
             
             /* ===== Staging Area: Stacked for touch ===== */
@@ -888,13 +1024,11 @@
         @media (max-width: 400px) {
             .dog-row {
                 grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
-                padding: 0.6rem 0.5rem 0.5rem;
-                margin: 0.4rem 0.25rem;
-                border-radius: 10px;
+                padding: 0.6rem 0.5rem;
             }
             
-            .dog-row .dog-name {
-                font-size: 0.95rem;
+            .dog-name {
+                font-size: 0.9rem;
             }
             
             .vp-select {
@@ -971,18 +1105,73 @@
             color: white;
         }
 
-        /* Service-colour section-row rules now in card styles above */
+        .section-row.half-day-am {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+        }
 
-        /* Full Day header */
+        /* Full Day - Blue theme (default) */
         .section-header.full-day {
             background: var(--brand-gradient);
             color: white;
         }
 
-        /* Boarding header */
+        .section-row.full-day {
+            background: white;
+            border-left: 4px solid var(--brand-blue);
+        }
+
+        /* Boarding - Purple theme */
         .section-header.boarding {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             color: white;
+        }
+
+        .section-row.boarding {
+            background: #f5f3ff;
+            border-left: 4px solid #8b5cf6;
+        }
+
+        /* Boarding-specific grid: Name | Photo | Walk | AM | Crate | Notes | Delete */
+        .table-header.boarding-header {
+            grid-template-columns: 2fr 50px 80px 90px 70px 1.5fr 32px;
+        }
+
+        .dog-row.boarding {
+            grid-template-columns: 2fr 50px 80px 90px 70px 1.5fr 32px;
+        }
+
+        /* Crate select styling */
+        .crate-select {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .crate-select:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        .crate-select.has-value {
+            background: #f5f3ff;
+            border-color: #8b5cf6;
+            color: #6d28d9;
+        }
+
+        /* Boarding AM-only VP control — narrower, no PM */
+        .vp-control-am {
+            display: flex;
+            align-items: center;
+            gap: 0;
         }
 
         /* Section content wrapper */
@@ -1039,71 +1228,26 @@
             display: grid;
             grid-template-columns: 2fr 50px 80px 140px 1.5fr 32px;
             gap: 0.25rem;
-            padding: 0.5rem 0.75rem;
+            padding: 0.4rem 0.75rem;
+            border-bottom: 1px solid var(--border-light);
             align-items: center;
-            transition: all 0.2s ease;
-            /* Card styling */
-            margin: 0.4rem 0.6rem;
-            border-radius: 10px;
-            border: 2px solid var(--border-light);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: background 0.15s ease;
         }
 
         .dog-row:hover {
             background: #f8fafc;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
-        /* Zebra striping — every other card slightly shaded */
-        .dog-row:nth-child(odd) {
-            background: rgba(248, 250, 252, 0.5);
-        }
-
-        /* Service-colour left accent borders (thicker for visibility) */
-        .section-row.half-day-am {
-            background: #fffbeb;
-            border-left: 5px solid #f59e0b;
-        }
-
-        .section-row.half-day-am:nth-child(odd) {
-            background: #fef9e7;
-        }
-
-        .section-row.full-day {
-            background: white;
-            border-left: 5px solid var(--brand-blue);
-        }
-
-        .section-row.full-day:nth-child(odd) {
-            background: #f0f9ff;
-        }
-
-        .section-row.boarding {
-            background: #faf5ff;
-            border-left: 5px solid #8b5cf6;
-        }
-
-        .section-row.boarding:nth-child(odd) {
-            background: #f3eeff;
+        .dog-row:last-child {
+            border-bottom: none;
         }
 
         /* Dog Name Display */
         .dog-name {
-            font-weight: 800;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 0.95rem;
             color: var(--text-dark);
             padding: 0.4rem 0;
-            letter-spacing: -0.01em;
-        }
-
-        /* Photo done — subtle completion glow on card */
-        .dog-row:has(.photo-checkbox:checked) {
-            border-color: #86efac;
-        }
-
-        .dog-row:has(.photo-checkbox:checked) .dog-name::before {
-            content: '✅ ';
-            font-size: 0.75rem;
         }
 
         /* Form Controls */
@@ -1172,27 +1316,6 @@
             display: flex;
             align-items: center;
             gap: 0;
-        }
-
-        /* AM/PM group wrappers */
-        .vp-group {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            position: relative;
-        }
-
-        .vp-group-label {
-            display: none;
-        }
-
-        /* Divider between AM and PM groups */
-        .vp-divider {
-            width: 2px;
-            height: 24px;
-            background: var(--border-light);
-            margin: 0 3px;
-            flex-shrink: 0;
         }
 
         .vp-select {
@@ -1313,7 +1436,6 @@
         .notes-input:not(:placeholder-shown) {
             background: #fffbeb;
             border-color: var(--warning-amber);
-            font-weight: 700;
         }
 
         /* Delete Button */
@@ -1335,6 +1457,11 @@
         .delete-btn:hover {
             background: #ef4444;
             color: white;
+        }
+
+        /* Notes Toggle Button — hidden on desktop (notes always visible) */
+        .notes-toggle {
+            display: none;
         }
 
         /* Empty Board State */
@@ -1858,6 +1985,7 @@
                 stopAM: '',
                 stop: '',
                 notes: '',
+                crate: '',
                 serviceType: serviceType
             }));
             
@@ -1942,7 +2070,7 @@
             };
 
             return `
-                <div class="dog-row section-row ${sectionClass}" data-id="${id}">
+                <div class="dog-row section-row ${sectionClass} ${notes ? 'notes-expanded' : ''}" data-id="${id}">
                     <div class="dog-name">${name}</div>
                     
                     <div class="photo-check">
@@ -1959,49 +2087,134 @@
                     </select>
                     
                     <div class="vp-control">
-                        <div class="vp-group vp-group-am">
-                            <span class="vp-group-label">AM</span>
-                            <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
-                                   ${stopAMDisabled ? 'disabled' : ''}
-                                   onchange="updateDog('${id}', 'stopAM', this.value); updateStopStyle(this)"
-                                   title="AM Stop Number">
-                                ${generateStopOptions(stopAM)}
-                            </select>
-                            <select class="vp-select vp-am ${vpAMClass}" 
-                                    onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
-                                    title="Morning pickup">
-                                <option value="">-</option>
-                                <option value="V" ${vpAM === 'V' ? 'selected' : ''}>V</option>
-                                <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
-                                <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
-                                <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
-                                <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
-                            </select>
-                        </div>
-                        <div class="vp-divider"></div>
-                        <div class="vp-group vp-group-pm">
-                            <span class="vp-group-label">PM</span>
-                            <select class="vp-select vp-pm ${vpPMClass}" 
-                                    onchange="updateDog('${id}', 'vpPM', this.value); updateVPStyle(this)"
-                                    title="Evening dropoff">
-                                <option value="">-</option>
-                                <option value="V" ${vpPM === 'V' ? 'selected' : ''}>V</option>
-                                <option value="P" ${vpPM === 'P' ? 'selected' : ''}>P</option>
-                                <option value="BV" ${vpPM === 'BV' ? 'selected' : ''}>BV</option>
-                                <option value="SV" ${vpPM === 'SV' ? 'selected' : ''}>SV</option>
-                                <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
-                            </select>
-                            <select class="stop-select stop-pm ${stop ? 'has-value' : ''}" 
-                                   ${stopPMDisabled ? 'disabled' : ''}
-                                   onchange="updateDog('${id}', 'stop', this.value); updateStopStyle(this)"
-                                   title="PM Stop Number">
-                                ${generateStopOptions(stop)}
-                            </select>
-                        </div>
+                        <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
+                               ${stopAMDisabled ? 'disabled' : ''}
+                               onchange="updateDog('${id}', 'stopAM', this.value); updateStopStyle(this)"
+                               title="AM Stop Number">
+                            ${generateStopOptions(stopAM)}
+                        </select>
+                        <select class="vp-select vp-am ${vpAMClass}" 
+                                onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
+                                title="Morning pickup">
+                            <option value="">-</option>
+                            <option value="V" ${vpAM === 'V' ? 'selected' : ''}>V</option>
+                            <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
+                            <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
+                            <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
+                            <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                        </select>
+                        <select class="vp-select vp-pm ${vpPMClass}" 
+                                onchange="updateDog('${id}', 'vpPM', this.value); updateVPStyle(this)"
+                                title="Evening dropoff">
+                            <option value="">-</option>
+                            <option value="V" ${vpPM === 'V' ? 'selected' : ''}>V</option>
+                            <option value="P" ${vpPM === 'P' ? 'selected' : ''}>P</option>
+                            <option value="BV" ${vpPM === 'BV' ? 'selected' : ''}>BV</option>
+                            <option value="SV" ${vpPM === 'SV' ? 'selected' : ''}>SV</option>
+                            <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
+                        </select>
+                        <select class="stop-select stop-pm ${stop ? 'has-value' : ''}" 
+                               ${stopPMDisabled ? 'disabled' : ''}
+                               onchange="updateDog('${id}', 'stop', this.value); updateStopStyle(this)"
+                               title="PM Stop Number">
+                            ${generateStopOptions(stop)}
+                        </select>
+                    </div>
+                    
+                    <div class="notes-toggle ${notes ? 'has-notes' : ''}" onclick="toggleNotes(this)" title="Toggle notes">
+                        <span class="notes-toggle-label">📝</span>
+                        <div class="toggle-track"><div class="toggle-knob"></div></div>
                     </div>
                     
                     <input type="text" class="notes-input" placeholder="Notes..." 
-                           value="${notes || ''}" onchange="updateDog('${id}', 'notes', this.value)">
+                           value="${notes || ''}" 
+                           onchange="updateDog('${id}', 'notes', this.value); updateNotesToggle(this)"
+                           oninput="updateNotesToggle(this)">
+                    
+                    <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
+                </div>
+            `;
+        }
+
+        // Boarding-specific row: AM only + Crate select
+        function createBoardingDogRow(dog) {
+            const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
+            
+            const getVPClass = (val) => {
+                if (val === 'V' || val === 'BV') return 'van-bv';
+                if (val === 'SV') return 'van-sv';
+                if (val === 'DV') return 'van-dv';
+                if (val === 'P') return 'parent-pickup';
+                return '';
+            };
+            
+            const vpAMClass = getVPClass(vpAM);
+            const vanOptions = ['V', 'BV', 'SV', 'DV'];
+            const stopAMDisabled = !vanOptions.includes(vpAM);
+            
+            const generateStopOptions = (selectedValue) => {
+                let options = '<option value="">-</option>';
+                for (let i = 1; i <= 20; i++) {
+                    const selected = String(selectedValue) === String(i) ? 'selected' : '';
+                    options += `<option value="${i}" ${selected}>${i}</option>`;
+                }
+                return options;
+            };
+            
+            const crateOptions = ['HLL', 'HLM', 'HLU', 'HLS', 'HSM', 'HSS'];
+
+            return `
+                <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}" data-id="${id}">
+                    <div class="dog-name">${name}</div>
+                    
+                    <div class="photo-check">
+                        <input type="checkbox" class="photo-checkbox" 
+                               ${photo ? 'checked' : ''} 
+                               onchange="updateDog('${id}', 'photo', this.checked)">
+                    </div>
+                    
+                    <select class="walk-select ${walk === 'booked' ? 'walk-booked' : walk === 'transferred' ? 'walk-transferred' : ''}" 
+                            onchange="updateDog('${id}', 'walk', this.value); updateWalkStyle(this)">
+                        <option value="">None</option>
+                        <option value="booked" ${walk === 'booked' ? 'selected' : ''}>Walk📆</option>
+                        <option value="transferred" ${walk === 'transferred' ? 'selected' : ''}>Walk✅</option>
+                    </select>
+                    
+                    <div class="vp-control-am">
+                        <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
+                               ${stopAMDisabled ? 'disabled' : ''}
+                               onchange="updateDog('${id}', 'stopAM', this.value); updateStopStyle(this)"
+                               title="AM Stop Number">
+                            ${generateStopOptions(stopAM)}
+                        </select>
+                        <select class="vp-select vp-am ${vpAMClass}" 
+                                onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
+                                title="AM pickup">
+                            <option value="">-</option>
+                            <option value="V" ${vpAM === 'V' ? 'selected' : ''}>V</option>
+                            <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
+                            <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
+                            <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
+                            <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                        </select>
+                    </div>
+                    
+                    <select class="crate-select ${crate ? 'has-value' : ''}" 
+                            onchange="updateDog('${id}', 'crate', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Crate type">
+                        <option value="">-</option>
+                        ${crateOptions.map(c => `<option value="${c}" ${crate === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                    
+                    <div class="notes-toggle ${notes ? 'has-notes' : ''}" onclick="toggleNotes(this)" title="Toggle notes">
+                        <span class="notes-toggle-label">📝</span>
+                        <div class="toggle-track"><div class="toggle-knob"></div></div>
+                    </div>
+                    
+                    <input type="text" class="notes-input" placeholder="Notes..." 
+                           value="${notes || ''}" 
+                           onchange="updateDog('${id}', 'notes', this.value); updateNotesToggle(this)"
+                           oninput="updateNotesToggle(this)">
                     
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
@@ -2089,6 +2302,16 @@
                 if (sectionDogs.length === 0) continue;
                 
                 const config = serviceConfig[serviceType];
+                const isBoarding = serviceType === 'Boarding';
+                
+                // Boarding gets different header and row layout
+                const tableHeaderClass = isBoarding ? 'table-header boarding-header' : 'table-header';
+                const headerCols = isBoarding
+                    ? `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Notes</span><span></span>`
+                    : `<span>Name</span><span>Photo</span><span>Walk</span><span>AM/PM</span><span>Notes</span><span></span>`;
+                const rowsHtml = isBoarding
+                    ? sectionDogs.map(dog => createBoardingDogRow(dog)).join('')
+                    : sectionDogs.map(dog => createDogRow(dog, config.class)).join('');
                 
                 html += `
                     <div class="service-section">
@@ -2097,16 +2320,11 @@
                             <span class="section-count">${sectionDogs.length} dog${sectionDogs.length !== 1 ? 's' : ''}</span>
                         </div>
                         <div class="section-content">
-                            <div class="table-header">
-                                <span>Name</span>
-                                <span>Photo</span>
-                                <span>Walk</span>
-                                <span>AM/PM</span>
-                                <span>Notes</span>
-                                <span></span>
+                            <div class="${tableHeaderClass}">
+                                ${headerCols}
                             </div>
                             <div class="dog-rows">
-                                ${sectionDogs.map(dog => createDogRow(dog, config.class)).join('')}
+                                ${rowsHtml}
                             </div>
                         </div>
                     </div>
@@ -2149,6 +2367,31 @@
             }
         }
 
+        // Toggle notes row visibility on mobile
+        function toggleNotes(toggleEl) {
+            const row = toggleEl.closest('.dog-row');
+            row.classList.toggle('notes-expanded');
+            
+            // If expanding, focus the input for immediate typing
+            if (row.classList.contains('notes-expanded')) {
+                const input = row.querySelector('.notes-input');
+                setTimeout(() => input.focus(), 280);
+            }
+        }
+        
+        // Sync the has-notes indicator when notes content changes
+        function updateNotesToggle(input) {
+            const row = input.closest('.dog-row');
+            const toggle = row.querySelector('.notes-toggle');
+            if (toggle) {
+                if (input.value.trim()) {
+                    toggle.classList.add('has-notes');
+                } else {
+                    toggle.classList.remove('has-notes');
+                }
+            }
+        }
+
         function updateWalkStyle(select) {
             select.classList.remove('walk-booked', 'walk-transferred');
             if (select.value === 'booked') select.classList.add('walk-booked');
@@ -2173,23 +2416,27 @@
             const vanOptions = ['V', 'BV', 'SV', 'DV'];
             
             // Enable/disable AM stop select based on AM selection
-            const isAMVan = vanOptions.includes(vpAMSelect.value);
-            stopAMSelect.disabled = !isAMVan;
-            if (!isAMVan) {
-                stopAMSelect.value = '';
-                stopAMSelect.classList.remove('has-value');
-                const id = row.dataset.id;
-                updateDog(id, 'stopAM', '');
+            if (vpAMSelect && stopAMSelect) {
+                const isAMVan = vanOptions.includes(vpAMSelect.value);
+                stopAMSelect.disabled = !isAMVan;
+                if (!isAMVan) {
+                    stopAMSelect.value = '';
+                    stopAMSelect.classList.remove('has-value');
+                    const id = row.dataset.id;
+                    updateDog(id, 'stopAM', '');
+                }
             }
             
-            // Enable/disable PM stop select based on PM selection
-            const isPMVan = vanOptions.includes(vpPMSelect.value);
-            stopPMSelect.disabled = !isPMVan;
-            if (!isPMVan) {
-                stopPMSelect.value = '';
-                stopPMSelect.classList.remove('has-value');
-                const id = row.dataset.id;
-                updateDog(id, 'stop', '');
+            // Enable/disable PM stop select based on PM selection (not present on boarding rows)
+            if (vpPMSelect && stopPMSelect) {
+                const isPMVan = vanOptions.includes(vpPMSelect.value);
+                stopPMSelect.disabled = !isPMVan;
+                if (!isPMVan) {
+                    stopPMSelect.value = '';
+                    stopPMSelect.classList.remove('has-value');
+                    const id = row.dataset.id;
+                    updateDog(id, 'stop', '');
+                }
             }
         }
 
