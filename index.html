@@ -1148,7 +1148,8 @@
             border: 2px solid var(--border-light);
             border-radius: 6px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-family: inherit;
+            font-weight: 700;
             background: white;
             cursor: pointer;
             text-align: center;
@@ -1353,6 +1354,8 @@
             background: #dbeafe;
             border-color: #3b82f6;
             color: #1e40af;
+            position: relative;
+            z-index: 1;
         }
 
         /* SV - Small Van - green */
@@ -1360,6 +1363,8 @@
             background: #d1fae5;
             border-color: #10b981;
             color: #065f46;
+            position: relative;
+            z-index: 1;
         }
 
         /* DV - Dispatch/Dog Van - amber */
@@ -1367,12 +1372,16 @@
             background: #fef3c7;
             border-color: #f59e0b;
             color: #92400e;
+            position: relative;
+            z-index: 1;
         }
 
         .vp-select.parent-pickup {
             background: #f3e8ff;
             border-color: #a855f7;
             color: #7c3aed;
+            position: relative;
+            z-index: 1;
         }
 
         /* Stop selects - AM on left, PM on right (dropdown 1-20) */
@@ -1415,6 +1424,8 @@
             background: #dbeafe;
             border-color: #3b82f6;
             color: #1e40af;
+            position: relative;
+            z-index: 1;
         }
 
         /* Notes Input */
@@ -1564,6 +1575,68 @@
         /* Additional column options */
         .board-container.cols-5 { grid-template-columns: repeat(5, 1fr); }
         .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+        /* ================================================================
+           MOBILE CASCADE OVERRIDES
+           These MUST come AFTER global rules to win the CSS cascade.
+           Global styles at lines ~1200+ otherwise override the earlier
+           mobile media query rules due to same specificity + later source.
+           ================================================================ */
+        @media (max-width: 768px) {
+            /* Hide table headers on mobile — card layout uses inline labels */
+            .table-header,
+            .table-header.boarding-header {
+                display: none !important;
+            }
+
+            /* Ensure 4-column mobile card grid for ALL row types */
+            .dog-row {
+                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+            }
+
+            .dog-row.boarding {
+                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+            }
+
+            /* Boarding crate: span columns 2-3 so text isn't truncated */
+            .dog-row.boarding .crate-select {
+                grid-column: 2 / 4;
+                grid-row: 2;
+                align-self: center;
+                justify-self: stretch;
+                width: auto;
+                min-height: 44px;
+                font-size: 16px;
+                font-family: inherit;
+                font-weight: 700;
+                padding: 0.4rem 0.3rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                padding-top: 0.5rem;
+                border-radius: 8px;
+            }
+
+            /* Boarding notes toggle: move to column 4 (shares with delete on row 1) */
+            .dog-row.boarding .notes-toggle {
+                grid-column: 4;
+                grid-row: 2;
+                justify-self: center;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                padding-top: 0.5rem;
+            }
+        }
+
+        /* Very small phones cascade fix */
+        @media (max-width: 400px) {
+            .dog-row {
+                grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
+            }
+
+            .dog-row.boarding {
+                grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
+            }
+        }
     </style>
 </head>
 <body>
