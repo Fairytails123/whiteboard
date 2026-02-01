@@ -699,20 +699,27 @@
             
             .staging-input-row {
                 flex-wrap: wrap;
+                gap: 0.5rem;
             }
             
             .staging-input {
                 flex: 1 1 100%;
                 font-size: 16px;
                 min-height: 48px;
-                margin-bottom: 0.25rem;
             }
             
             .service-type-select {
-                flex: 1 1 auto;
+                flex: 1 1 0;
+                min-width: 0;
                 font-size: 16px;
                 min-height: 48px;
-                min-width: 120px;
+            }
+            
+            .staging-input-row .btn-primary {
+                flex: 0 0 auto;
+                min-height: 48px;
+                font-size: 1rem;
+                padding: 0.6rem 1.25rem;
             }
             
             .staging-area .btn {
