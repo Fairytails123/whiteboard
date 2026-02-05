@@ -1317,6 +1317,66 @@
             border-left: 4px solid #f43f5e;
         }
 
+        /* ===== Boarding Parent Container (groups Boarding Hol + Boarding School) ===== */
+        .boarding-parent-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header.boarding-parent {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .boarding-subsections {
+            border-left: 3px solid #8b5cf6;
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+            background: #faf9ff;
+        }
+
+        .boarding-sub-section {
+            /* No extra margin — sits flush inside parent */
+        }
+
+        .boarding-sub-section + .boarding-sub-section {
+            border-top: 2px solid #e2e8f0;
+        }
+
+        /* Sub-headers: smaller, indented feel, still themed */
+        .boarding-sub-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: white;
+        }
+
+        .boarding-sub-header .section-icon {
+            margin-right: 0.4rem;
+        }
+
+        .boarding-sub-header .section-count {
+            background: rgba(255,255,255,0.3);
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* Boarding Hol sub-header — lighter purple */
+        .boarding-sub-header.boarding-hol-sub {
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+        }
+
+        /* Boarding School sub-header — rose */
+        .boarding-sub-header.boarding-school-sub {
+            background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
+        }
+
         /* Grooming-specific grid: Name | Pick Up | Drop Off | Van Type | Delete */
         .table-header.grooming-header {
             grid-template-columns: 2fr 110px 110px 70px 32px;
@@ -2122,7 +2182,7 @@
                 <select class="service-type-select" id="today-service-type">
                     <option value="Full Day">☀️ Full Day</option>
                     <option value="Half Day AM">🌅 Half Day</option>
-                    <option value="Boarding">🏠 Boarding</option>
+                    <option value="Boarding">🏖️ Boarding Hol</option>
                     <option value="Grooming">✂️ Grooming Dogs</option>
                     <option value="Boarding School">🎓 Boarding School</option>
                 </select>
@@ -2224,7 +2284,7 @@
                 <select class="service-type-select" id="tomorrow-service-type">
                     <option value="Full Day">☀️ Full Day</option>
                     <option value="Half Day AM">🌅 Half Day</option>
-                    <option value="Boarding">🏠 Boarding</option>
+                    <option value="Boarding">🏖️ Boarding Hol</option>
                     <option value="Grooming">✂️ Grooming Dogs</option>
                     <option value="Boarding School">🎓 Boarding School</option>
                 </select>
@@ -2904,21 +2964,21 @@
                     order: 2
                 },
                 'Boarding': { 
-                    icon: '🏠', 
-                    label: 'Boarding', 
+                    icon: '🏖️', 
+                    label: 'Boarding Hol', 
                     class: 'boarding',
                     order: 3
-                },
-                'Grooming': { 
-                    icon: '✂️', 
-                    label: 'Grooming Dogs', 
-                    class: 'grooming',
-                    order: 4
                 },
                 'Boarding School': { 
                     icon: '🎓', 
                     label: 'Boarding School', 
                     class: 'boarding-school',
+                    order: 4
+                },
+                'Grooming': { 
+                    icon: '✂️', 
+                    label: 'Grooming Dogs', 
+                    class: 'grooming',
                     order: 5
                 }
             };
@@ -2936,19 +2996,96 @@
             // Build HTML for each section
             let html = '';
             
-            // Render sections in order: Half Day AM first, then Full Day, then Boarding
+            // Pre-build the combined Boarding Parent HTML for correct insertion order
+            const boardingHolDogs = serviceGroups['Boarding'];
+            const boardingSchoolDogs = serviceGroups['Boarding School'];
+            const totalBoardingDogs = boardingHolDogs.length + boardingSchoolDogs.length;
+            let boardingParentHtml = '';
+            
+            if (totalBoardingDogs > 0) {
+                // Parent header with combined count
+                boardingParentHtml += `
+                    <div class="service-section boarding-parent-section">
+                        <div class="section-header boarding-parent">
+                            <span><span class="section-icon">🏠</span>Boarding</span>
+                            <span class="section-count">${totalBoardingDogs} dog${totalBoardingDogs !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="boarding-subsections">
+                `;
+                
+                // Sub-section: Boarding Hol
+                if (boardingHolDogs.length > 0) {
+                    const bhConfig = serviceConfig['Boarding'];
+                    const bhRowsHtml = boardingHolDogs.map(dog => createBoardingDogRow(dog)).join('');
+                    boardingParentHtml += `
+                            <div class="boarding-sub-section">
+                                <div class="boarding-sub-header boarding-hol-sub">
+                                    <span><span class="section-icon">${bhConfig.icon}</span>${bhConfig.label}</span>
+                                    <span class="section-count">${boardingHolDogs.length} dog${boardingHolDogs.length !== 1 ? 's' : ''}</span>
+                                </div>
+                                <div class="section-content">
+                                    <div class="table-header boarding-header">
+                                        <span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Check In</span><span>Check Out</span><span>Notes</span><span></span>
+                                    </div>
+                                    <div class="dog-rows">
+                                        ${bhRowsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                    `;
+                }
+                
+                // Sub-section: Boarding School
+                if (boardingSchoolDogs.length > 0) {
+                    const bsConfig = serviceConfig['Boarding School'];
+                    const bsRowsHtml = boardingSchoolDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
+                    boardingParentHtml += `
+                            <div class="boarding-sub-section">
+                                <div class="boarding-sub-header boarding-school-sub">
+                                    <span><span class="section-icon">${bsConfig.icon}</span>${bsConfig.label}</span>
+                                    <span class="section-count">${boardingSchoolDogs.length} dog${boardingSchoolDogs.length !== 1 ? 's' : ''}</span>
+                                </div>
+                                <div class="section-content">
+                                    <div class="table-header boarding-school-header">
+                                        <span>Name</span><span>Check In</span><span>Check Out</span><span>Crate Size</span><span></span>
+                                    </div>
+                                    <div class="dog-rows">
+                                        ${bsRowsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                    `;
+                }
+                
+                // Close parent container
+                boardingParentHtml += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Render sections in order: Half Day AM, Full Day, Boarding Parent, Grooming
             const orderedTypes = Object.keys(serviceGroups).sort((a, b) => 
                 serviceConfig[a].order - serviceConfig[b].order
             );
             
             for (const serviceType of orderedTypes) {
                 const sectionDogs = serviceGroups[serviceType];
+                
+                // Insert boarding parent at its correct position (order 3)
+                // Triggered once when we first hit the Boarding slot
+                if (serviceType === 'Boarding') {
+                    html += boardingParentHtml;
+                    continue;
+                }
+                
+                // Boarding School is already rendered inside the parent above
+                if (serviceType === 'Boarding School') continue;
+                
                 if (sectionDogs.length === 0) continue;
                 
                 const config = serviceConfig[serviceType];
-                const isBoarding = serviceType === 'Boarding';
                 const isGrooming = serviceType === 'Grooming';
-                const isBoardingSchool = serviceType === 'Boarding School';
                 
                 // Each section type gets its own header and row layout
                 let tableHeaderClass, headerCols, rowsHtml;
@@ -2957,14 +3094,6 @@
                     tableHeaderClass = 'table-header grooming-header';
                     headerCols = `<span>Name</span><span>Pick Up</span><span>Drop Off</span><span>Van Type</span><span></span>`;
                     rowsHtml = sectionDogs.map(dog => createGroomingDogRow(dog)).join('');
-                } else if (isBoardingSchool) {
-                    tableHeaderClass = 'table-header boarding-school-header';
-                    headerCols = `<span>Name</span><span>Check In</span><span>Check Out</span><span>Crate Size</span><span></span>`;
-                    rowsHtml = sectionDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
-                } else if (isBoarding) {
-                    tableHeaderClass = 'table-header boarding-header';
-                    headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Check In</span><span>Check Out</span><span>Notes</span><span></span>`;
-                    rowsHtml = sectionDogs.map(dog => createBoardingDogRow(dog)).join('');
                 } else {
                     tableHeaderClass = 'table-header';
                     headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM/PM</span><span>Notes</span><span></span>`;
