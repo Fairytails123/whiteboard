@@ -45,7 +45,7 @@
         /* ===== Global Touch-Friendly Styles ===== */
 
         /* Remove tap highlight flash on Android/iOS */
-        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn, .grooming-select, .grooming-van-select, .bs-date-input, .bs-crate-select {
+        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn, .grooming-select, .grooming-van-select, .bs-date-input, .bs-crate-select, .boarding-date-input {
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -771,10 +771,11 @@
                 border-width: 2px;
             }
             
-            /* ===== Boarding Mobile: AM only + Crate ===== */
+            /* ===== Boarding Mobile: AM only + Crate + Dates ===== */
             /* Row 1: Name | Photo | Walk | Delete */
             /* Row 2: AM VP | Crate | Notes toggle */
-            /* Row 3 (conditional): Notes input */
+            /* Row 3: Check In | Check Out */
+            /* Row 4 (conditional): Notes input */
             
             .dog-row.boarding {
                 grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
@@ -817,9 +818,32 @@
                 padding-top: 0.5rem;
             }
             
+            /* Boarding date inputs: full-width row below AM/Crate */
+            .dog-row.boarding .boarding-checkin {
+                grid-column: 1 / 3;
+                grid-row: 3;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+            }
+            
+            .dog-row.boarding .boarding-checkout {
+                grid-column: 3 / 5;
+                grid-row: 3;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+            }
+            
+            .dog-row.boarding .boarding-checkin .boarding-date-input,
+            .dog-row.boarding .boarding-checkout .boarding-date-input {
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
             .dog-row.boarding .notes-input {
                 grid-column: 1 / 5;
-                grid-row: 3;
+                grid-row: 4;
             }
             
             /* ===== Grooming Mobile: Card layout ===== */
@@ -935,8 +959,6 @@
                 padding-top: 0.5rem;
                 margin-top: 0.25rem;
                 border-top: 2px solid var(--border-light);
-                min-height: 44px;
-                font-size: 16px;
             }
             
             .dog-row.boarding-school .bs-checkout {
@@ -945,6 +967,10 @@
                 padding-top: 0.5rem;
                 margin-top: 0.25rem;
                 border-top: 2px solid var(--border-light);
+            }
+            
+            .dog-row.boarding-school .bs-checkin .bs-date-input,
+            .dog-row.boarding-school .bs-checkout .bs-date-input {
                 min-height: 44px;
                 font-size: 16px;
             }
@@ -1416,13 +1442,13 @@
             color: #be123c;
         }
 
-        /* Boarding-specific grid: Name | Photo | Walk | AM | Crate | Notes | Delete */
+        /* Boarding-specific grid: Name | Photo | Walk | AM | Crate | Check In | Check Out | Notes | Delete */
         .table-header.boarding-header {
-            grid-template-columns: 2fr 50px 80px 90px 70px 1.5fr 32px;
+            grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
         }
 
         .dog-row.boarding {
-            grid-template-columns: 2fr 50px 80px 90px 70px 1.5fr 32px;
+            grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
         }
 
         /* Crate select styling */
@@ -1450,6 +1476,69 @@
             background: #f5f3ff;
             border-color: #8b5cf6;
             color: #6d28d9;
+        }
+
+        /* Boarding date input styling (Check In / Check Out) */
+        .boarding-date-input {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: inherit;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .boarding-date-input:focus {
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        .boarding-date-input.has-value {
+            background: #f5f3ff;
+            border-color: #8b5cf6;
+            color: #6d28d9;
+        }
+
+        /* Date-with-day container: wraps date input + day label as a single grid unit */
+        .date-with-day {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .date-with-day .day-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .date-with-day .day-label.visible {
+            opacity: 1;
+            height: auto;
+            padding-top: 2px;
+        }
+
+        /* Boarding section day label colour */
+        .boarding .day-label {
+            color: #7c3aed;
+        }
+
+        /* Boarding School section day label colour */
+        .boarding-school .day-label {
+            color: #e11d48;
         }
 
         /* Boarding AM-only VP control — narrower, no PM */
@@ -1910,6 +1999,35 @@
                 padding-top: 0.5rem;
             }
 
+            /* Boarding date inputs: row 3, split across full width */
+            .dog-row.boarding .boarding-checkin {
+                grid-column: 1 / 3;
+                grid-row: 3;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+            }
+
+            .dog-row.boarding .boarding-checkout {
+                grid-column: 3 / 5;
+                grid-row: 3;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+            }
+
+            .dog-row.boarding .boarding-checkin .boarding-date-input,
+            .dog-row.boarding .boarding-checkout .boarding-date-input {
+                min-height: 44px;
+                font-size: 16px;
+            }
+
+            /* Boarding notes input: moved to row 4 (after dates) */
+            .dog-row.boarding .notes-input {
+                grid-column: 1 / 5;
+                grid-row: 4;
+            }
+
             /* Grooming mobile: 4-column card (Name across 1-3 | Delete in 4) */
             .dog-row.grooming {
                 grid-template-columns: 1fr 1fr 70px 44px;
@@ -2265,6 +2383,24 @@
             return 'dog_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
+        // Returns abbreviated day name (Mon, Tue, etc.) from a YYYY-MM-DD date string
+        function getDayName(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr + 'T00:00:00');
+            if (isNaN(date.getTime())) return '';
+            return date.toLocaleDateString('en-GB', { weekday: 'short' });
+        }
+
+        // Updates the day-of-week label next to a date input
+        function updateDayLabel(inputEl) {
+            const label = inputEl.parentElement.querySelector('.day-label');
+            if (label) {
+                const day = getDayName(inputEl.value);
+                label.textContent = day;
+                label.classList.toggle('visible', !!day);
+            }
+        }
+
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -2536,7 +2672,7 @@
 
         // Boarding-specific row: AM only + Crate select
         function createBoardingDogRow(dog) {
-            const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
+            const { id, name, photo, walk, vpAM, stopAM, notes, crate, checkIn, checkOut } = dog;
             
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
@@ -2559,7 +2695,7 @@
                 return options;
             };
             
-            const crateOptions = ['HLL', 'HLM', 'HLU', 'HLS', 'HSM', 'HSS'];
+            const crateOptions = ['HLL', 'HLM', 'HLS', 'HSB', 'HST'];
 
             return `
                 <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}" data-id="${id}">
@@ -2603,6 +2739,22 @@
                         <option value="">-</option>
                         ${crateOptions.map(c => `<option value="${c}" ${crate === c ? 'selected' : ''}>${c}</option>`).join('')}
                     </select>
+                    
+                    <div class="date-with-day boarding-checkin">
+                        <input type="date" class="boarding-date-input ${checkIn ? 'has-value' : ''}" 
+                               value="${checkIn || ''}"
+                               onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
+                               title="Check In Date">
+                        <span class="day-label ${checkIn ? 'visible' : ''}">${getDayName(checkIn)}</span>
+                    </div>
+                    
+                    <div class="date-with-day boarding-checkout">
+                        <input type="date" class="boarding-date-input ${checkOut ? 'has-value' : ''}" 
+                               value="${checkOut || ''}"
+                               onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
+                               title="Check Out Date">
+                        <span class="day-label ${checkOut ? 'visible' : ''}">${getDayName(checkOut)}</span>
+                    </div>
                     
                     <div class="notes-toggle ${notes ? 'has-notes' : ''}" onclick="toggleNotes(this)" title="Toggle notes">
                         <span class="notes-toggle-label">📝</span>
@@ -2667,15 +2819,21 @@
                 <div class="dog-row section-row boarding-school" data-id="${id}">
                     <div class="dog-name">${name}</div>
                     
-                    <input type="date" class="bs-date-input bs-checkin ${checkIn ? 'has-value' : ''}" 
-                           value="${checkIn || ''}"
-                           onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value)"
-                           title="Check In Date">
+                    <div class="date-with-day bs-checkin">
+                        <input type="date" class="bs-date-input ${checkIn ? 'has-value' : ''}" 
+                               value="${checkIn || ''}"
+                               onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
+                               title="Check In Date">
+                        <span class="day-label ${checkIn ? 'visible' : ''}">${getDayName(checkIn)}</span>
+                    </div>
                     
-                    <input type="date" class="bs-date-input bs-checkout ${checkOut ? 'has-value' : ''}" 
-                           value="${checkOut || ''}"
-                           onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value)"
-                           title="Check Out Date">
+                    <div class="date-with-day bs-checkout">
+                        <input type="date" class="bs-date-input ${checkOut ? 'has-value' : ''}" 
+                               value="${checkOut || ''}"
+                               onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
+                               title="Check Out Date">
+                        <span class="day-label ${checkOut ? 'visible' : ''}">${getDayName(checkOut)}</span>
+                    </div>
                     
                     <select class="bs-crate-select ${crateSize ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'crateSize', this.value); this.classList.toggle('has-value', !!this.value)"
@@ -2805,7 +2963,7 @@
                     rowsHtml = sectionDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
                 } else if (isBoarding) {
                     tableHeaderClass = 'table-header boarding-header';
-                    headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Notes</span><span></span>`;
+                    headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Check In</span><span>Check Out</span><span>Notes</span><span></span>`;
                     rowsHtml = sectionDogs.map(dog => createBoardingDogRow(dog)).join('');
                 } else {
                     tableHeaderClass = 'table-header';
