@@ -45,7 +45,7 @@
         /* ===== Global Touch-Friendly Styles ===== */
 
         /* Remove tap highlight flash on Android/iOS */
-        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn {
+        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn, .grooming-select, .grooming-van-select, .bs-date-input, .bs-crate-select {
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -822,6 +822,143 @@
                 grid-row: 3;
             }
             
+            /* ===== Grooming Mobile: Card layout ===== */
+            /* Row 1: Name | Delete */
+            /* Row 2: Pick Up | Drop Off | Van Type */
+            
+            .dog-row.grooming {
+                grid-template-columns: 1fr 44px;
+                grid-template-rows: auto auto;
+                gap: 0.4rem 0.35rem;
+            }
+            
+            .dog-row.grooming .dog-name {
+                grid-column: 1;
+                grid-row: 1;
+                font-size: 1.1rem;
+                font-weight: 800;
+                align-self: center;
+            }
+            
+            .dog-row.grooming .delete-btn {
+                grid-column: 2;
+                grid-row: 1;
+                justify-self: center;
+                align-self: center;
+            }
+            
+            /* Pick Up, Drop Off, Van Type all flow into row 2, spanning full width */
+            .dog-row.grooming .grooming-pickup {
+                grid-column: 1;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            .dog-row.grooming .grooming-dropoff {
+                grid-column: 2;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            /* Use a 3-column sub-layout for row 2 */
+            .dog-row.grooming {
+                grid-template-columns: 1fr 1fr 70px 44px;
+                grid-template-rows: auto auto;
+            }
+            
+            .dog-row.grooming .dog-name {
+                grid-column: 1 / 4;
+                grid-row: 1;
+            }
+            
+            .dog-row.grooming .delete-btn {
+                grid-column: 4;
+                grid-row: 1;
+            }
+            
+            .dog-row.grooming .grooming-pickup {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            
+            .dog-row.grooming .grooming-dropoff {
+                grid-column: 2;
+                grid-row: 2;
+            }
+            
+            .dog-row.grooming .grooming-van-select {
+                grid-column: 3;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            /* ===== Boarding School Mobile: Card layout ===== */
+            /* Row 1: Name | Delete */
+            /* Row 2: Check In | Check Out | Crate Size */
+            
+            .dog-row.boarding-school {
+                grid-template-columns: 1fr 1fr 80px 44px;
+                grid-template-rows: auto auto;
+                gap: 0.4rem 0.35rem;
+            }
+            
+            .dog-row.boarding-school .dog-name {
+                grid-column: 1 / 4;
+                grid-row: 1;
+                font-size: 1.1rem;
+                font-weight: 800;
+                align-self: center;
+            }
+            
+            .dog-row.boarding-school .delete-btn {
+                grid-column: 4;
+                grid-row: 1;
+                justify-self: center;
+                align-self: center;
+            }
+            
+            .dog-row.boarding-school .bs-checkin {
+                grid-column: 1;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            .dog-row.boarding-school .bs-checkout {
+                grid-column: 2;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            .dog-row.boarding-school .bs-crate-select {
+                grid-column: 3;
+                grid-row: 2;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 2px solid var(--border-light);
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
             /* ===== Touch Targets: Minimum 44px ===== */
             
             .photo-checkbox {
@@ -1130,6 +1267,153 @@
         .section-row.boarding {
             background: #f5f3ff;
             border-left: 4px solid #8b5cf6;
+        }
+
+        /* Grooming Dogs - Teal/Cyan theme */
+        .section-header.grooming {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+        }
+
+        .section-row.grooming {
+            background: #ecfeff;
+            border-left: 4px solid #06b6d4;
+        }
+
+        /* Boarding School - Rose/Pink theme */
+        .section-header.boarding-school {
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            color: white;
+        }
+
+        .section-row.boarding-school {
+            background: #fff1f2;
+            border-left: 4px solid #f43f5e;
+        }
+
+        /* Grooming-specific grid: Name | Pick Up | Drop Off | Van Type | Delete */
+        .table-header.grooming-header {
+            grid-template-columns: 2fr 110px 110px 70px 32px;
+        }
+
+        .dog-row.grooming {
+            grid-template-columns: 2fr 110px 110px 70px 32px;
+        }
+
+        /* Grooming pickup/dropoff select styling */
+        .grooming-select {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .grooming-select:focus {
+            border-color: #06b6d4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+
+        .grooming-select.has-value {
+            background: #ecfeff;
+            border-color: #06b6d4;
+            color: #0e7490;
+        }
+
+        /* Grooming van type select styling */
+        .grooming-van-select {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 700;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .grooming-van-select:focus {
+            border-color: #06b6d4;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+
+        .grooming-van-select.has-value {
+            background: #ecfeff;
+            border-color: #06b6d4;
+            color: #0e7490;
+        }
+
+        /* Boarding School-specific grid: Name | Check In | Check Out | Crate Size | Delete */
+        .table-header.boarding-school-header {
+            grid-template-columns: 2fr 120px 120px 80px 32px;
+        }
+
+        .dog-row.boarding-school {
+            grid-template-columns: 2fr 120px 120px 80px 32px;
+        }
+
+        /* Boarding School date input styling */
+        .bs-date-input {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 600;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bs-date-input:focus {
+            border-color: #f43f5e;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+        }
+
+        .bs-date-input:not(:placeholder-shown),
+        .bs-date-input.has-value {
+            background: #fff1f2;
+            border-color: #f43f5e;
+            color: #be123c;
+        }
+
+        /* Boarding School crate size select styling */
+        .bs-crate-select {
+            width: 100%;
+            padding: 0.35rem 0.25rem;
+            border: 2px solid var(--border-light);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            font-weight: 700;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .bs-crate-select:focus {
+            border-color: #f43f5e;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+        }
+
+        .bs-crate-select.has-value {
+            background: #fff1f2;
+            border-color: #f43f5e;
+            color: #be123c;
         }
 
         /* Boarding-specific grid: Name | Photo | Walk | AM | Crate | Notes | Delete */
@@ -1625,6 +1909,22 @@
                 border-top: 2px solid var(--border-light);
                 padding-top: 0.5rem;
             }
+
+            /* Grooming mobile: 4-column card (Name across 1-3 | Delete in 4) */
+            .dog-row.grooming {
+                grid-template-columns: 1fr 1fr 70px 44px;
+            }
+
+            /* Boarding School mobile: 4-column card (Name across 1-3 | Delete in 4) */
+            .dog-row.boarding-school {
+                grid-template-columns: 1fr 1fr 80px 44px;
+            }
+
+            /* Grooming and Boarding School table headers hidden on mobile */
+            .table-header.grooming-header,
+            .table-header.boarding-school-header {
+                display: none !important;
+            }
         }
 
         /* Very small phones cascade fix */
@@ -1635,6 +1935,15 @@
 
             .dog-row.boarding {
                 grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
+            }
+
+            /* Grooming and Boarding School: same compact layout on very small phones */
+            .dog-row.grooming {
+                grid-template-columns: 1fr 1fr 60px 40px;
+            }
+
+            .dog-row.boarding-school {
+                grid-template-columns: 1fr 1fr 70px 40px;
             }
         }
     </style>
@@ -1696,6 +2005,8 @@
                     <option value="Full Day">☀️ Full Day</option>
                     <option value="Half Day AM">🌅 Half Day</option>
                     <option value="Boarding">🏠 Boarding</option>
+                    <option value="Grooming">✂️ Grooming Dogs</option>
+                    <option value="Boarding School">🎓 Boarding School</option>
                 </select>
                 <button class="btn btn-primary" onclick="addToStaging('today')">+ Add</button>
             </div>
@@ -1796,6 +2107,8 @@
                     <option value="Full Day">☀️ Full Day</option>
                     <option value="Half Day AM">🌅 Half Day</option>
                     <option value="Boarding">🏠 Boarding</option>
+                    <option value="Grooming">✂️ Grooming Dogs</option>
+                    <option value="Boarding School">🎓 Boarding School</option>
                 </select>
                 <button class="btn btn-primary" onclick="addToStaging('tomorrow')">+ Add</button>
             </div>
@@ -2048,19 +2361,31 @@
             const serviceType = serviceTypeSelect ? serviceTypeSelect.value : 'Full Day';
             
             // Create dog objects from staged names with selected service type
-            const newDogs = staging.map(name => ({
-                id: generateId(),
-                name: name,
-                photo: false,
-                walk: '',
-                vpAM: '',
-                vpPM: '',
-                stopAM: '',
-                stop: '',
-                notes: '',
-                crate: '',
-                serviceType: serviceType
-            }));
+            const newDogs = staging.map(name => {
+                // Base dog object with all fields
+                const dog = {
+                    id: generateId(),
+                    name: name,
+                    photo: false,
+                    walk: '',
+                    vpAM: '',
+                    vpPM: '',
+                    stopAM: '',
+                    stop: '',
+                    notes: '',
+                    crate: '',
+                    serviceType: serviceType,
+                    // Grooming Dogs fields
+                    pickup: '',
+                    dropoff: '',
+                    vanType: '',
+                    // Boarding School fields
+                    checkIn: '',
+                    checkOut: '',
+                    crateSize: ''
+                };
+                return dog;
+            });
             
             // Add to existing dogs
             state[tab].dogs = [...state[tab].dogs, ...newDogs];
@@ -2294,6 +2619,76 @@
             `;
         }
 
+        // Grooming Dogs row: Name | Pick Up | Drop Off | Van Type | Delete
+        function createGroomingDogRow(dog) {
+            const { id, name, pickup, dropoff, vanType } = dog;
+
+            const pickupOptions = ['AM Pick Up', 'AM Drop Off', 'PM Pick Up', 'PM Drop Off'];
+            const dropoffOptions = ['AM Pick Up', 'AM Drop Off', 'PM Pick Up', 'PM Drop Off'];
+            const vanTypeOptions = ['BV', 'SV', 'DV'];
+
+            return `
+                <div class="dog-row section-row grooming" data-id="${id}">
+                    <div class="dog-name">${name}</div>
+                    
+                    <select class="grooming-select grooming-pickup ${pickup ? 'has-value' : ''}" 
+                            onchange="updateDog('${id}', 'pickup', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Pick Up">
+                        <option value="">Pick Up...</option>
+                        ${pickupOptions.map(opt => `<option value="${opt}" ${pickup === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    
+                    <select class="grooming-select grooming-dropoff ${dropoff ? 'has-value' : ''}" 
+                            onchange="updateDog('${id}', 'dropoff', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Drop Off">
+                        <option value="">Drop Off...</option>
+                        ${dropoffOptions.map(opt => `<option value="${opt}" ${dropoff === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    
+                    <select class="grooming-van-select ${vanType ? 'has-value' : ''}" 
+                            onchange="updateDog('${id}', 'vanType', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Van Type">
+                        <option value="">Van...</option>
+                        ${vanTypeOptions.map(opt => `<option value="${opt}" ${vanType === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    
+                    <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
+                </div>
+            `;
+        }
+
+        // Boarding School row: Name | Check In | Check Out | Crate Size | Delete
+        function createBoardingSchoolDogRow(dog) {
+            const { id, name, checkIn, checkOut, crateSize } = dog;
+
+            const crateSizeOptions = ['HLL', 'HLM', 'HLS', 'HSB', 'HST'];
+
+            return `
+                <div class="dog-row section-row boarding-school" data-id="${id}">
+                    <div class="dog-name">${name}</div>
+                    
+                    <input type="date" class="bs-date-input bs-checkin ${checkIn ? 'has-value' : ''}" 
+                           value="${checkIn || ''}"
+                           onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value)"
+                           title="Check In Date">
+                    
+                    <input type="date" class="bs-date-input bs-checkout ${checkOut ? 'has-value' : ''}" 
+                           value="${checkOut || ''}"
+                           onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value)"
+                           title="Check Out Date">
+                    
+                    <select class="bs-crate-select ${crateSize ? 'has-value' : ''}" 
+                            onchange="updateDog('${id}', 'crateSize', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Crate Size">
+                        <option value="">Crate...</option>
+                        ${crateSizeOptions.map(opt => `<option value="${opt}" ${crateSize === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                    
+                    <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
+                </div>
+            `;
+        }
+
         function renderBoard(tab) {
             const board = document.getElementById(`${tab}-board`);
             const dogs = state[tab].dogs;
@@ -2316,12 +2711,18 @@
             const serviceGroups = {
                 'Half Day AM': [],
                 'Full Day': [],
-                'Boarding': []
+                'Boarding': [],
+                'Grooming': [],
+                'Boarding School': []
             };
             
             dogs.forEach(dog => {
                 const type = dog.serviceType || 'Full Day';
-                if (type.includes('Half Day')) {
+                if (type === 'Grooming') {
+                    serviceGroups['Grooming'].push(dog);
+                } else if (type === 'Boarding School') {
+                    serviceGroups['Boarding School'].push(dog);
+                } else if (type.includes('Half Day')) {
                     serviceGroups['Half Day AM'].push(dog);
                 } else if (type.includes('Boarding')) {
                     serviceGroups['Boarding'].push(dog);
@@ -2349,6 +2750,18 @@
                     label: 'Boarding', 
                     class: 'boarding',
                     order: 3
+                },
+                'Grooming': { 
+                    icon: '✂️', 
+                    label: 'Grooming Dogs', 
+                    class: 'grooming',
+                    order: 4
+                },
+                'Boarding School': { 
+                    icon: '🎓', 
+                    label: 'Boarding School', 
+                    class: 'boarding-school',
+                    order: 5
                 }
             };
             
@@ -2376,15 +2789,29 @@
                 
                 const config = serviceConfig[serviceType];
                 const isBoarding = serviceType === 'Boarding';
+                const isGrooming = serviceType === 'Grooming';
+                const isBoardingSchool = serviceType === 'Boarding School';
                 
-                // Boarding gets different header and row layout
-                const tableHeaderClass = isBoarding ? 'table-header boarding-header' : 'table-header';
-                const headerCols = isBoarding
-                    ? `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Notes</span><span></span>`
-                    : `<span>Name</span><span>Photo</span><span>Walk</span><span>AM/PM</span><span>Notes</span><span></span>`;
-                const rowsHtml = isBoarding
-                    ? sectionDogs.map(dog => createBoardingDogRow(dog)).join('')
-                    : sectionDogs.map(dog => createDogRow(dog, config.class)).join('');
+                // Each section type gets its own header and row layout
+                let tableHeaderClass, headerCols, rowsHtml;
+                
+                if (isGrooming) {
+                    tableHeaderClass = 'table-header grooming-header';
+                    headerCols = `<span>Name</span><span>Pick Up</span><span>Drop Off</span><span>Van Type</span><span></span>`;
+                    rowsHtml = sectionDogs.map(dog => createGroomingDogRow(dog)).join('');
+                } else if (isBoardingSchool) {
+                    tableHeaderClass = 'table-header boarding-school-header';
+                    headerCols = `<span>Name</span><span>Check In</span><span>Check Out</span><span>Crate Size</span><span></span>`;
+                    rowsHtml = sectionDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
+                } else if (isBoarding) {
+                    tableHeaderClass = 'table-header boarding-header';
+                    headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM</span><span>Crate</span><span>Notes</span><span></span>`;
+                    rowsHtml = sectionDogs.map(dog => createBoardingDogRow(dog)).join('');
+                } else {
+                    tableHeaderClass = 'table-header';
+                    headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM/PM</span><span>Notes</span><span></span>`;
+                    rowsHtml = sectionDogs.map(dog => createDogRow(dog, config.class)).join('');
+                }
                 
                 html += `
                     <div class="service-section">
