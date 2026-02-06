@@ -2,26 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Fairy Tails K9 Centre - Staff Board</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* ================================================================
+           MOBILE-FIRST DESIGN SYSTEM
+           Base styles = mobile. Scale UP via min-width queries.
+           ================================================================ */
+
         :root {
             --brand-blue: #00acee;
             --brand-blue-dark: #007ba8;
             --brand-gradient: linear-gradient(135deg, #00acee 0%, #007ba8 100%);
             --success-green: #22c55e;
             --warning-amber: #f59e0b;
-            --bg-light: #f8fafc;
+            --danger-red: #ef4444;
+            --bg-light: #f0f4f8;
             --bg-white: #ffffff;
             --text-dark: #1e293b;
             --text-muted: #64748b;
+            --text-light: #94a3b8;
             --border-light: #e2e8f0;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --border-medium: #cbd5e1;
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+            --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
+            /* Bottom nav height for spacing */
+            --bottom-nav-height: 64px;
+            /* Safe area insets */
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
         }
 
         * {
@@ -35,22 +57,25 @@
             background: var(--bg-light);
             color: var(--text-dark);
             min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
-            /* Safe area padding for notched phones */
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
-            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
+            /* Space for fixed bottom nav */
+            padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 8px);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* ===== Global Touch-Friendly Styles ===== */
 
         /* Remove tap highlight flash on Android/iOS */
-        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn, .grooming-select, .grooming-van-select, .bs-date-input, .bs-crate-select, .boarding-date-input {
+        button, select, input, a, label, .photo-checkbox, .delete-btn, .tab-btn, .btn, .grooming-select, .grooming-van-select, .bs-date-input, .bs-crate-select, .boarding-date-input, .bottom-tab {
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Reduce 300ms tap delay on all interactive elements (all platforms) */
-        button, select, input, a, label, .tab-btn, .btn {
+        /* Reduce 300ms tap delay on all interactive elements */
+        button, select, input, a, label, .tab-btn, .btn, .bottom-tab {
             touch-action: manipulation;
         }
 
@@ -62,7 +87,7 @@
 
         .delete-btn:active {
             transform: scale(0.9);
-            background: #ef4444;
+            background: var(--danger-red);
             color: white;
         }
 
@@ -70,85 +95,96 @@
             transform: scale(0.9);
         }
 
-        /* Ensure smooth momentum scrolling on iOS for staging list */
+        /* Smooth momentum scrolling on iOS */
         .staging-dogs {
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Header */
+        /* ================================================================
+           HEADER — Compact, glassy mobile header
+           ================================================================ */
         .header {
             background: var(--brand-gradient);
             color: white;
-            padding: 1rem 1.5rem;
+            padding: 0.6rem 1rem;
+            padding-top: calc(0.6rem + var(--safe-top));
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: var(--shadow-md);
             position: sticky;
             top: 0;
             z-index: 100;
+            /* Subtle bottom glow */
+            box-shadow: 0 2px 12px rgba(0, 172, 238, 0.25);
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.65rem;
         }
 
         .logo {
-            width: 50px;
-            height: 50px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid white;
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .header-title {
-            font-size: 1.5rem;
-            font-weight: 800;
+            font-size: 1.15rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
         }
 
         .header-subtitle {
-            font-size: 0.875rem;
-            opacity: 0.9;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-weight: 600;
+            letter-spacing: 0.02em;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.65rem;
         }
 
         .current-time {
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1.1rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            opacity: 0.95;
         }
 
-
-
         .refresh-btn {
-            padding: 0.6rem 0.9rem;
-            border-radius: 8px;
-            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            border: 2px solid #fbbf24;
-            background: #f59e0b;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.15);
             color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
         .refresh-btn:hover {
-            background: #d97706;
-            border-color: #d97706;
-            transform: rotate(180deg);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.3);
         }
 
         .refresh-btn.refreshing {
             animation: spin 1s linear infinite;
-            background: #3b82f6;
-            border-color: #3b82f6;
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
         }
 
         @keyframes spin {
@@ -156,74 +192,150 @@
             to { transform: rotate(360deg); }
         }
 
-
-
-        /* Tab Navigation */
-        .tab-nav {
-            display: flex;
+        /* ================================================================
+           BOTTOM TAB NAVIGATION — fixed at bottom for thumb reach
+           ================================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
             background: var(--bg-white);
-            border-bottom: 2px solid var(--border-light);
-            padding: 0 1rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            align-items: stretch;
+            height: var(--bottom-nav-height);
+            padding-bottom: var(--safe-bottom);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
         }
 
-        .tab-btn {
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: 700;
+        .bottom-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
             border: none;
             background: transparent;
             cursor: pointer;
             color: var(--text-muted);
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
+            font-family: inherit;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .bottom-tab .tab-icon {
+            font-size: 1.35rem;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .bottom-tab.active {
+            color: var(--brand-blue);
+        }
+
+        .bottom-tab.active .tab-icon {
+            transform: scale(1.1);
+        }
+
+        /* Active indicator pill */
+        .bottom-tab.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 3px;
+            background: var(--brand-blue);
+            border-radius: 0 0 3px 3px;
+        }
+
+        .bottom-tab:active {
+            transform: scale(0.92);
+        }
+
+        /* Action buttons in bottom nav */
+        .bottom-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 8px;
+        }
+
+        .bottom-action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 700;
             transition: all 0.2s ease;
         }
 
-        .tab-btn:hover {
-            color: var(--brand-blue);
+        .bottom-action-btn.transfer {
+            background: var(--success-green);
+            color: white;
         }
 
-        .tab-btn.active {
-            color: var(--brand-blue);
-            border-bottom-color: var(--brand-blue);
+        .bottom-action-btn.save {
+            background: var(--brand-gradient);
+            color: white;
         }
 
-        .tab-actions {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 0;
+        .bottom-action-btn:active {
+            transform: scale(0.9);
         }
 
-        /* Buttons */
+        /* Hide the old tab-nav on mobile (replaced by bottom nav) */
+        .tab-nav {
+            display: none;
+        }
+
+        /* ================================================================
+           BUTTONS
+           ================================================================ */
         .btn {
-            padding: 0.625rem 1.25rem;
+            padding: 0.6rem 1.1rem;
             font-size: 0.9rem;
             font-weight: 700;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            gap: 0.4rem;
             transition: all 0.2s ease;
             font-family: inherit;
+            min-height: 44px;
         }
 
         .btn-primary {
             background: var(--brand-gradient);
             color: white;
+            box-shadow: 0 2px 8px rgba(0, 172, 238, 0.25);
         }
 
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 12px rgba(0, 172, 238, 0.35);
         }
 
         .btn-success {
             background: var(--success-green);
             color: white;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
         }
 
         .btn-success:hover {
@@ -242,7 +354,7 @@
         }
 
         .btn-danger {
-            background: #ef4444;
+            background: var(--danger-red);
             color: white;
         }
 
@@ -251,39 +363,53 @@
         }
 
         .btn-small {
-            padding: 0.375rem 0.75rem;
+            padding: 0.35rem 0.7rem;
             font-size: 0.8rem;
+            min-height: 36px;
         }
 
-        /* Tab Content */
+        /* ================================================================
+           TAB CONTENT
+           ================================================================ */
         .tab-content {
             display: none;
-            padding: 1rem;
+            padding: 0.75rem;
         }
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.2s ease;
         }
 
-        /* Staging Area */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================================================================
+           STAGING AREA — Collapsible on mobile
+           ================================================================ */
         .staging-area {
             background: var(--bg-white);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow-sm);
-            border: 2px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
         }
 
         .staging-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1rem;
+            padding: 0.85rem 1rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .staging-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 800;
             color: var(--text-dark);
             display: flex;
@@ -294,42 +420,81 @@
         .staging-count {
             background: var(--brand-blue);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
+            padding: 0.15rem 0.55rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 800;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .staging-chevron {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .staging-chevron .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .staging-area.expanded .staging-chevron .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .staging-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            padding: 0 1rem;
+        }
+
+        .staging-area.expanded .staging-body {
+            max-height: 600px;
+            padding: 0 1rem 1rem;
         }
 
         .staging-input-row {
             display: flex;
+            flex-wrap: wrap;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .staging-input {
-            flex: 1;
+            flex: 1 1 100%;
             padding: 0.75rem 1rem;
-            font-size: 1rem;
+            font-size: 16px;
             border: 2px solid var(--border-light);
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-family: inherit;
             font-weight: 600;
+            min-height: 48px;
+            background: var(--bg-light);
+            transition: border-color 0.2s ease, background 0.2s ease;
         }
 
         .staging-input:focus {
             outline: none;
             border-color: var(--brand-blue);
+            background: white;
         }
 
         .service-type-select {
-            padding: 0.75rem 1rem;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0.75rem 0.75rem;
             border: 2px solid var(--border-light);
-            border-radius: 8px;
-            font-size: 0.9rem;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
             font-family: inherit;
             font-weight: 600;
             background: white;
             cursor: pointer;
-            min-width: 140px;
+            min-height: 48px;
         }
 
         .service-type-select:focus {
@@ -340,30 +505,31 @@
         .staging-dogs {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-            min-height: 50px;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 8px;
+            gap: 0.4rem;
+            min-height: 48px;
+            padding: 0.75rem;
+            background: var(--bg-light);
+            border-radius: var(--radius-sm);
             border: 2px dashed var(--border-light);
         }
 
         .staging-dogs:empty::before {
-            content: 'No dogs added yet — type a name above and press Enter or click Add';
-            color: var(--text-muted);
+            content: 'Type a name above and press Enter or tap Add';
+            color: var(--text-light);
             font-style: italic;
+            font-size: 0.85rem;
         }
 
         .staged-dog {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             background: var(--brand-gradient);
             color: white;
-            padding: 0.5rem 0.75rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
+            padding: 0.45rem 0.65rem;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.9rem;
             animation: popIn 0.2s ease;
         }
 
@@ -385,10 +551,10 @@
             align-items: center;
             justify-content: center;
             transition: background 0.2s ease;
-            /* Expand touch target beyond visual size */
             position: relative;
         }
 
+        /* Expanded touch target */
         .staged-dog-remove::before {
             content: '';
             position: absolute;
@@ -405,37 +571,48 @@
         .staging-actions {
             display: flex;
             gap: 0.5rem;
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             justify-content: flex-end;
         }
 
-        /* Stats Bar */
+        /* ================================================================
+           STATS BAR — Horizontal scrollable chips
+           ================================================================ */
         .stats-bar {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding: 2px;
+        }
+
+        .stats-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .stat-card {
             background: var(--bg-white);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 0.6rem 0.85rem;
+            box-shadow: var(--shadow-card);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.6rem;
+            flex-shrink: 0;
+            min-width: 0;
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.15rem;
+            flex-shrink: 0;
         }
 
         .stat-icon.dogs { background: #dbeafe; }
@@ -444,28 +621,68 @@
         .stat-icon.vans { background: #f3e8ff; }
 
         .stat-value {
-            font-size: 1.75rem;
-            font-weight: 800;
+            font-size: 1.35rem;
+            font-weight: 900;
             line-height: 1;
         }
 
         .stat-label {
-            font-size: 0.875rem;
+            font-size: 0.65rem;
             color: var(--text-muted);
+            font-weight: 600;
+            white-space: nowrap;
         }
 
-        /* Van Legend */
+        /* ================================================================
+           VAN LEGEND — Collapsible accordion
+           ================================================================ */
         .van-legend {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
             background: var(--bg-white);
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            box-shadow: var(--shadow-sm);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
             border: 1px solid var(--border-light);
-            flex-wrap: wrap;
+        }
+
+        .van-legend-header {
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 0.7rem 1rem;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+        }
+
+        .van-legend-header .van-chevron {
+            transition: transform 0.3s ease;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .van-legend.expanded .van-chevron {
+            transform: rotate(180deg);
+        }
+
+        .van-legend-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+
+        .van-legend.expanded .van-legend-body {
+            max-height: 400px;
+        }
+
+        .van-legend-content {
+            padding: 0 1rem 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
         }
 
         .van-item {
@@ -473,13 +690,16 @@
             align-items: center;
             gap: 0.5rem;
             font-weight: 600;
+            font-size: 0.85rem;
         }
 
         .van-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 800;
+            min-width: 32px;
+            text-align: center;
         }
 
         .van-badge.bv { background: #dbeafe; color: #1d4ed8; }
@@ -487,14 +707,15 @@
         .van-badge.sv { background: #dcfce7; color: #15803d; }
 
         .van-time-select {
-            padding: 0.3rem 0.5rem;
+            padding: 0.35rem 0.5rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
-            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
             font-family: inherit;
             font-weight: 600;
             cursor: pointer;
             background: white;
+            min-height: 40px;
         }
 
         .van-time-select:focus {
@@ -502,737 +723,47 @@
             border-color: var(--brand-blue);
         }
 
-        /* Board Container - Dynamic Columns */
+        .walk-legend {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-light);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* ================================================================
+           BOARD CONTAINER
+           ================================================================ */
         .board-container {
             display: grid;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
-        .board-container.cols-1 { grid-template-columns: 1fr; }
-        .board-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .board-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
-        .board-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-        /* Mobile: Stack columns vertically for comfortable editing */
-        @media (max-width: 1400px) {
-            .board-container.cols-4,
-            .board-container.cols-5,
-            .board-container.cols-6 { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 1100px) {
-            .board-container.cols-3,
-            .board-container.cols-4,
-            .board-container.cols-5,
-            .board-container.cols-6 { grid-template-columns: repeat(2, 1fr); }
-            
-            /* Tablet: Ensure touch targets meet 44px minimum */
-            .photo-checkbox {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .delete-btn {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .vp-select {
-                min-height: 38px;
-            }
-            
-            .stop-select {
-                min-height: 38px;
-            }
-            
-            .walk-select {
-                min-height: 38px;
-            }
-            
-            .notes-input {
-                min-height: 38px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .board-container.cols-2,
-            .board-container.cols-3,
-            .board-container.cols-4,
-            .board-container.cols-5,
-            .board-container.cols-6 { grid-template-columns: 1fr; }
-            
-            /* ===== Mobile Dog Rows: Card layout ===== */
-            /* Row 1: Name | Photo ✓ | Walk | Delete × */
-            /* Row 2: VP Controls (AM/PM) | Notes toggle 📝 */
-            /* Row 3 (conditional): Full-width notes text input */
-            
-            /* Hide table header — card layout has inline labels */
-            .table-header {
-                display: none;
-            }
-            
-            .dog-row {
-                display: grid;
-                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
-                grid-template-rows: auto auto 0fr;
-                gap: 0.4rem 0.35rem;
-                padding: 0.75rem 0.75rem 0.65rem;
-                margin: 0.5rem 0.4rem;
-                border-radius: 12px;
-                border-width: 2px;
-                border-left-width: 6px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-                transition: grid-template-rows 0.25s ease, all 0.2s ease;
-            }
-            
-            /* When notes expanded, row 3 opens up */
-            .dog-row.notes-expanded {
-                grid-template-rows: auto auto 1fr;
-            }
-            
-            /* Row 1 placement */
-            .dog-row .dog-name {
-                grid-column: 1;
-                grid-row: 1;
-                font-size: 1.1rem;
-                font-weight: 800;
-                align-self: center;
-            }
-            
-            .dog-row .photo-check {
-                grid-column: 2;
-                grid-row: 1;
-                align-self: center;
-                justify-self: center;
-                position: relative;
-            }
-            
-            /* Mobile inline label: Photo */
-            .dog-row .photo-check::before {
-                content: '📸';
-                position: absolute;
-                top: -14px;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 0.6rem;
-                color: var(--text-muted);
-                white-space: nowrap;
-            }
-            
-            .dog-row .walk-select {
-                grid-column: 3;
-                grid-row: 1;
-                align-self: center;
-            }
-            
-            .dog-row .delete-btn {
-                grid-column: 4;
-                grid-row: 1;
-                justify-self: center;
-                align-self: center;
-            }
-            
-            /* ===== Row 2: VP Controls + Notes Toggle ===== */
-            
-            .dog-row .vp-control {
-                grid-column: 1 / 4;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                flex-wrap: nowrap;
-                justify-content: flex-start;
-            }
-            
-            /* Show AM/PM labels on mobile */
-            .vp-group-label {
-                display: block !important;
-                font-size: 0.6rem;
-                font-weight: 800;
-                color: var(--text-muted);
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-right: 3px;
-                flex-shrink: 0;
-                min-width: 20px;
-            }
-            
-            /* Prominent divider on mobile */
-            .vp-divider {
-                width: 3px;
-                height: 36px;
-                background: var(--text-muted);
-                margin: 0 6px;
-                border-radius: 2px;
-                opacity: 0.4;
-            }
-            
-            /* Prevent flex-shrink clipping any selects */
-            .vp-group > select {
-                flex-shrink: 0;
-            }
-            
-            /* Notes toggle switch — visible on mobile */
-            .notes-toggle {
-                display: flex !important;
-                grid-column: 4;
-                grid-row: 2;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                justify-self: center;
-                align-self: center;
-                gap: 3px;
-                cursor: pointer;
-                -webkit-tap-highlight-color: transparent;
-            }
-            
-            .notes-toggle-label {
-                font-size: 0.65rem;
-                line-height: 1;
-            }
-            
-            /* The pill-shaped track */
-            .toggle-track {
-                width: 40px;
-                height: 22px;
-                background: #cbd5e1;
-                border-radius: 11px;
-                position: relative;
-                transition: background 0.25s ease;
-                flex-shrink: 0;
-            }
-            
-            /* The sliding circle knob */
-            .toggle-knob {
-                width: 18px;
-                height: 18px;
-                background: white;
-                border-radius: 50%;
-                position: absolute;
-                top: 2px;
-                left: 2px;
-                transition: transform 0.25s ease;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-            }
-            
-            .notes-toggle:active .toggle-knob {
-                width: 22px;
-                border-radius: 9px;
-            }
-            
-            /* ON state — green track, knob slides right */
-            .dog-row.notes-expanded .toggle-track {
-                background: #22c55e;
-            }
-            
-            .dog-row.notes-expanded .toggle-knob {
-                transform: translateX(18px);
-            }
-            
-            .dog-row.notes-expanded .notes-toggle:active .toggle-knob {
-                transform: translateX(14px);
-            }
-            
-            /* Has notes content but panel is closed — amber track */
-            .notes-toggle.has-notes .toggle-track {
-                background: #f59e0b;
-            }
-            
-            /* When expanded, green overrides amber */
-            .dog-row.notes-expanded .notes-toggle.has-notes .toggle-track {
-                background: #22c55e;
-            }
-            
-            /* ===== Row 3: Notes input (conditional) ===== */
-            
-            .dog-row .notes-input {
-                grid-column: 1 / 5;
-                grid-row: 3;
-                font-size: 16px;
-                min-height: 44px;
-                padding: 0.5rem;
-                border-radius: 8px;
-                overflow: hidden;
-                opacity: 0;
-                min-height: 0;
-                padding: 0;
-                margin: 0;
-                border-width: 0;
-                transition: all 0.25s ease;
-            }
-            
-            /* Expanded state — notes input visible */
-            .dog-row.notes-expanded .notes-input {
-                opacity: 1;
-                min-height: 44px;
-                padding: 0.5rem;
-                margin-top: 0.25rem;
-                border-width: 2px;
-            }
-            
-            /* ===== Boarding Mobile: AM only + Crate + Dates ===== */
-            /* Row 1: Name | Photo | Walk | Delete */
-            /* Row 2: AM VP | Crate | Notes toggle */
-            /* Row 3: Check In | Check Out */
-            /* Row 4 (conditional): Notes input */
-            
-            .dog-row.boarding {
-                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
-            }
-            
-            .dog-row.boarding .vp-control-am {
-                grid-column: 1 / 2;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-            
-            .dog-row.boarding .crate-select {
-                grid-column: 2 / 3;
-                grid-row: 2;
-                align-self: center;
-                justify-self: center;
-                width: 52px;
-                min-height: 44px;
-                font-size: 16px;
-                padding: 0.3rem 0.1rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                padding-top: 0.5rem;
-                border-radius: 8px;
-            }
-            
-            .dog-row.boarding .walk-select {
-                grid-column: 3;
-                grid-row: 1;
-            }
-            
-            .dog-row.boarding .notes-toggle {
-                grid-column: 3;
-                grid-row: 2;
-                justify-self: center;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                padding-top: 0.5rem;
-            }
-            
-            /* Boarding date inputs: full-width row below AM/Crate */
-            .dog-row.boarding .boarding-checkin {
-                grid-column: 1 / 3;
-                grid-row: 3;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-            
-            .dog-row.boarding .boarding-checkout {
-                grid-column: 3 / 5;
-                grid-row: 3;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-            
-            .dog-row.boarding .boarding-checkin .boarding-date-input,
-            .dog-row.boarding .boarding-checkout .boarding-date-input {
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            .dog-row.boarding .notes-input {
-                grid-column: 1 / 5;
-                grid-row: 4;
-            }
-            
-            /* ===== Grooming Mobile: Card layout ===== */
-            /* Row 1: Name | Delete */
-            /* Row 2: Pick Up | Drop Off | Van Type */
-            
-            .dog-row.grooming {
-                grid-template-columns: 1fr 44px;
-                grid-template-rows: auto auto;
-                gap: 0.4rem 0.35rem;
-            }
-            
-            .dog-row.grooming .dog-name {
-                grid-column: 1;
-                grid-row: 1;
-                font-size: 1.1rem;
-                font-weight: 800;
-                align-self: center;
-            }
-            
-            .dog-row.grooming .delete-btn {
-                grid-column: 2;
-                grid-row: 1;
-                justify-self: center;
-                align-self: center;
-            }
-            
-            /* Pick Up, Drop Off, Van Type all flow into row 2, spanning full width */
-            .dog-row.grooming .grooming-pickup {
-                grid-column: 1;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            .dog-row.grooming .grooming-dropoff {
-                grid-column: 2;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            /* Use a 3-column sub-layout for row 2 */
-            .dog-row.grooming {
-                grid-template-columns: 1fr 1fr 70px 44px;
-                grid-template-rows: auto auto;
-            }
-            
-            .dog-row.grooming .dog-name {
-                grid-column: 1 / 4;
-                grid-row: 1;
-            }
-            
-            .dog-row.grooming .delete-btn {
-                grid-column: 4;
-                grid-row: 1;
-            }
-            
-            .dog-row.grooming .grooming-pickup {
-                grid-column: 1;
-                grid-row: 2;
-            }
-            
-            .dog-row.grooming .grooming-dropoff {
-                grid-column: 2;
-                grid-row: 2;
-            }
-            
-            .dog-row.grooming .grooming-van-select {
-                grid-column: 3;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            /* ===== Boarding School Mobile: Card layout ===== */
-            /* Row 1: Name | Delete */
-            /* Row 2: Check In | Check Out | Crate Size */
-            
-            .dog-row.boarding-school {
-                grid-template-columns: 1fr 1fr 80px 44px;
-                grid-template-rows: auto auto;
-                gap: 0.4rem 0.35rem;
-            }
-            
-            .dog-row.boarding-school .dog-name {
-                grid-column: 1 / 4;
-                grid-row: 1;
-                font-size: 1.1rem;
-                font-weight: 800;
-                align-self: center;
-            }
-            
-            .dog-row.boarding-school .delete-btn {
-                grid-column: 4;
-                grid-row: 1;
-                justify-self: center;
-                align-self: center;
-            }
-            
-            .dog-row.boarding-school .bs-checkin {
-                grid-column: 1;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-            
-            .dog-row.boarding-school .bs-checkout {
-                grid-column: 2;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-            
-            .dog-row.boarding-school .bs-checkin .bs-date-input,
-            .dog-row.boarding-school .bs-checkout .bs-date-input {
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            .dog-row.boarding-school .bs-crate-select {
-                grid-column: 3;
-                grid-row: 2;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                min-height: 44px;
-                font-size: 16px;
-            }
-            
-            /* ===== Touch Targets: Minimum 44px ===== */
-            
-            .photo-checkbox {
-                width: 44px;
-                height: 44px;
-            }
-            
-            .photo-checkbox:checked::after {
-                font-size: 1.3rem;
-            }
-            
-            .delete-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 1.3rem;
-                border-radius: 8px;
-            }
-            
-            /* Walk select — full touch height, prevent iOS zoom */
-            .walk-select {
-                font-size: 16px;
-                min-height: 44px;
-                padding: 0.5rem 0.4rem;
-                border-radius: 8px;
-            }
-            
-            /* VP selects — enlarged for fingers */
-            .vp-select {
-                width: 44px;
-                min-height: 44px;
-                font-size: 16px;
-                padding: 0.4rem 0.15rem;
-                border-radius: 0;
-            }
-            
-            .vp-select.vp-am {
-                border-left: 2px solid var(--border-light);
-            }
-            
-            /* Stop selects — enlarged for fingers */
-            .stop-select {
-                width: 40px;
-                min-height: 44px;
-                font-size: 16px;
-                padding: 0.4rem 0.15rem;
-            }
-            
-            .stop-select.stop-am {
-                border-radius: 8px 0 0 8px;
-            }
-            
-            .stop-select.stop-pm {
-                border-radius: 0 8px 8px 0;
-            }
-            
-            /* ===== Staging Area: Stacked for touch ===== */
-            
-            .staging-input-row {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            
-            .staging-input {
-                flex: 1 1 100%;
-                font-size: 16px;
-                min-height: 48px;
-            }
-            
-            .service-type-select {
-                flex: 1 1 0;
-                min-width: 0;
-                font-size: 16px;
-                min-height: 48px;
-            }
-            
-            .staging-input-row .btn-primary {
-                flex: 0 0 auto;
-                min-height: 48px;
-                font-size: 1rem;
-                padding: 0.6rem 1.25rem;
-            }
-            
-            .staging-area .btn {
-                min-height: 48px;
-                font-size: 1rem;
-            }
-            
-            /* Staged dog tags — touch-friendly sizing */
-            .staged-dog {
-                padding: 0.6rem 0.85rem;
-                font-size: 1rem;
-            }
-            
-            .staged-dog-remove {
-                width: 32px;
-                height: 32px;
-                font-size: 1.1rem;
-            }
-            
-            /* ===== Buttons: Touch-friendly minimums ===== */
-            
-            .btn {
-                min-height: 44px;
-                padding: 0.6rem 1rem;
-                font-size: 0.95rem;
-            }
-            
-            .btn-small {
-                min-height: 40px;
-                padding: 0.5rem 0.75rem;
-            }
-            
-            /* ===== Compact Header ===== */
-            
-            .header {
-                padding: 0.75rem 1rem;
-            }
-            
-            .header-title {
-                font-size: 1.2rem;
-            }
-            
-            .logo {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .refresh-btn {
-                width: 44px;
-                height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            /* ===== Stats: 2×2 Grid ===== */
-            
-            .stats-bar {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .stat-card {
-                padding: 0.75rem 1rem;
-            }
-            
-            .stat-value {
-                font-size: 1.5rem;
-            }
-            
-            /* ===== Van Legend: Stacked ===== */
-            
-            .van-legend {
-                flex-direction: column;
-                gap: 0.75rem;
-                align-items: flex-start;
-            }
-            
-            .van-item {
-                justify-content: flex-start;
-                width: 100%;
-            }
-            
-            .van-time-select {
-                font-size: 16px;
-                min-height: 44px;
-                padding: 0.5rem;
-            }
-            
-            /* ===== Tab Navigation ===== */
-            
-            .tab-nav {
-                flex-wrap: wrap;
-                padding: 0.5rem;
-            }
-            
-            .tab-btn {
-                padding: 0.75rem 1rem;
-                font-size: 1rem;
-                min-height: 44px;
-            }
-            
-            .tab-actions {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-                padding-top: 0.5rem;
-                gap: 0.5rem;
-            }
-            
-            .tab-actions .btn {
-                flex: 1;
-                min-width: 0;
-                text-align: center;
-                justify-content: center;
-            }
-        }
-        
-        /* ===== Very Small Phones (< 400px) ===== */
-        @media (max-width: 400px) {
-            .dog-row {
-                grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
-                padding: 0.6rem 0.5rem;
-            }
-            
-            .dog-name {
-                font-size: 0.9rem;
-            }
-            
-            .vp-select {
-                width: 40px;
-            }
-            
-            .stop-select {
-                width: 36px;
-            }
-            
-            .header-left .header-subtitle {
-                display: none;
-            }
-            
-            .stat-card {
-                padding: 0.5rem 0.75rem;
-            }
-            
-            .stat-value {
-                font-size: 1.25rem;
-            }
-            
-            .stat-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 1.1rem;
-            }
+        /* Mobile: always single column */
+        .board-container.cols-1,
+        .board-container.cols-2,
+        .board-container.cols-3,
+        .board-container.cols-4,
+        .board-container.cols-5,
+        .board-container.cols-6 {
+            grid-template-columns: 1fr;
         }
 
         /* Board Column */
         .board-column {
             background: var(--bg-white);
-            border-radius: 16px;
+            border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-light);
             overflow: clip;
         }
 
-        /* Service Type Sections */
+        /* ================================================================
+           SERVICE SECTIONS
+           ================================================================ */
         .service-section {
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .service-section:last-child {
@@ -1243,83 +774,78 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 1rem;
+            padding: 0.7rem 1rem;
             font-weight: 800;
-            font-size: 1rem;
-            border-radius: 12px 12px 0 0;
+            font-size: 0.9rem;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
             margin-bottom: 0;
         }
 
         .section-header .section-icon {
-            margin-right: 0.5rem;
+            margin-right: 0.4rem;
         }
 
         .section-header .section-count {
             background: rgba(255,255,255,0.3);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            padding: 0.15rem 0.6rem;
+            border-radius: var(--radius-full);
+            font-size: 0.7rem;
+            font-weight: 800;
         }
 
-        /* Half Day AM - Orange/Amber theme */
+        /* Half Day AM - Orange/Amber */
         .section-header.half-day-am {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: white;
         }
-
         .section-row.half-day-am {
             background: #fffbeb;
             border-left: 4px solid #f59e0b;
         }
 
-        /* Full Day - Blue theme (default) */
+        /* Full Day - Blue */
         .section-header.full-day {
             background: var(--brand-gradient);
             color: white;
         }
-
         .section-row.full-day {
             background: white;
             border-left: 4px solid var(--brand-blue);
         }
 
-        /* Boarding - Purple theme */
+        /* Boarding - Purple */
         .section-header.boarding {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             color: white;
         }
-
         .section-row.boarding {
             background: #f5f3ff;
             border-left: 4px solid #8b5cf6;
         }
 
-        /* Grooming Dogs - Teal/Cyan theme */
+        /* Grooming - Teal */
         .section-header.grooming {
             background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
             color: white;
         }
-
         .section-row.grooming {
             background: #ecfeff;
             border-left: 4px solid #06b6d4;
         }
 
-        /* Boarding School - Rose/Pink theme */
+        /* Boarding School - Rose */
         .section-header.boarding-school {
             background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
             color: white;
         }
-
         .section-row.boarding-school {
             background: #fff1f2;
             border-left: 4px solid #f43f5e;
         }
 
-        /* ===== Boarding Parent Container (groups Boarding Hol + Boarding School) ===== */
+        /* ===== Boarding Parent Container ===== */
         .boarding-parent-section {
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .section-header.boarding-parent {
@@ -1329,87 +855,720 @@
 
         .boarding-subsections {
             border-left: 3px solid #8b5cf6;
-            border-right: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
-            border-radius: 0 0 12px 12px;
+            border-right: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
             overflow: hidden;
             background: #faf9ff;
         }
 
-        .boarding-sub-section {
-            /* No extra margin — sits flush inside parent */
-        }
-
         .boarding-sub-section + .boarding-sub-section {
-            border-top: 2px solid #e2e8f0;
+            border-top: 2px solid var(--border-light);
         }
 
-        /* Sub-headers: smaller, indented feel, still themed */
         .boarding-sub-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0.5rem 1rem;
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: white;
         }
 
         .boarding-sub-header .section-icon {
-            margin-right: 0.4rem;
+            margin-right: 0.35rem;
         }
 
         .boarding-sub-header .section-count {
             background: rgba(255,255,255,0.3);
-            padding: 0.15rem 0.55rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
+            padding: 0.1rem 0.5rem;
+            border-radius: var(--radius-full);
+            font-size: 0.65rem;
+            font-weight: 800;
         }
 
-        /* Boarding Hol sub-header — lighter purple */
         .boarding-sub-header.boarding-hol-sub {
             background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
         }
 
-        /* Boarding School sub-header — rose */
         .boarding-sub-header.boarding-school-sub {
             background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
         }
 
-        /* Boarding parent header — stats row (crate counts + dog count) */
         .boarding-header-stats {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             flex-shrink: 0;
         }
 
         .crate-summary {
             background: rgba(255,255,255,0.2);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: var(--radius-full);
+            font-size: 0.6rem;
+            font-weight: 800;
             white-space: nowrap;
-            letter-spacing: 0.01em;
         }
 
-        /* Grooming-specific grid: Name | Pick Up | Drop Off | Van Type | Delete */
-        .table-header.grooming-header {
-            grid-template-columns: 2fr 110px 110px 70px 32px;
+        /* ================================================================
+           SECTION CONTENT & TABLE HEADER
+           ================================================================ */
+        .section-content {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            overflow: clip;
         }
 
+        /* Table headers hidden on mobile — card layout uses inline cues */
+        .table-header,
+        .table-header.boarding-header,
+        .table-header.grooming-header,
+        .table-header.boarding-school-header {
+            display: none;
+        }
+
+        .column-header {
+            background: var(--brand-gradient);
+            color: white;
+            padding: 0.65rem 1rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-count {
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+        }
+
+        /* ================================================================
+           DOG ROWS — Mobile Card Layout
+           ================================================================ */
+        .dog-rows {
+            max-height: none !important;
+            overflow: visible !important;
+            height: auto !important;
+        }
+
+        /* 
+           Mobile Card Grid:
+           Row 1: Name | Photo ✓ | Walk | Delete ×
+           Row 2: VP Controls (AM/PM) | Notes toggle 📝
+           Row 3 (conditional): Full-width notes input
+        */
+        .dog-row {
+            display: grid;
+            grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+            grid-template-rows: auto auto 0fr;
+            gap: 0.35rem 0.3rem;
+            padding: 0.7rem 0.75rem 0.6rem;
+            margin: 0.35rem 0.4rem;
+            border-radius: var(--radius-md);
+            border-width: 1px;
+            border-style: solid;
+            border-color: var(--border-light);
+            border-left-width: 5px;
+            box-shadow: var(--shadow-xs);
+            transition: grid-template-rows 0.25s ease, box-shadow 0.2s ease;
+            background: white;
+        }
+
+        /* When notes expanded, row 3 opens */
+        .dog-row.notes-expanded {
+            grid-template-rows: auto auto 1fr;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Row 1 placement */
+        .dog-row .dog-name {
+            grid-column: 1;
+            grid-row: 1;
+            font-size: 1.05rem;
+            font-weight: 800;
+            align-self: center;
+            color: var(--text-dark);
+            padding: 0.2rem 0;
+            letter-spacing: -0.01em;
+        }
+
+        .dog-row .photo-check {
+            grid-column: 2;
+            grid-row: 1;
+            align-self: center;
+            justify-self: center;
+            position: relative;
+        }
+
+        /* Mobile inline label: Camera icon above checkbox */
+        .dog-row .photo-check::before {
+            content: '📸';
+            position: absolute;
+            top: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.55rem;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        .dog-row .walk-select {
+            grid-column: 3;
+            grid-row: 1;
+            align-self: center;
+        }
+
+        .dog-row .delete-btn {
+            grid-column: 4;
+            grid-row: 1;
+            justify-self: center;
+            align-self: center;
+        }
+
+        /* Row 2: VP Controls + Notes Toggle */
+        .dog-row .vp-control {
+            grid-column: 1 / 4;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+
+        /* AM/PM labels */
+        .vp-group-label {
+            display: block !important;
+            font-size: 0.55rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 2px;
+            flex-shrink: 0;
+            min-width: 18px;
+        }
+
+        /* AM/PM divider bar */
+        .vp-divider {
+            width: 2px;
+            height: 32px;
+            background: var(--border-medium);
+            margin: 0 6px;
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        .vp-group > select {
+            flex-shrink: 0;
+        }
+
+        /* Notes toggle — mobile visible */
+        .notes-toggle {
+            display: flex !important;
+            grid-column: 4;
+            grid-row: 2;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            justify-self: center;
+            align-self: center;
+            gap: 2px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .notes-toggle-label {
+            font-size: 0.6rem;
+            line-height: 1;
+        }
+
+        /* Toggle track */
+        .toggle-track {
+            width: 36px;
+            height: 20px;
+            background: #cbd5e1;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        /* Toggle knob */
+        .toggle-knob {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.25s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+        }
+
+        .notes-toggle:active .toggle-knob {
+            width: 20px;
+            border-radius: 8px;
+        }
+
+        /* ON state */
+        .dog-row.notes-expanded .toggle-track {
+            background: #22c55e;
+        }
+        .dog-row.notes-expanded .toggle-knob {
+            transform: translateX(16px);
+        }
+        .dog-row.notes-expanded .notes-toggle:active .toggle-knob {
+            transform: translateX(12px);
+        }
+
+        /* Has notes but closed — amber track */
+        .notes-toggle.has-notes .toggle-track {
+            background: #f59e0b;
+        }
+        /* Expanded overrides amber */
+        .dog-row.notes-expanded .notes-toggle.has-notes .toggle-track {
+            background: #22c55e;
+        }
+
+        /* Row 3: Notes input (conditional) */
+        .dog-row .notes-input {
+            grid-column: 1 / 5;
+            grid-row: 3;
+            font-size: 16px;
+            overflow: hidden;
+            opacity: 0;
+            min-height: 0;
+            padding: 0;
+            margin: 0;
+            border-width: 0;
+            transition: all 0.25s ease;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .dog-row.notes-expanded .notes-input {
+            opacity: 1;
+            min-height: 44px;
+            padding: 0.5rem;
+            margin-top: 0.2rem;
+            border-width: 2px;
+            border-style: solid;
+            border-color: var(--border-light);
+        }
+
+        /* ===== Boarding Mobile Layout ===== */
+        .dog-row.boarding {
+            grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
+        }
+
+        .dog-row.boarding .vp-control-am {
+            grid-column: 1 / 2;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dog-row.boarding .crate-select {
+            grid-column: 2 / 4;
+            grid-row: 2;
+            align-self: center;
+            justify-self: stretch;
+            width: auto;
+            min-height: 44px;
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 700;
+            padding: 0.35rem 0.3rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            padding-top: 0.45rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .dog-row.boarding .walk-select {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .dog-row.boarding .notes-toggle {
+            grid-column: 4;
+            grid-row: 2;
+            justify-self: center;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            padding-top: 0.45rem;
+        }
+
+        .dog-row.boarding .boarding-checkin {
+            grid-column: 1 / 3;
+            grid-row: 3;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dog-row.boarding .boarding-checkout {
+            grid-column: 3 / 5;
+            grid-row: 3;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dog-row.boarding .boarding-checkin .boarding-date-input,
+        .dog-row.boarding .boarding-checkout .boarding-date-input {
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        .dog-row.boarding .notes-input {
+            grid-column: 1 / 5;
+            grid-row: 4;
+        }
+
+        /* Notes expanded for boarding — 4-row grid */
+        .dog-row.boarding.notes-expanded {
+            grid-template-rows: auto auto auto 1fr;
+        }
+        .dog-row.boarding:not(.notes-expanded) {
+            grid-template-rows: auto auto auto 0fr;
+        }
+
+        /* ===== Grooming Mobile ===== */
         .dog-row.grooming {
-            grid-template-columns: 2fr 110px 110px 70px 32px;
+            grid-template-columns: 1fr 1fr 70px 44px;
+            grid-template-rows: auto auto;
+            gap: 0.35rem;
         }
 
-        /* Grooming pickup/dropoff select styling */
+        .dog-row.grooming .dog-name {
+            grid-column: 1 / 4;
+            grid-row: 1;
+            font-size: 1.05rem;
+            font-weight: 800;
+            align-self: center;
+        }
+
+        .dog-row.grooming .delete-btn {
+            grid-column: 4;
+            grid-row: 1;
+            justify-self: center;
+            align-self: center;
+        }
+
+        .dog-row.grooming .grooming-pickup {
+            grid-column: 1;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        .dog-row.grooming .grooming-dropoff {
+            grid-column: 2;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        .dog-row.grooming .grooming-van-select {
+            grid-column: 3;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        /* ===== Boarding School Mobile ===== */
+        .dog-row.boarding-school {
+            grid-template-columns: 1fr 1fr 80px 44px;
+            grid-template-rows: auto auto;
+            gap: 0.35rem;
+        }
+
+        .dog-row.boarding-school .dog-name {
+            grid-column: 1 / 4;
+            grid-row: 1;
+            font-size: 1.05rem;
+            font-weight: 800;
+            align-self: center;
+        }
+
+        .dog-row.boarding-school .delete-btn {
+            grid-column: 4;
+            grid-row: 1;
+            justify-self: center;
+            align-self: center;
+        }
+
+        .dog-row.boarding-school .bs-checkin {
+            grid-column: 1;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dog-row.boarding-school .bs-checkout {
+            grid-column: 2;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .dog-row.boarding-school .bs-checkin .bs-date-input,
+        .dog-row.boarding-school .bs-checkout .bs-date-input {
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        .dog-row.boarding-school .bs-crate-select {
+            grid-column: 3;
+            grid-row: 2;
+            padding-top: 0.45rem;
+            margin-top: 0.2rem;
+            border-top: 1px solid var(--border-light);
+            min-height: 44px;
+            font-size: 16px;
+        }
+
+        /* ================================================================
+           FORM CONTROLS — All touch-optimised
+           ================================================================ */
+        .photo-check {
+            display: flex;
+            justify-content: center;
+        }
+
+        .photo-checkbox {
+            width: 44px;
+            height: 44px;
+            appearance: none;
+            -webkit-appearance: none;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            background: var(--bg-light);
+        }
+
+        .photo-checkbox:checked {
+            background: var(--success-green);
+            border-color: var(--success-green);
+        }
+
+        .photo-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        /* Walk Select */
+        .walk-select {
+            width: 100%;
+            padding: 0.5rem 0.4rem;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            min-height: 44px;
+        }
+
+        .walk-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .walk-select.walk-booked {
+            background: #fef3c7;
+            border-color: var(--warning-amber);
+        }
+
+        .walk-select.walk-transferred {
+            background: #dcfce7;
+            border-color: var(--success-green);
+        }
+
+        /* VP Control */
+        .vp-control {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .vp-select {
+            width: 44px;
+            min-height: 44px;
+            padding: 0.4rem 0.15rem;
+            border: 2px solid var(--border-light);
+            border-radius: 0;
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            background: white;
+            text-align: center;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .vp-select.vp-am { border-left: none; }
+        .vp-select.vp-pm { border-left: none; }
+
+        .vp-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+            z-index: 1;
+        }
+
+        /* Van pickup styles */
+        .vp-select.van-pickup,
+        .vp-select.van-bv {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+            z-index: 1;
+        }
+        .vp-select.van-sv {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+            z-index: 1;
+        }
+        .vp-select.van-dv {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+            z-index: 1;
+        }
+        .vp-select.parent-pickup {
+            background: #f3e8ff;
+            border-color: #a855f7;
+            color: #7c3aed;
+            z-index: 1;
+        }
+
+        /* Stop selects */
+        .stop-select {
+            width: 40px;
+            min-height: 44px;
+            padding: 0.4rem 0.15rem;
+            border: 2px solid var(--border-light);
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 700;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .stop-select.stop-am {
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        }
+
+        .stop-select.stop-pm {
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            border-left: none;
+        }
+
+        .stop-select:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+            z-index: 1;
+        }
+
+        .stop-select:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .stop-select.has-value:not(:disabled) {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+            z-index: 1;
+        }
+
+        /* Notes Input */
+        .notes-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 600;
+            transition: border-color 0.2s ease;
+        }
+
+        .notes-input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+        }
+
+        .notes-input:not(:placeholder-shown) {
+            background: #fffbeb;
+            border-color: var(--warning-amber);
+        }
+
+        /* Delete Button */
+        .delete-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: #fee2e2;
+            color: var(--danger-red);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            font-size: 1.3rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger-red);
+            color: white;
+        }
+
+        /* Grooming select styling */
         .grooming-select {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-family: inherit;
             font-weight: 600;
@@ -1430,12 +1589,12 @@
             color: #0e7490;
         }
 
-        /* Grooming van type select styling */
+        /* Grooming van type select */
         .grooming-van-select {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-family: inherit;
             font-weight: 700;
@@ -1448,7 +1607,6 @@
         .grooming-van-select:focus {
             border-color: #06b6d4;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
         }
 
         .grooming-van-select.has-value {
@@ -1457,21 +1615,12 @@
             color: #0e7490;
         }
 
-        /* Boarding School-specific grid: Name | Check In | Check Out | Crate Size | Delete */
-        .table-header.boarding-school-header {
-            grid-template-columns: 2fr 120px 120px 80px 32px;
-        }
-
-        .dog-row.boarding-school {
-            grid-template-columns: 2fr 120px 120px 80px 32px;
-        }
-
-        /* Boarding School date input styling */
+        /* Boarding School date inputs */
         .bs-date-input {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-family: inherit;
             font-weight: 600;
@@ -1483,7 +1632,6 @@
         .bs-date-input:focus {
             border-color: #f43f5e;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
         }
 
         .bs-date-input:not(:placeholder-shown),
@@ -1493,12 +1641,12 @@
             color: #be123c;
         }
 
-        /* Boarding School crate size select styling */
+        /* Boarding School crate select */
         .bs-crate-select {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-family: inherit;
             font-weight: 700;
@@ -1511,7 +1659,6 @@
         .bs-crate-select:focus {
             border-color: #f43f5e;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
         }
 
         .bs-crate-select.has-value {
@@ -1520,21 +1667,12 @@
             color: #be123c;
         }
 
-        /* Boarding-specific grid: Name | Photo | Walk | AM | Crate | Check In | Check Out | Notes | Delete */
-        .table-header.boarding-header {
-            grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
-        }
-
-        .dog-row.boarding {
-            grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
-        }
-
-        /* Crate select styling */
+        /* Crate select */
         .crate-select {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.8rem;
             font-family: inherit;
             font-weight: 700;
@@ -1547,7 +1685,6 @@
         .crate-select:focus {
             border-color: #8b5cf6;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
 
         .crate-select.has-value {
@@ -1556,12 +1693,12 @@
             color: #6d28d9;
         }
 
-        /* Boarding date input styling (Check In / Check Out) */
+        /* Boarding date input */
         .boarding-date-input {
             width: 100%;
-            padding: 0.35rem 0.25rem;
+            padding: 0.4rem 0.25rem;
             border: 2px solid var(--border-light);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 0.75rem;
             font-family: inherit;
             font-weight: 600;
@@ -1573,7 +1710,6 @@
         .boarding-date-input:focus {
             border-color: #8b5cf6;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         }
 
         .boarding-date-input.has-value {
@@ -1582,7 +1718,7 @@
             color: #6d28d9;
         }
 
-        /* Date-with-day container: wraps date input + day label as a single grid unit */
+        /* Date-with-day container */
         .date-with-day {
             display: flex;
             flex-direction: column;
@@ -1591,7 +1727,7 @@
         }
 
         .date-with-day .day-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
             text-align: center;
             text-transform: uppercase;
@@ -1609,346 +1745,44 @@
             padding-top: 2px;
         }
 
-        /* Boarding section day label colour */
-        .boarding .day-label {
-            color: #7c3aed;
-        }
+        .boarding .day-label { color: #7c3aed; }
+        .boarding-school .day-label { color: #e11d48; }
 
-        /* Boarding School section day label colour */
-        .boarding-school .day-label {
-            color: #e11d48;
-        }
-
-        /* Boarding AM-only VP control — narrower, no PM */
+        /* Boarding AM-only VP control */
         .vp-control-am {
             display: flex;
             align-items: center;
             gap: 0;
         }
 
-        /* Section content wrapper */
-        .section-content {
-            background: var(--bg-white);
-            border: 1px solid var(--border-light);
-            border-top: none;
-            border-radius: 0 0 12px 12px;
-            /* overflow:clip rounds corners without creating a scroll container */
-            overflow: clip;
-        }
-
-        .column-header {
-            background: var(--brand-gradient);
-            color: white;
-            padding: 0.75rem 1rem;
-            font-weight: 700;
-            font-size: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .column-count {
-            background: rgba(255,255,255,0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-        }
-
-        /* Table Header */
-        .table-header {
-            display: grid;
-            grid-template-columns: 2fr 50px 80px 140px 1.5fr 32px;
-            gap: 0.25rem;
-            padding: 0.5rem 0.75rem;
-            background: #f1f5f9;
-            font-weight: 700;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        /* Dog Row */
-        .dog-rows {
-            /* Force all dogs visible — no mini scroll within sections */
-            max-height: none !important;
-            overflow: visible !important;
-            height: auto !important;
-        }
-
-        .dog-row {
-            display: grid;
-            grid-template-columns: 2fr 50px 80px 140px 1.5fr 32px;
-            gap: 0.25rem;
-            padding: 0.4rem 0.75rem;
-            border-bottom: 1px solid var(--border-light);
-            align-items: center;
-            transition: background 0.15s ease;
-        }
-
-        .dog-row:hover {
-            background: #f8fafc;
-        }
-
-        .dog-row:last-child {
-            border-bottom: none;
-        }
-
-        /* Dog Name Display */
-        .dog-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-dark);
-            padding: 0.4rem 0;
-        }
-
-        /* Form Controls */
-        .photo-check {
-            display: flex;
-            justify-content: center;
-        }
-
-        .photo-checkbox {
-            width: 28px;
-            height: 28px;
-            appearance: none;
-            border: 2px solid var(--border-light);
-            border-radius: 6px;
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-
-        .photo-checkbox:checked {
-            background: var(--success-green);
-            border-color: var(--success-green);
-        }
-
-        .photo-checkbox:checked::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        /* Walk Select */
-        .walk-select {
-            width: 100%;
-            padding: 0.4rem;
-            border: 2px solid var(--border-light);
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-family: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            background: white;
-        }
-
-        .walk-select:focus {
-            outline: none;
-            border-color: var(--brand-blue);
-        }
-
-        .walk-select.walk-booked {
-            background: #fef3c7;
-            border-color: var(--warning-amber);
-        }
-
-        .walk-select.walk-transferred {
-            background: #dcfce7;
-            border-color: var(--success-green);
-        }
-
-        /* V/P Control - AM/PM */
-        .vp-control {
-            display: flex;
-            align-items: center;
-            gap: 0;
-        }
-
-        .vp-select {
-            width: 36px;
-            padding: 0.35rem 0.1rem;
-            border: 2px solid var(--border-light);
-            border-radius: 0;
-            font-size: 0.75rem;
-            font-family: inherit;
-            font-weight: 700;
-            cursor: pointer;
-            background: white;
-            text-align: center;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .vp-select.vp-am {
-            border-left: none;
-        }
-
-        .vp-select.vp-pm {
-            border-left: none;
-        }
-
-        .vp-select:focus {
-            outline: none;
-            border-color: var(--brand-blue);
-            z-index: 1;
-        }
-
-        /* Van pickup styles - V (legacy) and BV use blue */
-        .vp-select.van-pickup,
-        .vp-select.van-bv {
-            background: #dbeafe;
-            border-color: #3b82f6;
-            color: #1e40af;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* SV - Small Van - green */
-        .vp-select.van-sv {
-            background: #d1fae5;
-            border-color: #10b981;
-            color: #065f46;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* DV - Dispatch/Dog Van - amber */
-        .vp-select.van-dv {
-            background: #fef3c7;
-            border-color: #f59e0b;
-            color: #92400e;
-            position: relative;
-            z-index: 1;
-        }
-
-        .vp-select.parent-pickup {
-            background: #f3e8ff;
-            border-color: #a855f7;
-            color: #7c3aed;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Stop selects - AM on left, PM on right (dropdown 1-20) */
-        .stop-select {
-            width: 36px;
-            padding: 0.3rem 0.1rem;
-            border: 2px solid var(--border-light);
-            font-size: 0.75rem;
-            font-family: inherit;
-            font-weight: 700;
-            text-align: center;
-            background: white;
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-        }
-
-        .stop-select.stop-am {
-            border-radius: 6px 0 0 6px;
-        }
-
-        .stop-select.stop-pm {
-            border-radius: 0 6px 6px 0;
-            border-left: none;
-        }
-
-        .stop-select:focus {
-            outline: none;
-            border-color: var(--brand-blue);
-            z-index: 1;
-        }
-
-        .stop-select:disabled {
-            background: #f1f5f9;
-            color: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .stop-select.has-value:not(:disabled) {
-            background: #dbeafe;
-            border-color: #3b82f6;
-            color: #1e40af;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Notes Input */
-        .notes-input {
-            width: 100%;
-            padding: 0.4rem;
-            border: 2px solid var(--border-light);
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-family: inherit;
-            transition: border-color 0.2s ease;
-        }
-
-        .notes-input:focus {
-            outline: none;
-            border-color: var(--brand-blue);
-        }
-
-        .notes-input:not(:placeholder-shown) {
-            background: #fffbeb;
-            border-color: var(--warning-amber);
-        }
-
-        /* Delete Button */
-        .delete-btn {
-            width: 28px;
-            height: 28px;
-            border: none;
-            background: #fee2e2;
-            color: #ef4444;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .delete-btn:hover {
-            background: #ef4444;
-            color: white;
-        }
-
-        /* Notes Toggle Button — hidden on desktop (notes always visible) */
-        .notes-toggle {
-            display: none;
-        }
-
-        /* Empty Board State */
+        /* ================================================================
+           EMPTY STATE
+           ================================================================ */
         .empty-board {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: 3rem 1.5rem;
             color: var(--text-muted);
         }
 
         .empty-board-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
         }
 
         .empty-board-text {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
         }
 
         .empty-board-hint {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             opacity: 0.7;
         }
 
-        /* Modal */
+        /* ================================================================
+           MODAL
+           ================================================================ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -1960,6 +1794,8 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
         .modal-overlay.active {
@@ -1968,22 +1804,30 @@
 
         .modal {
             background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 400px;
-            width: 90%;
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            max-width: 360px;
+            width: calc(100% - 2rem);
             box-shadow: var(--shadow-lg);
+            animation: modalPop 0.2s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         .modal-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
+            font-size: 1.15rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
         }
 
         .modal-text {
             color: var(--text-muted);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         .modal-actions {
@@ -1992,148 +1836,56 @@
             justify-content: flex-end;
         }
 
-        /* Toast Notifications */
+        /* ================================================================
+           TOAST NOTIFICATIONS
+           ================================================================ */
         .toast-container {
             position: fixed;
-            bottom: 1rem;
-            right: 1rem;
+            /* Above bottom nav */
+            bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 12px);
+            left: 0.75rem;
+            right: 0.75rem;
             z-index: 1001;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .toast {
             background: var(--text-dark);
             color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
             box-shadow: var(--shadow-lg);
-            animation: slideIn 0.3s ease;
+            animation: slideUp 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
         .toast.success { background: var(--success-green); }
-        .toast.error { background: #ef4444; }
+        .toast.error { background: var(--danger-red); }
 
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-
-        /* Additional column options */
-        .board-container.cols-5 { grid-template-columns: repeat(5, 1fr); }
-        .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
 
         /* ================================================================
-           MOBILE CASCADE OVERRIDES
-           These MUST come AFTER global rules to win the CSS cascade.
-           Global styles at lines ~1200+ otherwise override the earlier
-           mobile media query rules due to same specificity + later source.
+           VERY SMALL PHONES (< 400px)
            ================================================================ */
-        @media (max-width: 768px) {
-            /* Hide table headers on mobile — card layout uses inline labels */
-            .table-header,
-            .table-header.boarding-header {
-                display: none !important;
-            }
-
-            /* Ensure 4-column mobile card grid for ALL row types */
-            .dog-row {
-                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
-            }
-
-            .dog-row.boarding {
-                grid-template-columns: 1fr 48px minmax(80px, 110px) 44px;
-            }
-
-            /* Boarding crate: span columns 2-3 so text isn't truncated */
-            .dog-row.boarding .crate-select {
-                grid-column: 2 / 4;
-                grid-row: 2;
-                align-self: center;
-                justify-self: stretch;
-                width: auto;
-                min-height: 44px;
-                font-size: 16px;
-                font-family: inherit;
-                font-weight: 700;
-                padding: 0.4rem 0.3rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                padding-top: 0.5rem;
-                border-radius: 8px;
-            }
-
-            /* Boarding notes toggle: move to column 4 (shares with delete on row 1) */
-            .dog-row.boarding .notes-toggle {
-                grid-column: 4;
-                grid-row: 2;
-                justify-self: center;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-                padding-top: 0.5rem;
-            }
-
-            /* Boarding date inputs: row 3, split across full width */
-            .dog-row.boarding .boarding-checkin {
-                grid-column: 1 / 3;
-                grid-row: 3;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-
-            .dog-row.boarding .boarding-checkout {
-                grid-column: 3 / 5;
-                grid-row: 3;
-                padding-top: 0.5rem;
-                margin-top: 0.25rem;
-                border-top: 2px solid var(--border-light);
-            }
-
-            .dog-row.boarding .boarding-checkin .boarding-date-input,
-            .dog-row.boarding .boarding-checkout .boarding-date-input {
-                min-height: 44px;
-                font-size: 16px;
-            }
-
-            /* Boarding notes input: moved to row 4 (after dates) */
-            .dog-row.boarding .notes-input {
-                grid-column: 1 / 5;
-                grid-row: 4;
-            }
-
-            /* Grooming mobile: 4-column card (Name across 1-3 | Delete in 4) */
-            .dog-row.grooming {
-                grid-template-columns: 1fr 1fr 70px 44px;
-            }
-
-            /* Boarding School mobile: 4-column card (Name across 1-3 | Delete in 4) */
-            .dog-row.boarding-school {
-                grid-template-columns: 1fr 1fr 80px 44px;
-            }
-
-            /* Grooming and Boarding School table headers hidden on mobile */
-            .table-header.grooming-header,
-            .table-header.boarding-school-header {
-                display: none !important;
-            }
-        }
-
-        /* Very small phones cascade fix */
         @media (max-width: 400px) {
             .dog-row {
                 grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
+                padding: 0.55rem 0.5rem;
             }
 
             .dog-row.boarding {
                 grid-template-columns: 1fr 44px minmax(70px, 90px) 40px;
             }
 
-            /* Grooming and Boarding School: same compact layout on very small phones */
             .dog-row.grooming {
                 grid-template-columns: 1fr 1fr 60px 40px;
             }
@@ -2141,6 +1893,326 @@
             .dog-row.boarding-school {
                 grid-template-columns: 1fr 1fr 70px 40px;
             }
+
+            .dog-row .dog-name,
+            .dog-row.grooming .dog-name,
+            .dog-row.boarding-school .dog-name {
+                font-size: 0.9rem;
+            }
+
+            .header-subtitle {
+                display: none;
+            }
+
+            .stat-value {
+                font-size: 1.15rem;
+            }
+
+            .stat-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+        }
+
+        /* ================================================================
+           TABLET & DESKTOP (min-width: 768px) — Scale UP
+           ================================================================ */
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 0;
+            }
+
+            /* Hide bottom nav on tablet/desktop */
+            .bottom-nav {
+                display: none;
+            }
+
+            /* Show classic tab nav */
+            .tab-nav {
+                display: flex;
+                background: var(--bg-white);
+                border-bottom: 2px solid var(--border-light);
+                padding: 0 1rem;
+            }
+
+            .tab-btn {
+                padding: 1rem 2rem;
+                font-size: 1.1rem;
+                font-weight: 700;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                color: var(--text-muted);
+                border-bottom: 3px solid transparent;
+                margin-bottom: -2px;
+                transition: all 0.2s ease;
+                font-family: inherit;
+            }
+
+            .tab-btn:hover { color: var(--brand-blue); }
+
+            .tab-btn.active {
+                color: var(--brand-blue);
+                border-bottom-color: var(--brand-blue);
+            }
+
+            .tab-actions {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 0;
+            }
+
+            /* Header larger */
+            .header {
+                padding: 1rem 1.5rem;
+                padding-top: calc(1rem + var(--safe-top));
+            }
+
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .header-subtitle {
+                font-size: 0.875rem;
+            }
+
+            .current-time {
+                font-size: 1.25rem;
+            }
+
+            .refresh-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+                background: #f59e0b;
+                border: 2px solid #fbbf24;
+                color: white;
+                backdrop-filter: none;
+            }
+
+            .refresh-btn:hover {
+                background: #d97706;
+                border-color: #d97706;
+                transform: rotate(180deg);
+            }
+
+            /* Tab content padding */
+            .tab-content {
+                padding: 1rem;
+            }
+
+            /* Staging area always expanded on tablet */
+            .staging-area .staging-body {
+                max-height: 600px !important;
+                padding: 0 1rem 1rem !important;
+            }
+
+            .staging-chevron {
+                display: none;
+            }
+
+            .staging-area {
+                padding: 0;
+            }
+
+            .staging-header {
+                cursor: default;
+            }
+
+            .staging-input-row {
+                flex-wrap: nowrap;
+            }
+
+            .staging-input {
+                flex: 1 1 auto;
+            }
+
+            /* Van legend always expanded */
+            .van-legend .van-legend-body {
+                max-height: 400px !important;
+            }
+
+            .van-legend-header .van-chevron {
+                display: none;
+            }
+
+            .van-legend-content {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            /* Stats bar wraps nicely */
+            .stats-bar {
+                flex-wrap: wrap;
+            }
+
+            .stat-card {
+                padding: 1rem 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            /* Show table headers on desktop */
+            .table-header {
+                display: grid;
+                grid-template-columns: 2fr 50px 80px 140px 1.5fr 32px;
+                gap: 0.25rem;
+                padding: 0.5rem 0.75rem;
+                background: #f1f5f9;
+                font-weight: 700;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--border-light);
+            }
+
+            .table-header.boarding-header {
+                display: grid;
+                grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
+            }
+
+            .table-header.grooming-header {
+                display: grid;
+                grid-template-columns: 2fr 110px 110px 70px 32px;
+            }
+
+            .table-header.boarding-school-header {
+                display: grid;
+                grid-template-columns: 2fr 120px 120px 80px 32px;
+            }
+
+            /* Dog rows — table layout on desktop */
+            .dog-row {
+                display: grid;
+                grid-template-columns: 2fr 50px 80px 140px 1.5fr 32px;
+                gap: 0.25rem;
+                padding: 0.4rem 0.75rem;
+                margin: 0;
+                border-radius: 0;
+                border-width: 0;
+                border-bottom: 1px solid var(--border-light);
+                border-left-width: 4px;
+                border-left-style: solid;
+                box-shadow: none;
+                grid-template-rows: auto;
+            }
+
+            .dog-row:last-child {
+                border-bottom: none;
+            }
+
+            .dog-row .dog-name {
+                font-size: 0.95rem;
+                font-weight: 700;
+                padding: 0.4rem 0;
+            }
+
+            /* Hide notes toggle on desktop (notes always visible) */
+            .notes-toggle { display: none !important; }
+
+            /* Notes always visible on desktop */
+            .dog-row .notes-input {
+                opacity: 1;
+                min-height: auto;
+                padding: 0.4rem;
+                margin: 0;
+                border-width: 2px;
+                border-style: solid;
+                border-color: var(--border-light);
+                font-size: 0.8rem;
+            }
+
+            /* VP group labels hidden on desktop */
+            .vp-group-label { display: none !important; }
+            .vp-divider { display: none; }
+
+            /* Photo checkbox smaller on desktop */
+            .photo-checkbox {
+                width: 28px;
+                height: 28px;
+            }
+
+            .photo-checkbox:checked::after {
+                font-size: 1rem;
+            }
+
+            .dog-row .photo-check::before { display: none; }
+
+            /* Delete button smaller */
+            .delete-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 1.1rem;
+            }
+
+            /* Walk select smaller */
+            .walk-select {
+                font-size: 0.8rem;
+                min-height: auto;
+                padding: 0.4rem;
+            }
+
+            /* VP selects smaller */
+            .vp-select {
+                width: 36px;
+                min-height: auto;
+                font-size: 0.75rem;
+                padding: 0.35rem 0.1rem;
+            }
+
+            /* Stop selects smaller */
+            .stop-select {
+                width: 36px;
+                min-height: auto;
+                font-size: 0.75rem;
+                padding: 0.3rem 0.1rem;
+            }
+
+            /* Desktop boarding row */
+            .dog-row.boarding {
+                grid-template-columns: 2fr 50px 80px 90px 70px 100px 100px 1.5fr 32px;
+                grid-template-rows: auto;
+            }
+
+            /* Desktop grooming row */
+            .dog-row.grooming {
+                grid-template-columns: 2fr 110px 110px 70px 32px;
+                grid-template-rows: auto;
+            }
+
+            /* Desktop boarding school row */
+            .dog-row.boarding-school {
+                grid-template-columns: 2fr 120px 120px 80px 32px;
+                grid-template-rows: auto;
+            }
+
+            /* Multi-column board layout */
+            .board-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .board-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
+            .board-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1100px) {
+            .board-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .board-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (min-width: 1400px) {
+            .board-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
+            .board-container.cols-5 { grid-template-columns: repeat(5, 1fr); }
+            .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
         }
     </style>
 </head>
@@ -2156,13 +2228,13 @@
         </div>
         <div class="header-right">
             <div class="current-time" id="currentTime">--:--</div>
-            <button class="btn refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
+            <button class="refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
                 🔄
             </button>
         </div>
     </header>
 
-    <!-- Tab Navigation -->
+    <!-- Tab Navigation (desktop only — hidden on mobile via CSS) -->
     <nav class="tab-nav">
         <button class="tab-btn active" data-tab="today" onclick="switchTab('today')">
             📅 TODAY
@@ -2172,7 +2244,7 @@
         </button>
         <div class="tab-actions">
             <button class="btn btn-success" onclick="transferToToday()">
-                ⬅️ Transfer Tomorrow → Today
+                ⬅️ Transfer → Today
             </button>
             <button class="btn btn-primary" onclick="saveBoard()">
                 💾 Save
@@ -2182,35 +2254,38 @@
 
     <!-- Today Tab -->
     <div class="tab-content active" id="today-tab">
-        <!-- Staging Area -->
-        <div class="staging-area">
-            <div class="staging-header">
+        <!-- Staging Area — Collapsible -->
+        <div class="staging-area" id="today-staging-area">
+            <div class="staging-header" onclick="toggleStaging('today')">
                 <div class="staging-title">
                     🐕 Add Dogs
                     <span class="staging-count" id="today-staging-count">0</span>
                 </div>
-                <div>
-                    <button class="btn btn-outline btn-small" onclick="clearStaging('today')">Clear Staging</button>
+                <div class="staging-chevron">
+                    <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); clearStaging('today')">Clear</button>
+                    <span class="chevron-icon">▼</span>
                 </div>
             </div>
-            <div class="staging-input-row">
-                <input type="text" class="staging-input" id="today-staging-input" 
-                       placeholder="Type dog name and press Enter..." 
-                       onkeypress="handleStagingKeypress(event, 'today')">
-                <select class="service-type-select" id="today-service-type">
-                    <option value="Full Day">☀️ Full Day</option>
-                    <option value="Half Day AM">🌅 Half Day</option>
-                    <option value="Boarding">🏖️ Boarding Hol</option>
-                    <option value="Grooming">✂️ Grooming Dogs</option>
-                    <option value="Boarding School">🎓 Boarding School</option>
-                </select>
-                <button class="btn btn-primary" onclick="addToStaging('today')">+ Add</button>
-            </div>
-            <div class="staging-dogs" id="today-staging-dogs"></div>
-            <div class="staging-actions">
-                <button class="btn btn-success" onclick="addStagedToBoard('today')">
-                    ✅ Add to Board
-                </button>
+            <div class="staging-body">
+                <div class="staging-input-row">
+                    <input type="text" class="staging-input" id="today-staging-input" 
+                           placeholder="Type dog name and press Enter..." 
+                           onkeypress="handleStagingKeypress(event, 'today')">
+                    <select class="service-type-select" id="today-service-type">
+                        <option value="Full Day">☀️ Full Day</option>
+                        <option value="Half Day AM">🌅 Half Day</option>
+                        <option value="Boarding">🏖️ Boarding Hol</option>
+                        <option value="Grooming">✂️ Grooming</option>
+                        <option value="Boarding School">🎓 Boarding School</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addToStaging('today')">+ Add</button>
+                </div>
+                <div class="staging-dogs" id="today-staging-dogs"></div>
+                <div class="staging-actions">
+                    <button class="btn btn-success" onclick="addStagedToBoard('today')">
+                        ✅ Add to Board
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -2246,29 +2321,37 @@
             </div>
         </div>
 
-        <!-- Van Legend -->
-        <div class="van-legend">
-            <div class="van-item">
-                <span class="van-badge bv">BV</span>
-                <span>Big Van</span>
-                <select class="van-time-select" id="today-bv-time" onchange="updateVanTime('today', 'BV', this.value)">
-                </select>
+        <!-- Van Legend — Collapsible -->
+        <div class="van-legend" id="today-van-legend">
+            <div class="van-legend-header" onclick="toggleVanLegend('today')">
+                <span>🚐 Van Times & Legend</span>
+                <span class="van-chevron">▼</span>
             </div>
-            <div class="van-item">
-                <span class="van-badge dv">DV</span>
-                <span>Dispatch Van</span>
-                <select class="van-time-select" id="today-dv-time" onchange="updateVanTime('today', 'DV', this.value)">
-                </select>
-            </div>
-            <div class="van-item">
-                <span class="van-badge sv">SV</span>
-                <span>Small Van</span>
-                <select class="van-time-select" id="today-sv-time" onchange="updateVanTime('today', 'SV', this.value)">
-                </select>
-            </div>
-            <div class="van-item" style="margin-left: auto;">
-                <span style="color: var(--warning-amber);">Walk📆 = Booked</span>
-                <span style="color: var(--success-green); margin-left: 1rem;">Walk✅ = On Walking Board</span>
+            <div class="van-legend-body">
+                <div class="van-legend-content">
+                    <div class="van-item">
+                        <span class="van-badge bv">BV</span>
+                        <span>Big Van</span>
+                        <select class="van-time-select" id="today-bv-time" onchange="updateVanTime('today', 'BV', this.value)">
+                        </select>
+                    </div>
+                    <div class="van-item">
+                        <span class="van-badge dv">DV</span>
+                        <span>Dispatch Van</span>
+                        <select class="van-time-select" id="today-dv-time" onchange="updateVanTime('today', 'DV', this.value)">
+                        </select>
+                    </div>
+                    <div class="van-item">
+                        <span class="van-badge sv">SV</span>
+                        <span>Small Van</span>
+                        <select class="van-time-select" id="today-sv-time" onchange="updateVanTime('today', 'SV', this.value)">
+                        </select>
+                    </div>
+                    <div class="walk-legend">
+                        <span style="color: var(--warning-amber);">Walk📆 = Booked</span>
+                        <span style="color: var(--success-green);">Walk✅ = On Walking Board</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2284,35 +2367,38 @@
 
     <!-- Tomorrow Tab -->
     <div class="tab-content" id="tomorrow-tab">
-        <!-- Staging Area -->
-        <div class="staging-area">
-            <div class="staging-header">
+        <!-- Staging Area — Collapsible -->
+        <div class="staging-area" id="tomorrow-staging-area">
+            <div class="staging-header" onclick="toggleStaging('tomorrow')">
                 <div class="staging-title">
                     🐕 Add Dogs
                     <span class="staging-count" id="tomorrow-staging-count">0</span>
                 </div>
-                <div>
-                    <button class="btn btn-outline btn-small" onclick="clearStaging('tomorrow')">Clear Staging</button>
+                <div class="staging-chevron">
+                    <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); clearStaging('tomorrow')">Clear</button>
+                    <span class="chevron-icon">▼</span>
                 </div>
             </div>
-            <div class="staging-input-row">
-                <input type="text" class="staging-input" id="tomorrow-staging-input" 
-                       placeholder="Type dog name and press Enter..." 
-                       onkeypress="handleStagingKeypress(event, 'tomorrow')">
-                <select class="service-type-select" id="tomorrow-service-type">
-                    <option value="Full Day">☀️ Full Day</option>
-                    <option value="Half Day AM">🌅 Half Day</option>
-                    <option value="Boarding">🏖️ Boarding Hol</option>
-                    <option value="Grooming">✂️ Grooming Dogs</option>
-                    <option value="Boarding School">🎓 Boarding School</option>
-                </select>
-                <button class="btn btn-primary" onclick="addToStaging('tomorrow')">+ Add</button>
-            </div>
-            <div class="staging-dogs" id="tomorrow-staging-dogs"></div>
-            <div class="staging-actions">
-                <button class="btn btn-success" onclick="addStagedToBoard('tomorrow')">
-                    ✅ Add to Board
-                </button>
+            <div class="staging-body">
+                <div class="staging-input-row">
+                    <input type="text" class="staging-input" id="tomorrow-staging-input" 
+                           placeholder="Type dog name and press Enter..." 
+                           onkeypress="handleStagingKeypress(event, 'tomorrow')">
+                    <select class="service-type-select" id="tomorrow-service-type">
+                        <option value="Full Day">☀️ Full Day</option>
+                        <option value="Half Day AM">🌅 Half Day</option>
+                        <option value="Boarding">🏖️ Boarding Hol</option>
+                        <option value="Grooming">✂️ Grooming</option>
+                        <option value="Boarding School">🎓 Boarding School</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addToStaging('tomorrow')">+ Add</button>
+                </div>
+                <div class="staging-dogs" id="tomorrow-staging-dogs"></div>
+                <div class="staging-actions">
+                    <button class="btn btn-success" onclick="addStagedToBoard('tomorrow')">
+                        ✅ Add to Board
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -2341,25 +2427,33 @@
             </div>
         </div>
 
-        <!-- Van Legend -->
-        <div class="van-legend">
-            <div class="van-item">
-                <span class="van-badge bv">BV</span>
-                <span>Big Van</span>
-                <select class="van-time-select" id="tomorrow-bv-time" onchange="updateVanTime('tomorrow', 'BV', this.value)">
-                </select>
+        <!-- Van Legend — Collapsible -->
+        <div class="van-legend" id="tomorrow-van-legend">
+            <div class="van-legend-header" onclick="toggleVanLegend('tomorrow')">
+                <span>🚐 Van Times & Legend</span>
+                <span class="van-chevron">▼</span>
             </div>
-            <div class="van-item">
-                <span class="van-badge dv">DV</span>
-                <span>Dispatch Van</span>
-                <select class="van-time-select" id="tomorrow-dv-time" onchange="updateVanTime('tomorrow', 'DV', this.value)">
-                </select>
-            </div>
-            <div class="van-item">
-                <span class="van-badge sv">SV</span>
-                <span>Small Van</span>
-                <select class="van-time-select" id="tomorrow-sv-time" onchange="updateVanTime('tomorrow', 'SV', this.value)">
-                </select>
+            <div class="van-legend-body">
+                <div class="van-legend-content">
+                    <div class="van-item">
+                        <span class="van-badge bv">BV</span>
+                        <span>Big Van</span>
+                        <select class="van-time-select" id="tomorrow-bv-time" onchange="updateVanTime('tomorrow', 'BV', this.value)">
+                        </select>
+                    </div>
+                    <div class="van-item">
+                        <span class="van-badge dv">DV</span>
+                        <span>Dispatch Van</span>
+                        <select class="van-time-select" id="tomorrow-dv-time" onchange="updateVanTime('tomorrow', 'DV', this.value)">
+                        </select>
+                    </div>
+                    <div class="van-item">
+                        <span class="van-badge sv">SV</span>
+                        <span>Small Van</span>
+                        <select class="van-time-select" id="tomorrow-sv-time" onchange="updateVanTime('tomorrow', 'SV', this.value)">
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2372,6 +2466,26 @@
             </div>
         </div>
     </div>
+
+    <!-- Bottom Navigation (mobile only — hidden on tablet/desktop via CSS) -->
+    <nav class="bottom-nav">
+        <button class="bottom-tab active" data-tab="today" onclick="switchTab('today')">
+            <span class="tab-icon">📅</span>
+            <span>Today</span>
+        </button>
+        <button class="bottom-tab" data-tab="tomorrow" onclick="switchTab('tomorrow')">
+            <span class="tab-icon">📆</span>
+            <span>Tomorrow</span>
+        </button>
+        <div class="bottom-nav-actions">
+            <button class="bottom-action-btn transfer" onclick="transferToToday()" title="Transfer Tomorrow → Today">
+                ⬅️
+            </button>
+            <button class="bottom-action-btn save" onclick="saveBoard()" title="Save to Cloud">
+                💾
+            </button>
+        </div>
+    </nav>
 
     <!-- Transfer Confirmation Modal -->
     <div class="modal-overlay" id="transferModal">
@@ -2417,6 +2531,19 @@
             currentTab: 'today',
             initialLoadComplete: false  // Prevents autoSave until data is loaded
         };
+
+        // =====================
+        // Mobile UI: Collapsible Staging & Van Legend
+        // =====================
+        function toggleStaging(tab) {
+            const el = document.getElementById(`${tab}-staging-area`);
+            el.classList.toggle('expanded');
+        }
+
+        function toggleVanLegend(tab) {
+            const el = document.getElementById(`${tab}-van-legend`);
+            el.classList.toggle('expanded');
+        }
 
         // =====================
         // Time Options Generator
@@ -2495,15 +2622,22 @@
         }
 
         // =====================
-        // Tab Management
+        // Tab Management (handles both bottom nav and desktop tabs)
         // =====================
         function switchTab(tab) {
             state.currentTab = tab;
             
+            // Update desktop tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tab);
             });
             
+            // Update bottom nav tab buttons
+            document.querySelectorAll('.bottom-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            
+            // Switch content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -2705,6 +2839,7 @@
                                title="AM Stop Number">
                             ${generateStopOptions(stopAM)}
                         </select>
+                        <span class="vp-group-label">AM</span>
                         <select class="vp-select vp-am ${vpAMClass}" 
                                 onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
                                 title="Morning pickup">
@@ -2715,6 +2850,8 @@
                             <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
                             <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
                         </select>
+                        <div class="vp-divider"></div>
+                        <span class="vp-group-label">PM</span>
                         <select class="vp-select vp-pm ${vpPMClass}" 
                                 onchange="updateDog('${id}', 'vpPM', this.value); updateVPStyle(this)"
                                 title="Evening dropoff">
@@ -3033,7 +3170,6 @@
                 boardingHolDogs.forEach(d => { if (d.crate && crateLabels[d.crate]) crateCounts[d.crate] = (crateCounts[d.crate] || 0) + 1; });
                 boardingSchoolDogs.forEach(d => { if (d.crateSize && crateLabels[d.crateSize]) crateCounts[d.crateSize] = (crateCounts[d.crateSize] || 0) + 1; });
                 
-                // Build summary string: "Large 3, Medium 5, Small 1" — only codes with count > 0, in defined order
                 const crateSummary = ['HLL', 'HLM', 'HLS', 'HSB', 'HST']
                     .filter(code => crateCounts[code])
                     .map(code => `${crateLabels[code]} ${crateCounts[code]}`)
@@ -3042,7 +3178,6 @@
                     ? `<span class="crate-summary">${crateSummary}</span>`
                     : '';
                 
-                // Parent header with crate counts + combined dog count
                 boardingParentHtml += `
                     <div class="service-section boarding-parent-section">
                         <div class="section-header boarding-parent">
@@ -3055,7 +3190,6 @@
                         <div class="boarding-subsections">
                 `;
                 
-                // Sub-section: Boarding Hol
                 if (boardingHolDogs.length > 0) {
                     const bhConfig = serviceConfig['Boarding'];
                     const bhRowsHtml = boardingHolDogs.map(dog => createBoardingDogRow(dog)).join('');
@@ -3077,7 +3211,6 @@
                     `;
                 }
                 
-                // Sub-section: Boarding School
                 if (boardingSchoolDogs.length > 0) {
                     const bsConfig = serviceConfig['Boarding School'];
                     const bsRowsHtml = boardingSchoolDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
@@ -3099,14 +3232,13 @@
                     `;
                 }
                 
-                // Close parent container
                 boardingParentHtml += `
                         </div>
                     </div>
                 `;
             }
             
-            // Render sections in order: Half Day AM, Full Day, Boarding Parent, Grooming
+            // Render sections in order
             const orderedTypes = Object.keys(serviceGroups).sort((a, b) => 
                 serviceConfig[a].order - serviceConfig[b].order
             );
@@ -3114,14 +3246,11 @@
             for (const serviceType of orderedTypes) {
                 const sectionDogs = serviceGroups[serviceType];
                 
-                // Insert boarding parent at its correct position (order 3)
-                // Triggered once when we first hit the Boarding slot
                 if (serviceType === 'Boarding') {
                     html += boardingParentHtml;
                     continue;
                 }
                 
-                // Boarding School is already rendered inside the parent above
                 if (serviceType === 'Boarding School') continue;
                 
                 if (sectionDogs.length === 0) continue;
@@ -3129,7 +3258,6 @@
                 const config = serviceConfig[serviceType];
                 const isGrooming = serviceType === 'Grooming';
                 
-                // Each section type gets its own header and row layout
                 let tableHeaderClass, headerCols, rowsHtml;
                 
                 if (isGrooming) {
@@ -3234,17 +3362,15 @@
             const vpAMSelect = row.querySelector('.vp-am');
             const vpPMSelect = row.querySelector('.vp-pm');
             
-            // Update class for styling - remove all, add appropriate
+            // Update class for styling
             select.classList.remove('van-pickup', 'van-bv', 'van-sv', 'van-dv', 'parent-pickup');
             if (select.value === 'V' || select.value === 'BV') select.classList.add('van-bv');
             if (select.value === 'SV') select.classList.add('van-sv');
             if (select.value === 'DV') select.classList.add('van-dv');
             if (select.value === 'P') select.classList.add('parent-pickup');
             
-            // Van options that enable stop selects
             const vanOptions = ['V', 'BV', 'SV', 'DV'];
             
-            // Enable/disable AM stop select based on AM selection
             if (vpAMSelect && stopAMSelect) {
                 const isAMVan = vanOptions.includes(vpAMSelect.value);
                 stopAMSelect.disabled = !isAMVan;
@@ -3256,7 +3382,6 @@
                 }
             }
             
-            // Enable/disable PM stop select based on PM selection (not present on boarding rows)
             if (vpPMSelect && stopPMSelect) {
                 const isPMVan = vanOptions.includes(vpPMSelect.value);
                 stopPMSelect.disabled = !isPMVan;
@@ -3270,7 +3395,6 @@
         }
 
         function updateStopStyle(select) {
-            // Toggle has-value class based on selection
             if (select.value) {
                 select.classList.add('has-value');
             } else {
@@ -3301,7 +3425,6 @@
         }
 
         async function confirmTransfer() {
-            // Try to use Google Sheets transfer endpoint
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(CONFIG.SCRIPT_URL, {
@@ -3315,7 +3438,6 @@
                     const result = await response.json();
                     
                     if (result.success) {
-                        // Reload data from server
                         await loadBoard();
                         closeModal();
                         showToast(`✅ Transferred ${result.transferred} dogs to Today!`, 'success');
@@ -3324,7 +3446,6 @@
                     }
                 } catch (error) {
                     console.error('Failed to transfer via Google Sheets:', error);
-                    // Fall through to local transfer
                 }
             }
             
@@ -3332,7 +3453,6 @@
             state.today.dogs = JSON.parse(JSON.stringify(state.tomorrow.dogs));
             state.today.vanTimes = JSON.parse(JSON.stringify(state.tomorrow.vanTimes));
             
-            // Reset photo status and notes for today (fresh day)
             state.today.dogs.forEach(dog => {
                 dog.photo = false;
                 dog.notes = '';
@@ -3341,12 +3461,10 @@
                 }
             });
             
-            // Clear tomorrow
             state.tomorrow.dogs = [];
             state.tomorrow.staging = [];
             state.tomorrow.vanTimes = { BV: '07:30', DV: '08:00', SV: '08:30' };
             
-            // Re-render
             populateVanTimeDropdowns();
             renderBoard('today');
             renderBoard('tomorrow');
@@ -3354,10 +3472,7 @@
             
             closeModal();
             showToast('✅ Tomorrow transferred to Today successfully!', 'success');
-            
-            // Switch to Today tab
             switchTab('today');
-            
             saveBoard();
         }
 
@@ -3369,7 +3484,6 @@
         // Background Data Sync
         // =====================
 
-        // Manual refresh from cloud (for when you want to pull latest data)
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.classList.add('refreshing');
@@ -3415,10 +3529,8 @@
         }
 
         async function loadBoardSilent() {
-            // Load without showing toast (for background refresh)
             let data = null;
             
-            // Try Google Sheets first
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
@@ -3432,7 +3544,6 @@
                 }
             }
             
-            // Fall back to localStorage
             if (!data) {
                 const saved = localStorage.getItem('fairyTailsStaffBoard');
                 if (saved) {
@@ -3447,7 +3558,6 @@
             
             if (!data) return;
             
-            // Check if data has changed
             const currentData = JSON.stringify({
                 today: state.today,
                 tomorrow: state.tomorrow
@@ -3469,9 +3579,7 @@
                 tomorrow: newTomorrow
             });
             
-            // Only re-render if data has changed
             if (currentData !== newData) {
-                // Calculate what changed
                 const oldTodayCount = state.today.dogs.length;
                 const oldTomorrowCount = state.tomorrow.dogs.length;
                 const newTodayCount = newToday.dogs.length;
@@ -3491,7 +3599,7 @@
         }
 
         // =====================
-        // Data Persistence (Google Sheets + localStorage fallback)
+        // Data Persistence
         // =====================
         
         async function saveBoard() {
@@ -3509,15 +3617,13 @@
                 }
             };
             
-            // Always save to localStorage as backup
             localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
             
-            // Save to Google Sheets if enabled
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Google Apps Script requires this
+                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -3536,7 +3642,6 @@
         async function loadBoard() {
             let loadedFromSheets = false;
             
-            // Try to load from Google Sheets first (source of truth)
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
@@ -3560,8 +3665,6 @@
                 }
             }
             
-            // Fall back to localStorage ONLY if Google Sheets failed
-            // But we need to be careful not to use stale localStorage data
             if (!loadedFromSheets) {
                 console.warn('⚠️ Google Sheets unavailable - using localStorage (read-only mode until Sheets connects)');
                 const saved = localStorage.getItem('fairyTailsStaffBoard');
@@ -3580,11 +3683,9 @@
                     }
                 }
                 
-                // Show warning that we're in offline mode
                 showToast('⚠️ Could not connect to Google Sheets - changes may not save', 'error');
             }
             
-            // Populate van time dropdowns
             populateVanTimeDropdowns();
             
             renderStaging('today');
@@ -3593,22 +3694,19 @@
             renderBoard('tomorrow');
             
             // CRITICAL: Only enable autoSave if we successfully loaded from Google Sheets
-            // This prevents stale localStorage from overwriting fresh Sheet data
             if (loadedFromSheets) {
                 state.initialLoadComplete = true;
                 console.log('✅ Initial load complete - autoSave now enabled');
             } else {
                 state.initialLoadComplete = false;
                 console.warn('⚠️ AutoSave DISABLED - waiting for Google Sheets connection');
-                
-                // Retry loading from Sheets every 10 seconds until successful
                 setTimeout(retryLoadFromSheets, 10000);
             }
         }
         
         // Retry loading from Google Sheets if initial load failed
         async function retryLoadFromSheets() {
-            if (state.initialLoadComplete) return; // Already loaded
+            if (state.initialLoadComplete) return;
             
             console.log('🔄 Retrying Google Sheets connection...');
             
@@ -3618,13 +3716,11 @@
                     const result = await response.json();
                     
                     if (result.success && result.data) {
-                        // Check if remote has more data than local (prefer remote)
                         const remoteToday = result.data.today?.dogs?.length || 0;
                         const remoteTomorrow = result.data.tomorrow?.dogs?.length || 0;
                         const localToday = state.today.dogs.length;
                         const localTomorrow = state.tomorrow.dogs.length;
                         
-                        // Use remote data if it has more dogs (more likely to be correct)
                         if (remoteToday >= localToday || remoteTomorrow >= localTomorrow) {
                             state.today.dogs = result.data.today?.dogs || [];
                             state.today.staging = result.data.today?.staging || [];
@@ -3650,15 +3746,12 @@
                 }
             }
             
-            // Still not connected, retry again
             setTimeout(retryLoadFromSheets, 10000);
         }
 
-        // Auto-save on changes (to both localStorage and Google Sheets)
-        // SMART SAVE: Prevents overwriting remote data with empty local data
+        // Auto-save on changes (SMART SAVE with race condition protection)
         async function autoSave(forceLocalOnly = false) {
             // CRITICAL: Never save until initial data load is complete
-            // This prevents empty local state from overwriting remote data on page load
             if (!state.initialLoadComplete) {
                 console.log('Initial load not complete - skipping save to prevent data loss');
                 return;
@@ -3678,22 +3771,16 @@
                 }
             };
             
-            // Always save to localStorage
             localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
             
-            // Skip Google Sheets save if forced local only
             if (forceLocalOnly) return;
             
-            // Save to Google Sheets if enabled
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
-                    // SMART SAVE: Check if we're about to overwrite remote data with less data
                     const localTodayCount = state.today.dogs.length;
                     const localTomorrowCount = state.tomorrow.dogs.length;
                     const localTotal = localTodayCount + localTomorrowCount;
                     
-                    // ALWAYS check remote first to prevent data loss
-                    // This adds one extra request but prevents catastrophic data loss
                     console.log(`Checking remote before saving (local: Today=${localTodayCount}, Tomorrow=${localTomorrowCount})...`);
                     
                     try {
@@ -3705,20 +3792,13 @@
                             const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
                             const remoteTotal = remoteTodayCount + remoteTomorrowCount;
                             
-                            // PROTECTION: If remote has MORE dogs than local, don't overwrite!
-                            // This catches race conditions where remote was updated but local is stale
                             if (remoteTotal > localTotal) {
                                 console.warn(`⚠️ BLOCKED SAVE: Remote has more data (${remoteTotal}) than local (${localTotal})`);
-                                console.warn(`   Remote: Today=${remoteTodayCount}, Tomorrow=${remoteTomorrowCount}`);
-                                console.warn(`   Local:  Today=${localTodayCount}, Tomorrow=${localTomorrowCount}`);
-                                
-                                // Reload remote data instead of saving
                                 showToast('🔄 Syncing newer data from cloud...', 'info');
                                 await loadBoardSilent();
                                 return;
                             }
                             
-                            // PROTECTION: If both are empty locally but remote has data, don't save
                             if (localTotal === 0 && remoteTotal > 0) {
                                 console.warn(`⚠️ BLOCKED SAVE: Local is empty but remote has ${remoteTotal} dogs`);
                                 await loadBoardSilent();
@@ -3727,10 +3807,9 @@
                         }
                     } catch (checkError) {
                         console.error('Could not verify remote state - skipping save to be safe:', checkError);
-                        return; // Don't save if we can't verify remote state
+                        return;
                     }
                     
-                    // Safe to save - local has same or more data than remote
                     await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -3752,18 +3831,14 @@
         setInterval(autoSave, 94000);
 
         // Periodic inbound refresh (Sheets → website) every 93 seconds
-        // Offset from outbound to minimise read/write clashes on Google Sheets
         setInterval(loadBoardSilent, 93000);
 
         // =====================
         // Initialization
         // =====================
         function init() {
-            // Update clock
             updateTime();
             setInterval(updateTime, 1000);
-            
-            // Load saved data
             loadBoard();
         }
 
