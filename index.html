@@ -1377,6 +1377,24 @@
             background: linear-gradient(135deg, #fb7185 0%, #f43f5e 100%);
         }
 
+        /* Boarding parent header — stats row (crate counts + dog count) */
+        .boarding-header-stats {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .crate-summary {
+            background: rgba(255,255,255,0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+
         /* Grooming-specific grid: Name | Pick Up | Drop Off | Van Type | Delete */
         .table-header.grooming-header {
             grid-template-columns: 2fr 110px 110px 70px 32px;
@@ -3003,12 +3021,36 @@
             let boardingParentHtml = '';
             
             if (totalBoardingDogs > 0) {
-                // Parent header with combined count
+                // Count crates across both Boarding Hol (field: crate) and Boarding School (field: crateSize)
+                const crateLabels = {
+                    'HLL': 'Large',
+                    'HLM': 'Medium',
+                    'HLS': 'Small',
+                    'HSB': 'House Bottom',
+                    'HST': 'House Small'
+                };
+                const crateCounts = {};
+                boardingHolDogs.forEach(d => { if (d.crate && crateLabels[d.crate]) crateCounts[d.crate] = (crateCounts[d.crate] || 0) + 1; });
+                boardingSchoolDogs.forEach(d => { if (d.crateSize && crateLabels[d.crateSize]) crateCounts[d.crateSize] = (crateCounts[d.crateSize] || 0) + 1; });
+                
+                // Build summary string: "Large 3, Medium 5, Small 1" — only codes with count > 0, in defined order
+                const crateSummary = ['HLL', 'HLM', 'HLS', 'HSB', 'HST']
+                    .filter(code => crateCounts[code])
+                    .map(code => `${crateLabels[code]} ${crateCounts[code]}`)
+                    .join(', ');
+                const crateSummaryHtml = crateSummary
+                    ? `<span class="crate-summary">${crateSummary}</span>`
+                    : '';
+                
+                // Parent header with crate counts + combined dog count
                 boardingParentHtml += `
                     <div class="service-section boarding-parent-section">
                         <div class="section-header boarding-parent">
                             <span><span class="section-icon">🏠</span>Boarding</span>
-                            <span class="section-count">${totalBoardingDogs} dog${totalBoardingDogs !== 1 ? 's' : ''}</span>
+                            <div class="boarding-header-stats">
+                                ${crateSummaryHtml}
+                                <span class="section-count">${totalBoardingDogs} dog${totalBoardingDogs !== 1 ? 's' : ''}</span>
+                            </div>
                         </div>
                         <div class="boarding-subsections">
                 `;
