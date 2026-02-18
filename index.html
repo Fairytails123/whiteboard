@@ -294,6 +294,12 @@
             color: white;
         }
 
+        /* ADDED: Load Plan transfer button — amber/orange gradient */
+        .bottom-action-btn.loadplan {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
         .bottom-action-btn:active {
             transform: scale(0.9);
         }
@@ -2246,6 +2252,10 @@
             <button class="btn btn-success" onclick="transferToToday()">
                 ⬅️ Transfer → Today
             </button>
+            <!-- ADDED: Transfer dogs to Load Plan website -->
+            <button class="btn" onclick="transferToLoadPlan()" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none;">
+                🚐 Load Plan
+            </button>
             <button class="btn btn-primary" onclick="saveBoard()">
                 💾 Save
             </button>
@@ -2480,6 +2490,10 @@
         <div class="bottom-nav-actions">
             <button class="bottom-action-btn transfer" onclick="transferToToday()" title="Transfer Tomorrow → Today">
                 ⬅️
+            </button>
+            <!-- ADDED: Transfer dogs to Load Plan website -->
+            <button class="bottom-action-btn loadplan" onclick="transferToLoadPlan()" title="Send to Load Plan">
+                🚐
             </button>
             <button class="bottom-action-btn save" onclick="saveBoard()" title="Save to Cloud">
                 💾
@@ -3832,6 +3846,198 @@
 
         // Periodic inbound refresh (Sheets → website) every 93 seconds
         setInterval(loadBoardSilent, 93000);
+
+        // =====================================================
+        // ADDED: Transfer Dogs to Load Plan (localStorage)
+        // Writes to van_v5_PM or van_v5_NEXT_AM depending on
+        // which tab is active. Dogs are routed by van assignment
+        // into kennel boxes, filling left-to-right.
+        // =====================================================
+
+        // Box fill order constants — left-to-right per van section
+        const LOAD_PLAN_BOX_ORDER = {
+            bv: ['bv-c1', 'bv-c2', 'bv-c3', 'bv-c4', 'bv-c5', 'bv-c6', 'bv-c7',
+                 'bv-b1', 'bv-b2', 'bv-b3', 'bv-b4', 'bv-b5', 'bv-b6', 'bv-b7', 'bv-b8'],
+            sv: ['sv-c1', 'sv-c2', 'sv-c3', 'sv-c4', 'sv-c5',
+                 'sv-b1', 'sv-b2', 'sv-b3', 'sv-b4', 'sv-b5'],
+            dv: ['dv-l1', 'dv-l2', 'dv-m1', 'dv-m2', 'dv-m3', 'dv-m-xl', 'dv-r1', 'dv-r2']
+        };
+
+        // localStorage key prefix used by the Load Plan website
+        const LOAD_PLAN_STORAGE_PREFIX = 'van_v5_';
+
+        // ADDED: Load Plan Google Apps Script URL (for cross-device cloud sync)
+        const LOAD_PLAN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUeIiIJQZZeoo3aXHDdqVZNNqFKLhWhi_WhPVb6GUIvkMlfNxTKsOXyCTGdvAEsMLC/exec';
+
+        async function transferToLoadPlan() {
+            const tab = state.currentTab; // 'today' or 'tomorrow'
+            const dogs = state[tab].dogs;
+
+            // Determine which VP field to read and which plan to write
+            const vpField = tab === 'today' ? 'vpPM' : 'vpAM';
+            const planId = tab === 'today' ? 'PM' : 'NEXT_AM';
+            const planLabel = tab === 'today' ? 'PM' : 'Next Day AM';
+            const storageKey = LOAD_PLAN_STORAGE_PREFIX + planId;
+
+            // Categorise dogs by destination
+            const vanDogs = { bv: [], sv: [], dv: [] };
+            const trayDogs = [];
+            let skippedCount = 0;
+
+            dogs.forEach(dog => {
+                // Guard: skip dogs with no name
+                if (!dog.name || !dog.name.trim()) {
+                    skippedCount++;
+                    return;
+                }
+
+                const serviceType = dog.serviceType || '';
+
+                // SKIP: Half Day AM and Boarding School — not transferred
+                if (serviceType === 'Half Day AM' || serviceType === 'Boarding School') {
+                    skippedCount++;
+                    return;
+                }
+
+                // Full Day, Grooming, and Boarding Holiday: all route by van assignment
+                const vanAssignment = dog[vpField] || '';
+
+                if (vanAssignment === 'BV') {
+                    vanDogs.bv.push(dog.name);
+                } else if (vanAssignment === 'SV') {
+                    vanDogs.sv.push(dog.name);
+                } else if (vanAssignment === 'DV') {
+                    vanDogs.dv.push(dog.name);
+                } else if (vanAssignment === 'V') {
+                    // Generic van — goes to tray for manual assignment
+                    trayDogs.push(dog.name);
+                } else {
+                    // P (parent), empty, or unknown — skip entirely
+                    skippedCount++;
+                }
+            });
+
+            // Calculate totals
+            const vanTotal = vanDogs.bv.length + vanDogs.sv.length + vanDogs.dv.length;
+            const totalToTransfer = vanTotal + trayDogs.length;
+
+            // Guard: nothing to transfer
+            if (totalToTransfer === 0) {
+                showToast('No dogs to transfer to Load Plan', 'error');
+                return;
+            }
+
+            // Confirmation dialog with breakdown
+            const confirmMsg = 
+                `Transfer ${totalToTransfer} dogs to ${planLabel} Load Plan?\n\n` +
+                `This will CLEAR the existing ${planLabel} plan.\n\n` +
+                `🚐 BV: ${vanDogs.bv.length}\n` +
+                `🚗 SV: ${vanDogs.sv.length}\n` +
+                `📦 DV: ${vanDogs.dv.length}\n` +
+                `📋 Tray: ${trayDogs.length}\n` +
+                `⏭️ Skipped: ${skippedCount}`;
+
+            if (!confirm(confirmMsg)) return;
+
+            // Build the Load Plan state object (matches van_v5_ format)
+            const loadPlanState = {
+                tiles: {},
+                placements: {},
+                stops: {},
+                departures: {}
+            };
+
+            // Tile ID counter for uniqueness within this batch
+            let tileCounter = 0;
+            function generateLoadPlanTileId() {
+                tileCounter++;
+                return 't_lp_' + Date.now() + '_' + tileCounter + '_' + Math.random().toString(36).substr(2, 4);
+            }
+
+            // Fill van boxes with dogs (one per box first pass, then double up on second pass)
+            function fillVanBoxes(dogNames, boxes) {
+                // Create tile objects for each dog
+                const tileIds = dogNames.map(name => {
+                    const id = generateLoadPlanTileId();
+                    loadPlanState.tiles[id] = { id: id, text: name };
+                    return id;
+                });
+
+                // First pass: one dog per box (left to right)
+                let dogIndex = 0;
+                for (let i = 0; i < boxes.length && dogIndex < tileIds.length; i++) {
+                    if (!loadPlanState.placements[boxes[i]]) {
+                        loadPlanState.placements[boxes[i]] = [];
+                    }
+                    loadPlanState.placements[boxes[i]].push(tileIds[dogIndex]);
+                    dogIndex++;
+                }
+
+                // Second pass: double up (max 2 per box)
+                for (let i = 0; i < boxes.length && dogIndex < tileIds.length; i++) {
+                    if (!loadPlanState.placements[boxes[i]]) {
+                        loadPlanState.placements[boxes[i]] = [];
+                    }
+                    if (loadPlanState.placements[boxes[i]].length < 2) {
+                        loadPlanState.placements[boxes[i]].push(tileIds[dogIndex]);
+                        dogIndex++;
+                    }
+                }
+
+                // If overflow (more dogs than 2× boxes), remaining go to tray
+                while (dogIndex < tileIds.length) {
+                    // Tile already exists in loadPlanState.tiles but has no placement
+                    // — it will appear in the tray automatically
+                    console.warn(`⚠️ Van overflow: ${dogNames[dogIndex]} sent to tray`);
+                    dogIndex++;
+                }
+            }
+
+            // Fill each van section
+            fillVanBoxes(vanDogs.bv, LOAD_PLAN_BOX_ORDER.bv);
+            fillVanBoxes(vanDogs.sv, LOAD_PLAN_BOX_ORDER.sv);
+            fillVanBoxes(vanDogs.dv, LOAD_PLAN_BOX_ORDER.dv);
+
+            // Add tray dogs (tiles with no placement — appear in the tray)
+            trayDogs.forEach(name => {
+                const id = generateLoadPlanTileId();
+                loadPlanState.tiles[id] = { id: id, text: name };
+                // Deliberately NOT added to placements — shows in tray
+            });
+
+            // Write to Load Plan's Google Apps Script cloud backend (cross-device)
+            // Also write to localStorage as same-device fallback
+            try {
+                // localStorage write first (instant same-device access)
+                localStorage.setItem(storageKey, JSON.stringify(loadPlanState));
+                console.log(`📦 Load Plan written to localStorage key: ${storageKey}`);
+
+                // Cloud POST to Load Plan's Apps Script (cross-device access)
+                showToast(`☁️ Uploading ${totalToTransfer} dogs to cloud...`, 'info');
+
+                const response = await fetch(LOAD_PLAN_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'savePlan',
+                        planId: planId,
+                        state: loadPlanState
+                    }),
+                    redirect: 'follow'
+                });
+
+                const resultText = await response.text();
+                console.log('☁️ Load Plan cloud response:', resultText);
+
+                showToast(`🚐 ${totalToTransfer} dogs → ${planLabel} Load Plan (synced to cloud)`, 'success');
+                console.log(`✅ Load Plan cloud sync complete for ${planId}`);
+                console.log(`   BV: ${vanDogs.bv.length}, SV: ${vanDogs.sv.length}, DV: ${vanDogs.dv.length}, Tray: ${trayDogs.length}`);
+
+            } catch (e) {
+                console.error('❌ Failed to sync Load Plan to cloud:', e);
+                // localStorage write may still have succeeded above
+                showToast(`⚠️ ${totalToTransfer} dogs saved locally but cloud sync failed — open Load Plan on this device or retry`, 'error');
+            }
+        }
 
         // =====================
         // Initialization
