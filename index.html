@@ -2602,10 +2602,23 @@
             return 'dog_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
+        // ADDED: Normalise date string to YYYY-MM-DD, handling ISO timestamps
+        // e.g. "2026-02-18T00:00:00.000Z" → "2026-02-18"
+        //       "2026-02-18" → "2026-02-18" (unchanged)
+        function normaliseDateStr(dateStr) {
+            if (!dateStr) return '';
+            const s = String(dateStr).trim();
+            const tIdx = s.indexOf('T');
+            if (tIdx > -1) return s.substring(0, tIdx);
+            return s;
+        }
+
         // Returns abbreviated day name (Mon, Tue, etc.) from a YYYY-MM-DD date string
         function getDayName(dateStr) {
             if (!dateStr) return '';
-            const date = new Date(dateStr + 'T00:00:00');
+            const normalised = normaliseDateStr(dateStr);
+            if (!normalised) return '';
+            const date = new Date(normalised + 'T00:00:00');
             if (isNaN(date.getTime())) return '';
             return date.toLocaleDateString('en-GB', { weekday: 'short' });
         }
@@ -2901,7 +2914,10 @@
 
         // Boarding-specific row: AM only + Crate select
         function createBoardingDogRow(dog) {
-            const { id, name, photo, walk, vpAM, stopAM, notes, crate, checkIn, checkOut } = dog;
+            const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
+            // ADDED: Normalise dates to YYYY-MM-DD for <input type="date"> compatibility
+            const checkIn = normaliseDateStr(dog.checkIn);
+            const checkOut = normaliseDateStr(dog.checkOut);
             
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
@@ -3040,7 +3056,10 @@
 
         // Boarding School row: Name | Check In | Check Out | Crate Size | Delete
         function createBoardingSchoolDogRow(dog) {
-            const { id, name, checkIn, checkOut, crateSize } = dog;
+            const { id, name, crateSize } = dog;
+            // ADDED: Normalise dates to YYYY-MM-DD for <input type="date"> compatibility
+            const checkIn = normaliseDateStr(dog.checkIn);
+            const checkOut = normaliseDateStr(dog.checkOut);
 
             const crateSizeOptions = ['HLL', 'HLM', 'HLS', 'HSB', 'HST'];
 
