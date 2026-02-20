@@ -2574,6 +2574,18 @@
             return options;
         }
 
+        // ADDED: Normalise van time values — handles Date objects from Google Sheets (1899 base date)
+        function normaliseVanTime(val) {
+            if (!val) return '08:00';
+            const str = String(val).trim();
+            // Already HH:MM format
+            if (/^\d{2}:\d{2}$/.test(str)) return str;
+            // Extract HH:MM from longer strings (e.g. "Sat Dec 30 1899 07:30:00 GMT...")
+            const timeMatch = str.match(/(\d{2}:\d{2}):\d{2}/);
+            if (timeMatch) return timeMatch[1];
+            return '08:00';
+        }
+
         function populateVanTimeDropdowns() {
             const timeOptions = generateTimeOptions();
             const optionsHTML = timeOptions.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -2584,7 +2596,11 @@
                     const select = document.getElementById(`${tab}-${van}-time`);
                     if (select) {
                         select.innerHTML = optionsHTML;
-                        select.value = state[tab].vanTimes[van.toUpperCase()] || '08:00';
+                        // ADDED: Normalise van time before setting select value
+                        const rawTime = state[tab].vanTimes[van.toUpperCase()] || '08:00';
+                        const cleanTime = normaliseVanTime(rawTime);
+                        state[tab].vanTimes[van.toUpperCase()] = cleanTime;
+                        select.value = cleanTime;
                     }
                 });
             });
@@ -2602,20 +2618,18 @@
             return 'dog_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
-        // ADDED: Normalise date string to YYYY-MM-DD, handling ISO timestamps
-        // e.g. "2026-02-18T00:00:00.000Z" → "2026-02-18"
-        //       "2026-02-18" → "2026-02-18" (unchanged)
+        // Returns abbreviated day name (Mon, Tue, etc.) from a YYYY-MM-DD date string
+        // ADDED: Normalise date strings — strips ISO timestamps and validates YYYY-MM-DD
         function normaliseDateStr(dateStr) {
             if (!dateStr) return '';
-            const s = String(dateStr).trim();
-            const tIdx = s.indexOf('T');
-            if (tIdx > -1) return s.substring(0, tIdx);
-            return s;
+            let str = String(dateStr).trim();
+            // Strip ISO timestamp suffix (e.g. "2026-02-18T00:00:00.000Z" → "2026-02-18")
+            if (str.includes('T')) str = str.split('T')[0];
+            // Validate YYYY-MM-DD format
+            return /^\d{4}-\d{2}-\d{2}$/.test(str) ? str : '';
         }
 
-        // Returns abbreviated day name (Mon, Tue, etc.) from a YYYY-MM-DD date string
         function getDayName(dateStr) {
-            if (!dateStr) return '';
             const normalised = normaliseDateStr(dateStr);
             if (!normalised) return '';
             const date = new Date(normalised + 'T00:00:00');
@@ -2915,7 +2929,7 @@
         // Boarding-specific row: AM only + Crate select
         function createBoardingDogRow(dog) {
             const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
-            // ADDED: Normalise dates to YYYY-MM-DD for <input type="date"> compatibility
+            // ADDED: Normalise dates to YYYY-MM-DD (strips ISO timestamps from GAS/n8n data)
             const checkIn = normaliseDateStr(dog.checkIn);
             const checkOut = normaliseDateStr(dog.checkOut);
             
@@ -3057,7 +3071,7 @@
         // Boarding School row: Name | Check In | Check Out | Crate Size | Delete
         function createBoardingSchoolDogRow(dog) {
             const { id, name, crateSize } = dog;
-            // ADDED: Normalise dates to YYYY-MM-DD for <input type="date"> compatibility
+            // ADDED: Normalise dates to YYYY-MM-DD
             const checkIn = normaliseDateStr(dog.checkIn);
             const checkOut = normaliseDateStr(dog.checkOut);
 
