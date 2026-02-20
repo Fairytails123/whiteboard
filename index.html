@@ -1725,6 +1725,24 @@
         }
 
         /* Date-with-day container */
+        /* ADDED: Date field labels for Check In / Check Out */
+        .date-field-label {
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1;
+            margin-bottom: 1px;
+        }
+
+        .date-field-label.checkin-label {
+            color: #16a34a;
+        }
+
+        .date-field-label.checkout-label {
+            color: #dc2626;
+        }
+
         .date-with-day {
             display: flex;
             flex-direction: column;
@@ -3000,6 +3018,7 @@
                     </select>
                     
                     <div class="date-with-day boarding-checkin">
+                        <span class="date-field-label checkin-label">📥 CHECK IN</span>
                         <input type="date" class="boarding-date-input ${checkIn ? 'has-value' : ''}" 
                                value="${checkIn || ''}"
                                onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
@@ -3008,6 +3027,7 @@
                     </div>
                     
                     <div class="date-with-day boarding-checkout">
+                        <span class="date-field-label checkout-label">📤 CHECK OUT</span>
                         <input type="date" class="boarding-date-input ${checkOut ? 'has-value' : ''}" 
                                value="${checkOut || ''}"
                                onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
@@ -3082,6 +3102,7 @@
                     <div class="dog-name">${name}</div>
                     
                     <div class="date-with-day bs-checkin">
+                        <span class="date-field-label checkin-label">📥 CHECK IN</span>
                         <input type="date" class="bs-date-input ${checkIn ? 'has-value' : ''}" 
                                value="${checkIn || ''}"
                                onchange="updateDog('${id}', 'checkIn', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
@@ -3090,6 +3111,7 @@
                     </div>
                     
                     <div class="date-with-day bs-checkout">
+                        <span class="date-field-label checkout-label">📤 CHECK OUT</span>
                         <input type="date" class="bs-date-input ${checkOut ? 'has-value' : ''}" 
                                value="${checkOut || ''}"
                                onchange="updateDog('${id}', 'checkOut', this.value); this.classList.toggle('has-value', !!this.value); updateDayLabel(this)"
