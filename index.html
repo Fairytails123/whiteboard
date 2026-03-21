@@ -198,8 +198,32 @@
             background: rgba(0, 122, 255, 0.18);
         }
 
-        .refresh-btn.refreshing {
+        .refresh-btn.refreshing, .pull-today-btn.pulling {
             animation: spin 0.8s linear infinite;
+        }
+
+        .pull-today-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-full);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: rgba(90, 200, 250, 0.15);
+            color: #32ADE6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pull-today-btn:hover {
+            background: rgba(90, 200, 250, 0.25);
+        }
+
+        .pull-today-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         @keyframes spin {
@@ -2230,6 +2254,9 @@
         </div>
         <div class="header-right">
             <div class="current-time" id="currentTime">--:--</div>
+            <button class="pull-today-btn" id="pullTodayBtn" onclick="pullToday()" title="Pull today's dogs from Acuity (manual fallback)">
+                📥
+            </button>
             <button class="refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
                 🔄
             </button>
@@ -2509,6 +2536,20 @@
         </div>
     </div>
 
+    <!-- Pull Today Confirmation Modal -->
+    <div class="modal-overlay" id="pullTodayModal">
+        <div class="modal">
+            <div class="modal-title">📥 Pull Today's Dogs from Acuity?</div>
+            <div class="modal-text">
+                This will fetch today's appointments from Acuity and replace the current Today board. Any manual changes on Today's board will be lost.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closePullTodayModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmPullToday()">Yes, Pull Today</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -2518,6 +2559,7 @@
         // =====================
         const CONFIG = {
             SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzqXD9OCM5oSNFdy3OF7pOG0PRcpy4dgkEYWJBVh40CFHJgjvSpPn6SE-mNjloo-GKw/exec',
+            PULL_TODAY_WEBHOOK: 'https://ftmanager.app.n8n.cloud/webhook/pull-today-staff-board',
             USE_GOOGLE_SHEETS: true,
             MAX_ROWS_PER_COLUMN: 15
         };
@@ -2537,7 +2579,8 @@
                 vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
             },
             currentTab: 'today',
-            initialLoadComplete: false
+            initialLoadComplete: false,
+            lastEditTime: 0
         };
 
         // =====================
@@ -2597,6 +2640,7 @@
 
         function updateVanTime(tab, van, time) {
             state[tab].vanTimes[van] = time;
+            state.lastEditTime = Date.now();
             autoSave();
         }
 
@@ -2753,14 +2797,15 @@
             });
             
             state[tab].dogs = [...state[tab].dogs, ...newDogs];
-            
+
             state[tab].staging = [];
             renderStaging(tab);
-            
+
             renderBoard(tab);
-            
+
+            state.lastEditTime = Date.now();
             autoSave();
-            
+
             showToast(`✅ Added ${newDogs.length} dog${newDogs.length > 1 ? 's' : ''} to ${serviceType}`, 'success');
         }
 
@@ -3322,6 +3367,7 @@
             if (dog) {
                 dog[field] = value;
                 updateStats(tab);
+                state.lastEditTime = Date.now();
                 autoSave();
             }
         }
@@ -3407,6 +3453,7 @@
             
             state[tab].dogs = state[tab].dogs.filter(d => d.id !== id);
             renderBoard(tab);
+            state.lastEditTime = Date.now();
             autoSave();
             showToast(`🗑️ ${dogName} removed from board`, 'info');
         }
@@ -3478,6 +3525,56 @@
         }
 
         // =====================
+        // Pull Today (Manual Fallback)
+        // =====================
+
+        function pullToday() {
+            document.getElementById('pullTodayModal').classList.add('active');
+        }
+
+        function closePullTodayModal() {
+            document.getElementById('pullTodayModal').classList.remove('active');
+        }
+
+        async function confirmPullToday() {
+            closePullTodayModal();
+
+            const btn = document.getElementById('pullTodayBtn');
+            btn.disabled = true;
+            btn.classList.add('pulling');
+            showToast('📥 Pulling today\'s dogs from Acuity...', 'info');
+
+            try {
+                const response = await fetch(CONFIG.PULL_TODAY_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ triggered: 'manual', timestamp: new Date().toISOString() })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Wait a moment for Google Sheets to update, then reload
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    await loadBoard();
+                    switchTab('today');
+                    const msg = result.count === 0
+                        ? '⚠️ No appointments found for today in Acuity'
+                        : `✅ Pulled ${result.count || ''} dogs into Today's board!`;
+                    showToast(msg, result.count === 0 ? 'warning' : 'success');
+                } else {
+                    showToast('❌ Pull failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Pull Today failed:', error);
+                showToast('❌ Failed to pull from Acuity — check your connection', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('pulling');
+            }
+        }
+
+        // =====================
         // Background Data Sync
         // =====================
 
@@ -3526,6 +3623,13 @@
         }
 
         async function loadBoardSilent() {
+            // Don't overwrite local state if user edited within the last 30 seconds
+            // (gives autoSave time to push changes to cloud first)
+            if (state.lastEditTime && (Date.now() - state.lastEditTime < 30000)) {
+                console.log('⏸️ Skipping cloud sync — recent local edit pending save');
+                return;
+            }
+
             let data = null;
             
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
@@ -3784,14 +3888,9 @@
                             const remoteTodayCount = result.data.today?.dogs?.length || 0;
                             const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
                             const remoteTotal = remoteTodayCount + remoteTomorrowCount;
-                            
-                            if (remoteTotal > localTotal) {
-                                console.warn(`⚠️ BLOCKED SAVE: Remote has more data (${remoteTotal}) than local (${localTotal})`);
-                                showToast('🔄 Syncing newer data from cloud...', 'info');
-                                await loadBoardSilent();
-                                return;
-                            }
-                            
+
+                            // Only block save if local is completely empty but remote has data
+                            // (protects against page-load race, but allows normal edits/deletes)
                             if (localTotal === 0 && remoteTotal > 0) {
                                 console.warn(`⚠️ BLOCKED SAVE: Local is empty but remote has ${remoteTotal} dogs`);
                                 await loadBoardSilent();
