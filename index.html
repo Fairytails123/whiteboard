@@ -3551,19 +3551,52 @@
                     body: JSON.stringify({ triggered: 'manual', timestamp: new Date().toISOString() })
                 });
 
-                const result = await response.json();
+                // n8n may return different formats — handle all of them
+                const raw = await response.text();
+                console.log('Pull Today — HTTP status:', response.status);
+                console.log('Pull Today — raw response:', raw);
 
-                if (result.success) {
+                let result;
+                try {
+                    result = JSON.parse(raw);
+                } catch (parseErr) {
+                    // Non-JSON response — if HTTP was 2xx, treat as success
+                    if (response.ok) {
+                        result = { success: true };
+                    } else {
+                        throw new Error('Non-JSON error response: ' + raw.substring(0, 200));
+                    }
+                }
+
+                // n8n sometimes wraps the response in an array
+                if (Array.isArray(result)) {
+                    result = result[0] || {};
+                }
+
+                // Determine success: check common property names n8n might use
+                const isSuccess = response.ok && (
+                    result.success === true ||
+                    result.status === 'success' ||
+                    result.status === 'ok' ||
+                    result.ok === true ||
+                    // If n8n returned data with no explicit success flag but HTTP was 200, treat as success
+                    (!result.error && !result.message && response.status === 200)
+                );
+
+                const count = result.count || result.dogsCount || result.totalFound || result.dogs_imported || '';
+
+                if (isSuccess) {
                     // Wait a moment for Google Sheets to update, then reload
                     await new Promise(resolve => setTimeout(resolve, 3000));
                     await loadBoard();
                     switchTab('today');
-                    const msg = result.count === 0
+                    const msg = count === 0
                         ? '⚠️ No appointments found for today in Acuity'
-                        : `✅ Pulled ${result.count || ''} dogs into Today's board!`;
-                    showToast(msg, result.count === 0 ? 'warning' : 'success');
+                        : `✅ Pulled ${count} dogs into Today's board!`;
+                    showToast(msg, count === 0 ? 'warning' : 'success');
                 } else {
-                    showToast('❌ Pull failed: ' + (result.message || 'Unknown error'), 'error');
+                    const errMsg = result.message || result.error || result.msg || ('Unknown error — check browser console (F12) for raw response');
+                    showToast('❌ Pull failed: ' + errMsg, 'error');
                 }
             } catch (error) {
                 console.error('Pull Today failed:', error);
