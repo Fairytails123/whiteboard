@@ -3990,7 +3990,15 @@
 
                 const serviceType = dog.serviceType || '';
 
-                if (serviceType === 'Half Day AM' || serviceType === 'Boarding School') {
+                // Boarding School always excluded from load plan
+                if (serviceType === 'Boarding School') {
+                    skippedCount++;
+                    return;
+                }
+
+                // Half Day AM excluded from Today's PM plan (they leave at noon),
+                // but included in Tomorrow's Next Day AM plan (they need morning pickup)
+                if (serviceType === 'Half Day AM' && tab === 'today') {
                     skippedCount++;
                     return;
                 }
