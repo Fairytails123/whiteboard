@@ -226,48 +226,6 @@
             cursor: not-allowed;
         }
 
-        /* ================================================================
-           Pull Tomorrow button — added 2026-04-25
-           Manual fallback for the 14:05 daily Acuity import automation.
-           Mirrors the Pull Today pattern but lives inside the Tomorrow tab
-           (only visible when that tab is active) and uses an amber accent
-           to distinguish it visually from the Today (blue) action.
-           ================================================================ */
-        .pull-tomorrow-row {
-            display: flex;
-            justify-content: center;
-            padding: 12px 16px 4px;
-        }
-
-        .pull-tomorrow-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            border-radius: var(--radius-full);
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            background: rgba(245, 158, 11, 0.15);
-            color: #B45309;
-            white-space: nowrap;
-        }
-
-        .pull-tomorrow-btn:hover {
-            background: rgba(245, 158, 11, 0.25);
-        }
-
-        .pull-tomorrow-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .pull-tomorrow-btn.pulling {
-            animation: spin 0.8s linear infinite;
-        }
-
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -2441,18 +2399,6 @@
 
     <!-- Tomorrow Tab -->
     <div class="tab-content" id="tomorrow-tab">
-        <!-- Pull Tomorrow's Appointments — manual fallback for the 14:05
-             daily automation. Visible only when the Tomorrow tab is active.
-             Added 2026-04-25. -->
-        <div class="pull-tomorrow-row">
-            <button class="pull-tomorrow-btn"
-                    id="pullTomorrowBtn"
-                    onclick="pullTomorrow()"
-                    title="Pull tomorrow's dogs from Acuity (manual fallback in case the 2:05 PM automation fails)">
-                📆 Pull Tomorrow's Appointments
-            </button>
-        </div>
-
         <!-- Staging Area — Collapsible -->
         <div class="staging-area" id="tomorrow-staging-area">
             <div class="staging-header" onclick="toggleStaging('tomorrow')">
@@ -2604,21 +2550,6 @@
         </div>
     </div>
 
-    <!-- Pull Tomorrow Confirmation Modal — added 2026-04-25.
-         Manual fallback for the 14:05 daily Acuity import automation. -->
-    <div class="modal-overlay" id="pullTomorrowModal">
-        <div class="modal">
-            <div class="modal-title">📆 Pull Tomorrow's Dogs from Acuity?</div>
-            <div class="modal-text">
-                This will fetch tomorrow's appointments from Acuity and replace the current Tomorrow board. Any manual changes on Tomorrow's board will be lost.
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-outline" onclick="closePullTomorrowModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmPullTomorrow()">Yes, Pull Tomorrow</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -2629,11 +2560,6 @@
         const CONFIG = {
             SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzqXD9OCM5oSNFdy3OF7pOG0PRcpy4dgkEYWJBVh40CFHJgjvSpPn6SE-mNjloo-GKw/exec',
             PULL_TODAY_WEBHOOK: 'https://ftmanager.app.n8n.cloud/webhook/pull-today-staff-board',
-            // Manual fallback for the 14:05 daily automation that imports
-            // tomorrow's appointments. Added 2026-04-25.
-            // The corresponding n8n workflow must be set up under this URL
-            // (mirror of pull-today-staff-board but targeting tomorrow's date).
-            PULL_TOMORROW_WEBHOOK: 'https://ftmanager.app.n8n.cloud/webhook/pull-tomorrow-staff-board',
             USE_GOOGLE_SHEETS: true,
             MAX_ROWS_PER_COLUMN: 15
         };
@@ -3682,94 +3608,6 @@
         }
 
         // =====================
-        // Pull Tomorrow (Manual Fallback for the 14:05 daily automation)
-        // ---------------------
-        // Added 2026-04-25. Mirrors the pullToday / closePullTodayModal /
-        // confirmPullToday trio above, but targets tomorrow's appointments
-        // via CONFIG.PULL_TOMORROW_WEBHOOK and switches to the Tomorrow tab
-        // on success. ADDITIVE — does not modify any existing behaviour.
-        // =====================
-
-        function pullTomorrow() {
-            document.getElementById('pullTomorrowModal').classList.add('active');
-        }
-
-        function closePullTomorrowModal() {
-            document.getElementById('pullTomorrowModal').classList.remove('active');
-        }
-
-        async function confirmPullTomorrow() {
-            closePullTomorrowModal();
-
-            const btn = document.getElementById('pullTomorrowBtn');
-            btn.disabled = true;
-            btn.classList.add('pulling');
-            showToast('📆 Pulling tomorrow\'s dogs from Acuity...', 'info');
-
-            try {
-                const response = await fetch(CONFIG.PULL_TOMORROW_WEBHOOK, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ triggered: 'manual', timestamp: new Date().toISOString(), target: 'tomorrow' })
-                });
-
-                // n8n may return different formats — handle all of them
-                const raw = await response.text();
-                console.log('Pull Tomorrow — HTTP status:', response.status);
-                console.log('Pull Tomorrow — raw response:', raw);
-
-                let result;
-                try {
-                    result = JSON.parse(raw);
-                } catch (parseErr) {
-                    // Non-JSON response — if HTTP was 2xx, treat as success
-                    if (response.ok) {
-                        result = { success: true };
-                    } else {
-                        throw new Error('Non-JSON error response: ' + raw.substring(0, 200));
-                    }
-                }
-
-                // n8n sometimes wraps the response in an array
-                if (Array.isArray(result)) {
-                    result = result[0] || {};
-                }
-
-                // Determine success: check common property names n8n might use
-                const isSuccess = response.ok && (
-                    result.success === true ||
-                    result.status === 'success' ||
-                    result.status === 'ok' ||
-                    result.ok === true ||
-                    // If n8n returned data with no explicit success flag but HTTP was 200, treat as success
-                    (!result.error && !result.message && response.status === 200)
-                );
-
-                const count = result.count || result.dogsCount || result.totalFound || result.dogs_imported || '';
-
-                if (isSuccess) {
-                    // Wait a moment for Google Sheets to update, then reload
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                    await loadBoard();
-                    switchTab('tomorrow');
-                    const msg = count === 0
-                        ? '⚠️ No appointments found for tomorrow in Acuity'
-                        : `✅ Pulled ${count} dogs into Tomorrow's board!`;
-                    showToast(msg, count === 0 ? 'warning' : 'success');
-                } else {
-                    const errMsg = result.message || result.error || result.msg || ('Unknown error — check browser console (F12) for raw response');
-                    showToast('❌ Pull failed: ' + errMsg, 'error');
-                }
-            } catch (error) {
-                console.error('Pull Tomorrow failed:', error);
-                showToast('❌ Failed to pull from Acuity — check your connection', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.classList.remove('pulling');
-            }
-        }
-
-        // =====================
         // Background Data Sync
         // =====================
 
@@ -4115,3 +3953,183 @@
         }
 
         setInterval(autoSave, 94000);
+        setInterval(loadBoardSilent, 93000);
+
+        // =====================================================
+        // Transfer Dogs to Load Plan
+        // =====================================================
+        const LOAD_PLAN_BOX_ORDER = {
+            bv: ['bv-c1', 'bv-c2', 'bv-c3', 'bv-c4', 'bv-c5', 'bv-c6', 'bv-c7',
+                 'bv-b1', 'bv-b2', 'bv-b3', 'bv-b4', 'bv-b5', 'bv-b6', 'bv-b7', 'bv-b8'],
+            sv: ['sv-c1', 'sv-c2', 'sv-c3', 'sv-c4', 'sv-c5',
+                 'sv-b1', 'sv-b2', 'sv-b3', 'sv-b4', 'sv-b5'],
+            dv: ['dv-l1', 'dv-l2', 'dv-m1', 'dv-m2', 'dv-m3', 'dv-m-xl', 'dv-r1', 'dv-r2']
+        };
+
+        const LOAD_PLAN_STORAGE_PREFIX = 'van_v5_';
+        const LOAD_PLAN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUeIiIJQZZeoo3aXHDdqVZNNqFKLhWhi_WhPVb6GUIvkMlfNxTKsOXyCTGdvAEsMLC/exec';
+
+        async function transferToLoadPlan() {
+            const tab = state.currentTab;
+            const dogs = state[tab].dogs;
+
+            const vpField = tab === 'today' ? 'vpPM' : 'vpAM';
+            const planId = tab === 'today' ? 'PM' : 'NEXT_AM';
+            const planLabel = tab === 'today' ? 'PM' : 'Next Day AM';
+            const storageKey = LOAD_PLAN_STORAGE_PREFIX + planId;
+
+            const vanDogs = { bv: [], sv: [], dv: [] };
+            const trayDogs = [];
+            let skippedCount = 0;
+
+            dogs.forEach(dog => {
+                if (!dog.name || !dog.name.trim()) {
+                    skippedCount++;
+                    return;
+                }
+
+                const serviceType = dog.serviceType || '';
+
+                // Boarding School always excluded from load plan
+                if (serviceType === 'Boarding School') {
+                    skippedCount++;
+                    return;
+                }
+
+                // Half Day AM excluded from Today's PM plan (they leave at noon),
+                // but included in Tomorrow's Next Day AM plan (they need morning pickup)
+                if (serviceType === 'Half Day AM' && tab === 'today') {
+                    skippedCount++;
+                    return;
+                }
+
+                const vanAssignment = dog[vpField] || '';
+
+                if (vanAssignment === 'BV') {
+                    vanDogs.bv.push(dog.name);
+                } else if (vanAssignment === 'SV') {
+                    vanDogs.sv.push(dog.name);
+                } else if (vanAssignment === 'DV') {
+                    vanDogs.dv.push(dog.name);
+                } else if (vanAssignment === 'V') {
+                    trayDogs.push(dog.name);
+                } else {
+                    skippedCount++;
+                }
+            });
+
+            const vanTotal = vanDogs.bv.length + vanDogs.sv.length + vanDogs.dv.length;
+            const totalToTransfer = vanTotal + trayDogs.length;
+
+            if (totalToTransfer === 0) {
+                showToast('No dogs to transfer to Load Plan', 'error');
+                return;
+            }
+
+            const confirmMsg = 
+                `Transfer ${totalToTransfer} dogs to ${planLabel} Load Plan?\n\n` +
+                `This will CLEAR the existing ${planLabel} plan.\n\n` +
+                `🚐 BV: ${vanDogs.bv.length}\n` +
+                `🚗 SV: ${vanDogs.sv.length}\n` +
+                `📦 DV: ${vanDogs.dv.length}\n` +
+                `📋 Tray: ${trayDogs.length}\n` +
+                `⏭️ Skipped: ${skippedCount}`;
+
+            if (!confirm(confirmMsg)) return;
+
+            const loadPlanState = {
+                tiles: {},
+                placements: {},
+                stops: {},
+                departures: {}
+            };
+
+            let tileCounter = 0;
+            function generateLoadPlanTileId() {
+                tileCounter++;
+                return 't_lp_' + Date.now() + '_' + tileCounter + '_' + Math.random().toString(36).substr(2, 4);
+            }
+
+            function fillVanBoxes(dogNames, boxes) {
+                const tileIds = dogNames.map(name => {
+                    const id = generateLoadPlanTileId();
+                    loadPlanState.tiles[id] = { id: id, text: name };
+                    return id;
+                });
+
+                let dogIndex = 0;
+                for (let i = 0; i < boxes.length && dogIndex < tileIds.length; i++) {
+                    if (!loadPlanState.placements[boxes[i]]) {
+                        loadPlanState.placements[boxes[i]] = [];
+                    }
+                    loadPlanState.placements[boxes[i]].push(tileIds[dogIndex]);
+                    dogIndex++;
+                }
+
+                for (let i = 0; i < boxes.length && dogIndex < tileIds.length; i++) {
+                    if (!loadPlanState.placements[boxes[i]]) {
+                        loadPlanState.placements[boxes[i]] = [];
+                    }
+                    if (loadPlanState.placements[boxes[i]].length < 2) {
+                        loadPlanState.placements[boxes[i]].push(tileIds[dogIndex]);
+                        dogIndex++;
+                    }
+                }
+
+                while (dogIndex < tileIds.length) {
+                    console.warn(`⚠️ Van overflow: ${dogNames[dogIndex]} sent to tray`);
+                    dogIndex++;
+                }
+            }
+
+            fillVanBoxes(vanDogs.bv, LOAD_PLAN_BOX_ORDER.bv);
+            fillVanBoxes(vanDogs.sv, LOAD_PLAN_BOX_ORDER.sv);
+            fillVanBoxes(vanDogs.dv, LOAD_PLAN_BOX_ORDER.dv);
+
+            trayDogs.forEach(name => {
+                const id = generateLoadPlanTileId();
+                loadPlanState.tiles[id] = { id: id, text: name };
+            });
+
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(loadPlanState));
+                console.log(`📦 Load Plan written to localStorage key: ${storageKey}`);
+
+                showToast(`☁️ Uploading ${totalToTransfer} dogs to cloud...`, 'info');
+
+                const response = await fetch(LOAD_PLAN_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'savePlan',
+                        planId: planId,
+                        state: loadPlanState
+                    }),
+                    redirect: 'follow'
+                });
+
+                const resultText = await response.text();
+                console.log('☁️ Load Plan cloud response:', resultText);
+
+                showToast(`🚐 ${totalToTransfer} dogs → ${planLabel} Load Plan (synced to cloud)`, 'success');
+                console.log(`✅ Load Plan cloud sync complete for ${planId}`);
+                console.log(`   BV: ${vanDogs.bv.length}, SV: ${vanDogs.sv.length}, DV: ${vanDogs.dv.length}, Tray: ${trayDogs.length}`);
+
+            } catch (e) {
+                console.error('❌ Failed to sync Load Plan to cloud:', e);
+                showToast(`⚠️ ${totalToTransfer} dogs saved locally but cloud sync failed — open Load Plan on this device or retry`, 'error');
+            }
+        }
+
+        // =====================
+        // Initialization
+        // =====================
+        function init() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            loadBoard();
+        }
+
+        init();
+    </script>
+</body>
+</html>
