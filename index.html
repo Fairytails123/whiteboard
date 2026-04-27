@@ -1543,6 +1543,13 @@
             color: #CC7700;
             z-index: 1;
         }
+        .vp-select.priority-pickup {
+            background: rgba(255, 59, 48, 0.15);
+            border-color: rgba(255, 59, 48, 0.5);
+            color: #FF3B30;
+            font-weight: 800;
+            z-index: 1;
+        }
         .vp-select.parent-pickup {
             background: rgba(175, 82, 222, 0.1);
             border-color: rgba(175, 82, 222, 0.4);
@@ -2697,7 +2704,7 @@
         function populateVanTimeDropdowns() {
             const timeOptions = generateTimeOptions();
             const optionsHTML = timeOptions.map(t => `<option value="${t}">${t}</option>`).join('');
-            
+
             ['today', 'tomorrow'].forEach(tab => {
                 ['bv', 'dv', 'sv'].forEach(van => {
                     const select = document.getElementById(`${tab}-${van}-time`);
@@ -2769,15 +2776,15 @@
         // =====================
         function switchTab(tab) {
             state.currentTab = tab;
-            
+
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tab);
             });
-            
+
             document.querySelectorAll('.bottom-tab').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.tab === tab);
             });
-            
+
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -2796,13 +2803,13 @@
         function addToStaging(tab) {
             const input = document.getElementById(`${tab}-staging-input`);
             const name = input.value.trim();
-            
+
             if (!name) return;
-            
+
             state[tab].staging.push(name);
             input.value = '';
             input.focus();
-            
+
             renderStaging(tab);
         }
 
@@ -2820,14 +2827,14 @@
             const container = document.getElementById(`${tab}-staging-dogs`);
             const countEl = document.getElementById(`${tab}-staging-count`);
             const staging = state[tab].staging;
-            
+
             countEl.textContent = staging.length;
-            
+
             if (staging.length === 0) {
                 container.innerHTML = '';
                 return;
             }
-            
+
             container.innerHTML = staging.map((name, index) => `
                 <div class="staged-dog">
                     <span>${name}</span>
@@ -2838,15 +2845,15 @@
 
         function addStagedToBoard(tab) {
             const staging = state[tab].staging;
-            
+
             if (staging.length === 0) {
                 showToast('No dogs to add — enter some names first', 'error');
                 return;
             }
-            
+
             const serviceTypeSelect = document.getElementById(`${tab}-service-type`);
             const serviceType = serviceTypeSelect ? serviceTypeSelect.value : 'Full Day';
-            
+
             const newDogs = staging.map(name => {
                 const dog = {
                     id: generateId(),
@@ -2869,7 +2876,7 @@
                 };
                 return dog;
             });
-            
+
             state[tab].dogs = [...state[tab].dogs, ...newDogs];
 
             state[tab].staging = [];
@@ -2888,7 +2895,7 @@
         // =====================
         function calculateLayout(dogCount) {
             if (dogCount === 0) return { columns: 1, rowsPerColumn: 0, scale: '' };
-            
+
             if (dogCount <= 12) {
                 return { columns: 1, rowsPerColumn: dogCount, scale: '' };
             }
@@ -2898,7 +2905,7 @@
             if (dogCount <= 45) {
                 return { columns: 3, rowsPerColumn: Math.ceil(dogCount / 3), scale: '' };
             }
-            
+
             return { columns: 4, rowsPerColumn: Math.ceil(dogCount / 4), scale: '' };
         }
 
@@ -2916,22 +2923,23 @@
         // =====================
         function createDogRow(dog, sectionClass = '') {
             const { id, name, photo, walk, vpAM, vpPM, stopAM, stop, notes } = dog;
-            
+
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
                 if (val === 'SV') return 'van-sv';
                 if (val === 'DV') return 'van-dv';
+                if (val === 'XV') return 'priority-pickup';
                 if (val === 'P') return 'parent-pickup';
                 return '';
             };
-            
+
             const vpAMClass = getVPClass(vpAM);
             const vpPMClass = getVPClass(vpPM);
-            
-            const vanOptions = ['V', 'BV', 'SV', 'DV'];
+
+            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
             const stopAMDisabled = !vanOptions.includes(vpAM);
             const stopPMDisabled = !vanOptions.includes(vpPM);
-            
+
             const generateStopOptions = (selectedValue) => {
                 let options = '<option value="">-</option>';
                 for (let i = 1; i <= 20; i++) {
@@ -2944,20 +2952,20 @@
             return `
                 <div class="dog-row section-row ${sectionClass} ${notes ? 'notes-expanded' : ''}" data-id="${id}">
                     <div class="dog-name">${name}</div>
-                    
+
                     <div class="photo-check">
                         <input type="checkbox" class="photo-checkbox" 
                                ${photo ? 'checked' : ''} 
                                onchange="updateDog('${id}', 'photo', this.checked)">
                     </div>
-                    
+
                     <select class="walk-select ${walk === 'booked' ? 'walk-booked' : walk === 'transferred' ? 'walk-transferred' : ''}" 
                             onchange="updateDog('${id}', 'walk', this.value); updateWalkStyle(this)">
                         <option value="">None</option>
                         <option value="booked" ${walk === 'booked' ? 'selected' : ''}>Walk📆</option>
                         <option value="transferred" ${walk === 'transferred' ? 'selected' : ''}>Walk✅</option>
                     </select>
-                    
+
                     <div class="vp-control">
                         <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
                                ${stopAMDisabled ? 'disabled' : ''}
@@ -2975,6 +2983,7 @@
                             <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
                             <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="XV" ${vpAM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                         <div class="vp-divider"></div>
                         <span class="vp-group-label">PM</span>
@@ -2987,6 +2996,7 @@
                             <option value="BV" ${vpPM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpPM === 'SV' ? 'selected' : ''}>SV</option>
                             <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="XV" ${vpPM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                         <select class="stop-select stop-pm ${stop ? 'has-value' : ''}" 
                                ${stopPMDisabled ? 'disabled' : ''}
@@ -2995,17 +3005,17 @@
                             ${generateStopOptions(stop)}
                         </select>
                     </div>
-                    
+
                     <div class="notes-toggle ${notes ? 'has-notes' : ''}" onclick="toggleNotes(this)" title="Toggle notes">
                         <span class="notes-toggle-label">📝</span>
                         <div class="toggle-track"><div class="toggle-knob"></div></div>
                     </div>
-                    
+
                     <input type="text" class="notes-input" placeholder="Notes..." 
                            value="${notes || ''}" 
                            onchange="updateDog('${id}', 'notes', this.value); updateNotesToggle(this)"
                            oninput="updateNotesToggle(this)">
-                    
+
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
             `;
@@ -3015,19 +3025,20 @@
             const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
             const checkIn = normaliseDateStr(dog.checkIn);
             const checkOut = normaliseDateStr(dog.checkOut);
-            
+
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
                 if (val === 'SV') return 'van-sv';
                 if (val === 'DV') return 'van-dv';
+                if (val === 'XV') return 'priority-pickup';
                 if (val === 'P') return 'parent-pickup';
                 return '';
             };
-            
+
             const vpAMClass = getVPClass(vpAM);
-            const vanOptions = ['V', 'BV', 'SV', 'DV'];
+            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
             const stopAMDisabled = !vanOptions.includes(vpAM);
-            
+
             const generateStopOptions = (selectedValue) => {
                 let options = '<option value="">-</option>';
                 for (let i = 1; i <= 20; i++) {
@@ -3036,26 +3047,26 @@
                 }
                 return options;
             };
-            
+
             const crateOptions = ['HLL', 'HLM', 'HLS', 'HSB', 'HST'];
 
             return `
                 <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}" data-id="${id}">
                     <div class="dog-name">${name}</div>
-                    
+
                     <div class="photo-check">
                         <input type="checkbox" class="photo-checkbox" 
                                ${photo ? 'checked' : ''} 
                                onchange="updateDog('${id}', 'photo', this.checked)">
                     </div>
-                    
+
                     <select class="walk-select ${walk === 'booked' ? 'walk-booked' : walk === 'transferred' ? 'walk-transferred' : ''}" 
                             onchange="updateDog('${id}', 'walk', this.value); updateWalkStyle(this)">
                         <option value="">None</option>
                         <option value="booked" ${walk === 'booked' ? 'selected' : ''}>Walk📆</option>
                         <option value="transferred" ${walk === 'transferred' ? 'selected' : ''}>Walk✅</option>
                     </select>
-                    
+
                     <div class="vp-control-am">
                         <select class="stop-select stop-am ${stopAM ? 'has-value' : ''}" 
                                ${stopAMDisabled ? 'disabled' : ''}
@@ -3072,16 +3083,17 @@
                             <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
                             <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="XV" ${vpAM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                     </div>
-                    
+
                     <select class="crate-select ${crate ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'crate', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Crate type">
                         <option value="">-</option>
                         ${crateOptions.map(c => `<option value="${c}" ${crate === c ? 'selected' : ''}>${c}</option>`).join('')}
                     </select>
-                    
+
                     <div class="date-with-day boarding-checkin">
                         <span class="date-field-label checkin-label">📥 CHECK IN</span>
                         <input type="date" class="boarding-date-input ${checkIn ? 'has-value' : ''}" 
@@ -3090,7 +3102,7 @@
                                title="Check In Date">
                         <span class="day-label ${checkIn ? 'visible' : ''}">${getDayName(checkIn)}</span>
                     </div>
-                    
+
                     <div class="date-with-day boarding-checkout">
                         <span class="date-field-label checkout-label">📤 CHECK OUT</span>
                         <input type="date" class="boarding-date-input ${checkOut ? 'has-value' : ''}" 
@@ -3099,17 +3111,17 @@
                                title="Check Out Date">
                         <span class="day-label ${checkOut ? 'visible' : ''}">${getDayName(checkOut)}</span>
                     </div>
-                    
+
                     <div class="notes-toggle ${notes ? 'has-notes' : ''}" onclick="toggleNotes(this)" title="Toggle notes">
                         <span class="notes-toggle-label">📝</span>
                         <div class="toggle-track"><div class="toggle-knob"></div></div>
                     </div>
-                    
+
                     <input type="text" class="notes-input" placeholder="Notes..." 
                            value="${notes || ''}" 
                            onchange="updateDog('${id}', 'notes', this.value); updateNotesToggle(this)"
                            oninput="updateNotesToggle(this)">
-                    
+
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
             `;
@@ -3125,28 +3137,28 @@
             return `
                 <div class="dog-row section-row grooming" data-id="${id}">
                     <div class="dog-name">${name}</div>
-                    
+
                     <select class="grooming-select grooming-pickup ${pickup ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'pickup', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Pick Up">
                         <option value="">Pick Up...</option>
                         ${pickupOptions.map(opt => `<option value="${opt}" ${pickup === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                     </select>
-                    
+
                     <select class="grooming-select grooming-dropoff ${dropoff ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'dropoff', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Drop Off">
                         <option value="">Drop Off...</option>
                         ${dropoffOptions.map(opt => `<option value="${opt}" ${dropoff === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                     </select>
-                    
+
                     <select class="grooming-van-select ${vanType ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'vanType', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Van Type">
                         <option value="">Van...</option>
                         ${vanTypeOptions.map(opt => `<option value="${opt}" ${vanType === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                     </select>
-                    
+
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
             `;
@@ -3162,7 +3174,7 @@
             return `
                 <div class="dog-row section-row boarding-school" data-id="${id}">
                     <div class="dog-name">${name}</div>
-                    
+
                     <div class="date-with-day bs-checkin">
                         <span class="date-field-label checkin-label">📥 CHECK IN</span>
                         <input type="date" class="bs-date-input ${checkIn ? 'has-value' : ''}" 
@@ -3171,7 +3183,7 @@
                                title="Check In Date">
                         <span class="day-label ${checkIn ? 'visible' : ''}">${getDayName(checkIn)}</span>
                     </div>
-                    
+
                     <div class="date-with-day bs-checkout">
                         <span class="date-field-label checkout-label">📤 CHECK OUT</span>
                         <input type="date" class="bs-date-input ${checkOut ? 'has-value' : ''}" 
@@ -3180,14 +3192,14 @@
                                title="Check Out Date">
                         <span class="day-label ${checkOut ? 'visible' : ''}">${getDayName(checkOut)}</span>
                     </div>
-                    
+
                     <select class="bs-crate-select ${crateSize ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'crateSize', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Crate Size">
                         <option value="">Crate...</option>
                         ${crateSizeOptions.map(opt => `<option value="${opt}" ${crateSize === opt ? 'selected' : ''}>${opt}</option>`).join('')}
                     </select>
-                    
+
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
                 </div>
             `;
@@ -3196,7 +3208,7 @@
         function renderBoard(tab) {
             const board = document.getElementById(`${tab}-board`);
             const dogs = state[tab].dogs;
-            
+
             if (dogs.length === 0) {
                 board.className = 'board-container cols-1';
                 board.innerHTML = `
@@ -3209,7 +3221,7 @@
                 updateStats(tab);
                 return;
             }
-            
+
             const serviceGroups = {
                 'Half Day AM': [],
                 'Full Day': [],
@@ -3217,7 +3229,7 @@
                 'Grooming': [],
                 'Boarding School': []
             };
-            
+
             dogs.forEach(dog => {
                 const type = dog.serviceType || 'Full Day';
                 if (type === 'Grooming') {
@@ -3232,7 +3244,7 @@
                     serviceGroups['Full Day'].push(dog);
                 }
             });
-            
+
             const serviceConfig = {
                 'Half Day AM': { 
                     icon: '🌅', 
@@ -3265,22 +3277,22 @@
                     order: 5
                 }
             };
-            
+
             const layout = calculateLayout(dogs.length);
-            
+
             let classNames = `board-container cols-1`;
             if (layout.scale) {
                 classNames += ` ${layout.scale}`;
             }
             board.className = classNames;
-            
+
             let html = '';
-            
+
             const boardingHolDogs = serviceGroups['Boarding'];
             const boardingSchoolDogs = serviceGroups['Boarding School'];
             const totalBoardingDogs = boardingHolDogs.length + boardingSchoolDogs.length;
             let boardingParentHtml = '';
-            
+
             if (totalBoardingDogs > 0) {
                 const crateLabels = {
                     'HLL': 'Large',
@@ -3292,7 +3304,7 @@
                 const crateCounts = {};
                 boardingHolDogs.forEach(d => { if (d.crate && crateLabels[d.crate]) crateCounts[d.crate] = (crateCounts[d.crate] || 0) + 1; });
                 boardingSchoolDogs.forEach(d => { if (d.crateSize && crateLabels[d.crateSize]) crateCounts[d.crateSize] = (crateCounts[d.crateSize] || 0) + 1; });
-                
+
                 const crateSummary = ['HLL', 'HLM', 'HLS', 'HSB', 'HST']
                     .filter(code => crateCounts[code])
                     .map(code => `${crateLabels[code]} ${crateCounts[code]}`)
@@ -3300,7 +3312,7 @@
                 const crateSummaryHtml = crateSummary
                     ? `<span class="crate-summary">${crateSummary}</span>`
                     : '';
-                
+
                 boardingParentHtml += `
                     <div class="service-section boarding-parent-section">
                         <div class="section-header boarding-parent">
@@ -3312,7 +3324,7 @@
                         </div>
                         <div class="boarding-subsections">
                 `;
-                
+
                 if (boardingHolDogs.length > 0) {
                     const bhConfig = serviceConfig['Boarding'];
                     const bhRowsHtml = boardingHolDogs.map(dog => createBoardingDogRow(dog)).join('');
@@ -3333,7 +3345,7 @@
                             </div>
                     `;
                 }
-                
+
                 if (boardingSchoolDogs.length > 0) {
                     const bsConfig = serviceConfig['Boarding School'];
                     const bsRowsHtml = boardingSchoolDogs.map(dog => createBoardingSchoolDogRow(dog)).join('');
@@ -3354,34 +3366,34 @@
                             </div>
                     `;
                 }
-                
+
                 boardingParentHtml += `
                         </div>
                     </div>
                 `;
             }
-            
+
             const orderedTypes = Object.keys(serviceGroups).sort((a, b) => 
                 serviceConfig[a].order - serviceConfig[b].order
             );
-            
+
             for (const serviceType of orderedTypes) {
                 const sectionDogs = serviceGroups[serviceType];
-                
+
                 if (serviceType === 'Boarding') {
                     html += boardingParentHtml;
                     continue;
                 }
-                
+
                 if (serviceType === 'Boarding School') continue;
-                
+
                 if (sectionDogs.length === 0) continue;
-                
+
                 const config = serviceConfig[serviceType];
                 const isGrooming = serviceType === 'Grooming';
-                
+
                 let tableHeaderClass, headerCols, rowsHtml;
-                
+
                 if (isGrooming) {
                     tableHeaderClass = 'table-header grooming-header';
                     headerCols = `<span>Name</span><span>Pick Up</span><span>Drop Off</span><span>Van Type</span><span></span>`;
@@ -3391,7 +3403,7 @@
                     headerCols = `<span>Name</span><span>Photo</span><span>Walk</span><span>AM/PM</span><span>Notes</span><span></span>`;
                     rowsHtml = sectionDogs.map(dog => createDogRow(dog, config.class)).join('');
                 }
-                
+
                 html += `
                     <div class="service-section">
                         <div class="section-header ${config.class}">
@@ -3416,18 +3428,18 @@
 
         function updateStats(tab) {
             const dogs = state[tab].dogs;
-            
+
             document.getElementById(`${tab}-dog-count`).textContent = dogs.length;
-            
+
             if (tab === 'today') {
                 document.getElementById(`${tab}-photo-count`).textContent = 
                     dogs.filter(d => d.photo).length;
             }
-            
+
             document.getElementById(`${tab}-walk-count`).textContent = 
                 dogs.filter(d => d.walk).length;
-            
-            const vanOptions = ['V', 'BV', 'SV', 'DV'];
+
+            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
             document.getElementById(`${tab}-van-count`).textContent = 
                 dogs.filter(d => vanOptions.includes(d.vpAM) || vanOptions.includes(d.vpPM)).length;
         }
@@ -3449,13 +3461,13 @@
         function toggleNotes(toggleEl) {
             const row = toggleEl.closest('.dog-row');
             row.classList.toggle('notes-expanded');
-            
+
             if (row.classList.contains('notes-expanded')) {
                 const input = row.querySelector('.notes-input');
                 setTimeout(() => input.focus(), 280);
             }
         }
-        
+
         function updateNotesToggle(input) {
             const row = input.closest('.dog-row');
             const toggle = row.querySelector('.notes-toggle');
@@ -3480,15 +3492,16 @@
             const stopPMSelect = row.querySelector('.stop-pm');
             const vpAMSelect = row.querySelector('.vp-am');
             const vpPMSelect = row.querySelector('.vp-pm');
-            
-            select.classList.remove('van-pickup', 'van-bv', 'van-sv', 'van-dv', 'parent-pickup');
+
+            select.classList.remove('van-pickup', 'van-bv', 'van-sv', 'van-dv', 'priority-pickup', 'parent-pickup');
             if (select.value === 'V' || select.value === 'BV') select.classList.add('van-bv');
             if (select.value === 'SV') select.classList.add('van-sv');
             if (select.value === 'DV') select.classList.add('van-dv');
+            if (select.value === 'XV') select.classList.add('priority-pickup');
             if (select.value === 'P') select.classList.add('parent-pickup');
-            
-            const vanOptions = ['V', 'BV', 'SV', 'DV'];
-            
+
+            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
+
             if (vpAMSelect && stopAMSelect) {
                 const isAMVan = vanOptions.includes(vpAMSelect.value);
                 stopAMSelect.disabled = !isAMVan;
@@ -3499,7 +3512,7 @@
                     updateDog(id, 'stopAM', '');
                 }
             }
-            
+
             if (vpPMSelect && stopPMSelect) {
                 const isPMVan = vanOptions.includes(vpPMSelect.value);
                 stopPMSelect.disabled = !isPMVan;
@@ -3524,7 +3537,7 @@
             const tab = state.currentTab;
             const dog = state[tab].dogs.find(d => d.id === id);
             const dogName = dog ? dog.name : 'Dog';
-            
+
             state[tab].dogs = state[tab].dogs.filter(d => d.id !== id);
             renderBoard(tab);
             state.lastEditTime = Date.now();
@@ -3553,9 +3566,9 @@
                         },
                         body: JSON.stringify({ action: 'transfer' })
                     });
-                    
+
                     const result = await response.json();
-                    
+
                     if (result.success) {
                         await loadBoard();
                         closeModal();
@@ -3567,10 +3580,10 @@
                     console.error('Failed to transfer via Google Sheets:', error);
                 }
             }
-            
+
             state.today.dogs = JSON.parse(JSON.stringify(state.tomorrow.dogs));
             state.today.vanTimes = JSON.parse(JSON.stringify(state.tomorrow.vanTimes));
-            
+
             state.today.dogs.forEach(dog => {
                 dog.photo = false;
                 dog.notes = '';
@@ -3578,16 +3591,16 @@
                     dog.walk = 'booked';
                 }
             });
-            
+
             state.tomorrow.dogs = [];
             state.tomorrow.staging = [];
             state.tomorrow.vanTimes = { BV: '07:30', DV: '08:00', SV: '08:30' };
-            
+
             populateVanTimeDropdowns();
             renderBoard('today');
             renderBoard('tomorrow');
             renderStaging('tomorrow');
-            
+
             closeModal();
             showToast('✅ Tomorrow transferred to Today successfully!', 'success');
             switchTab('today');
@@ -3770,32 +3783,32 @@
         async function manualRefresh() {
             const btn = document.querySelector('.refresh-btn');
             btn.classList.add('refreshing');
-            
+
             try {
                 if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                     const result = await response.json();
-                    
+
                     if (result.success && result.data) {
                         const oldTodayCount = state.today.dogs.length;
                         const oldTomorrowCount = state.tomorrow.dogs.length;
-                        
+
                         state.today.dogs = result.data.today?.dogs || [];
                         state.today.staging = result.data.today?.staging || [];
                         state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
                         state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
                         state.tomorrow.staging = result.data.tomorrow?.staging || [];
                         state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
-                        
+
                         populateVanTimeDropdowns();
                         renderStaging('today');
                         renderStaging('tomorrow');
                         renderBoard('today');
                         renderBoard('tomorrow');
-                        
+
                         const newTodayCount = state.today.dogs.length;
                         const newTomorrowCount = state.tomorrow.dogs.length;
-                        
+
                         showToast(`☁️ Refreshed from cloud (Today: ${newTodayCount}, Tomorrow: ${newTomorrowCount})`, 'success');
                     } else {
                         showToast('⚠️ No data received from cloud', 'error');
@@ -3820,12 +3833,12 @@
             }
 
             let data = null;
-            
+
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                     const result = await response.json();
-                    
+
                     if (result.success && result.data) {
                         data = result.data;
                     }
@@ -3833,7 +3846,7 @@
                     console.error('Failed to refresh from Google Sheets:', error);
                 }
             }
-            
+
             if (!data) {
                 const saved = localStorage.getItem('fairyTailsStaffBoard');
                 if (saved) {
@@ -3845,14 +3858,14 @@
                     }
                 }
             }
-            
+
             if (!data) return;
-            
+
             const currentData = JSON.stringify({
                 today: state.today,
                 tomorrow: state.tomorrow
             });
-            
+
             const newToday = {
                 dogs: data.today?.dogs || [],
                 staging: data.today?.staging || [],
@@ -3863,27 +3876,27 @@
                 staging: data.tomorrow?.staging || [],
                 vanTimes: data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
             };
-            
+
             const newData = JSON.stringify({
                 today: newToday,
                 tomorrow: newTomorrow
             });
-            
+
             if (currentData !== newData) {
                 const oldTodayCount = state.today.dogs.length;
                 const oldTomorrowCount = state.tomorrow.dogs.length;
                 const newTodayCount = newToday.dogs.length;
                 const newTomorrowCount = newTomorrow.dogs.length;
-                
+
                 state.today = newToday;
                 state.tomorrow = newTomorrow;
-                
+
                 populateVanTimeDropdowns();
                 renderStaging('today');
                 renderStaging('tomorrow');
                 renderBoard('today');
                 renderBoard('tomorrow');
-                
+
                 console.log(`Data refreshed - Today: ${oldTodayCount}→${newTodayCount}, Tomorrow: ${oldTomorrowCount}→${newTomorrowCount}`);
             }
         }
@@ -3891,7 +3904,7 @@
         // =====================
         // Data Persistence
         // =====================
-        
+
         async function saveBoard() {
             const dataToSave = {
                 action: 'save',
@@ -3906,9 +3919,9 @@
                     vanTimes: state.tomorrow.vanTimes
                 }
             };
-            
+
             localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
-            
+
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(CONFIG.SCRIPT_URL, {
@@ -3931,12 +3944,12 @@
 
         async function loadBoard() {
             let loadedFromSheets = false;
-            
+
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                     const result = await response.json();
-                    
+
                     if (result.success && result.data) {
                         state.today.dogs = result.data.today?.dogs || [];
                         state.today.staging = result.data.today?.staging || [];
@@ -3954,7 +3967,7 @@
                     console.error('❌ Failed to load from Google Sheets:', error);
                 }
             }
-            
+
             if (!loadedFromSheets) {
                 console.warn('⚠️ Google Sheets unavailable - using localStorage (read-only mode until Sheets connects)');
                 const saved = localStorage.getItem('fairyTailsStaffBoard');
@@ -3972,17 +3985,17 @@
                         console.error('Failed to load saved data:', e);
                     }
                 }
-                
+
                 showToast('⚠️ Could not connect to Google Sheets - changes may not save', 'error');
             }
-            
+
             populateVanTimeDropdowns();
-            
+
             renderStaging('today');
             renderStaging('tomorrow');
             renderBoard('today');
             renderBoard('tomorrow');
-            
+
             if (loadedFromSheets) {
                 state.initialLoadComplete = true;
                 console.log('✅ Initial load complete - autoSave now enabled');
@@ -3992,23 +4005,23 @@
                 setTimeout(retryLoadFromSheets, 10000);
             }
         }
-        
+
         async function retryLoadFromSheets() {
             if (state.initialLoadComplete) return;
-            
+
             console.log('🔄 Retrying Google Sheets connection...');
-            
+
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                     const result = await response.json();
-                    
+
                     if (result.success && result.data) {
                         const remoteToday = result.data.today?.dogs?.length || 0;
                         const remoteTomorrow = result.data.tomorrow?.dogs?.length || 0;
                         const localToday = state.today.dogs.length;
                         const localTomorrow = state.tomorrow.dogs.length;
-                        
+
                         if (remoteToday >= localToday || remoteTomorrow >= localTomorrow) {
                             state.today.dogs = result.data.today?.dogs || [];
                             state.today.staging = result.data.today?.staging || [];
@@ -4016,14 +4029,14 @@
                             state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
                             state.tomorrow.staging = result.data.tomorrow?.staging || [];
                             state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || state.tomorrow.vanTimes;
-                            
+
                             populateVanTimeDropdowns();
                             renderStaging('today');
                             renderStaging('tomorrow');
                             renderBoard('today');
                             renderBoard('tomorrow');
                         }
-                        
+
                         state.initialLoadComplete = true;
                         showToast('✅ Connected to Google Sheets', 'success');
                         console.log('✅ Reconnected to Google Sheets - autoSave now enabled');
@@ -4033,7 +4046,7 @@
                     console.error('Retry failed:', error);
                 }
             }
-            
+
             setTimeout(retryLoadFromSheets, 10000);
         }
 
@@ -4042,7 +4055,7 @@
                 console.log('Initial load not complete - skipping save to prevent data loss');
                 return;
             }
-            
+
             const dataToSave = {
                 action: 'save',
                 today: { 
@@ -4056,23 +4069,23 @@
                     vanTimes: state.tomorrow.vanTimes
                 }
             };
-            
+
             localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
-            
+
             if (forceLocalOnly) return;
-            
+
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const localTodayCount = state.today.dogs.length;
                     const localTomorrowCount = state.tomorrow.dogs.length;
                     const localTotal = localTodayCount + localTomorrowCount;
-                    
+
                     console.log(`Checking remote before saving (local: Today=${localTodayCount}, Tomorrow=${localTomorrowCount})...`);
-                    
+
                     try {
                         const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                         const result = await response.json();
-                        
+
                         if (result.success && result.data) {
                             const remoteTodayCount = result.data.today?.dogs?.length || 0;
                             const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
@@ -4090,7 +4103,7 @@
                         console.error('Could not verify remote state - skipping save to be safe:', checkError);
                         return;
                     }
-                    
+
                     await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -4099,9 +4112,9 @@
                         },
                         body: JSON.stringify(dataToSave)
                     });
-                    
+
                     console.log(`✅ Saved to Google Sheets (Today: ${localTodayCount}, Tomorrow: ${localTomorrowCount})`);
-                    
+
                 } catch (error) {
                     console.error('Auto-save to Google Sheets failed:', error);
                 }
