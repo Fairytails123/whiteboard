@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#F2F2F7">
     <title>Fairy Tails K9 Centre - Staff Board</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,6 +86,23 @@
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Plus Jakarta Sans', system-ui, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.45;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        html { font-size: 16px; }
+
+        /* Mobile-first fault-tolerant fallback. If for any reason the
+           main mobile media query block fails to apply, this minimal
+           layer keeps the board readable on a phone: single column,
+           16px text, no horizontal scroll. */
+        @media (max-width: 767px) {
+            html, body { font-size: 16px; }
+            input, select, textarea { font-size: 16px !important; }
+            .board-container { grid-template-columns: 1fr !important; }
+            body { overflow-x: hidden; }
+        }
             min-height: 100vh;
             min-height: 100dvh;
             overflow-x: hidden;
@@ -198,75 +219,82 @@
             background: rgba(0, 122, 255, 0.18);
         }
 
-        .refresh-btn.refreshing, .pull-today-btn.pulling {
+        .refresh-btn.refreshing, .pull-btn.pulling {
             animation: spin 0.8s linear infinite;
         }
 
-        .pull-today-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: var(--radius-full);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            background: rgba(90, 200, 250, 0.15);
-            color: #32ADE6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pull-today-btn:hover {
-            background: rgba(90, 200, 250, 0.25);
-        }
-
-        .pull-today-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* ================================================================
-           Pull Tomorrow button — added 2026-04-25
-           Manual fallback for the 14:05 daily Acuity import automation.
-           Mirrors the Pull Today pattern but lives inside the Tomorrow tab
-           (only visible when that tab is active) and uses an amber accent
-           to distinguish it visually from the Today (blue) action.
-           ================================================================ */
-        .pull-tomorrow-row {
-            display: flex;
-            justify-content: center;
-            padding: 12px 16px 4px;
-        }
-
-        .pull-tomorrow-btn {
+        /* ============================================================
+           Pull buttons — Today + Tomorrow share the same shape, but use
+           distinct accent colours so the team can tell them apart at a
+           glance. Pill-shaped to fit naturally next to the round
+           refresh button in the header.
+           ============================================================ */
+        .pull-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
-            border-radius: var(--radius-full);
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            height: 38px;
+            padding: 0 12px 0 10px;
             border: none;
-            background: rgba(245, 158, 11, 0.15);
-            color: #B45309;
+            border-radius: 999px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            color: white;
+            transition: transform 120ms ease, box-shadow 160ms ease, filter 160ms ease;
             white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .pull-btn:hover { filter: brightness(1.05); }
+        .pull-btn:active { transform: scale(0.96); }
+        .pull-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pull-btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.22);
+            font-size: 0.85rem;
+        }
+        .pull-btn-text {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
+            line-height: 1;
+        }
+        .pull-btn-when { font-size: 0.82rem; font-weight: 800; letter-spacing: -0.01em; }
+        .pull-btn-sub  { font-size: 0.6rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.02em; }
+
+        .pull-btn-today {
+            background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            box-shadow: 0 2px 6px rgba(0,122,255,0.30);
+        }
+        .pull-btn-tomorrow {
+            background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+            box-shadow: 0 2px 6px rgba(245,158,11,0.32);
+            color: #2A1B00;
+        }
+        .pull-btn-tomorrow .pull-btn-icon { background: rgba(0,0,0,0.10); }
+
+        /* On the narrowest phones, hide the sub-line so both buttons fit
+           comfortably next to the time + refresh. */
+        @media (max-width: 420px) {
+            .pull-btn { padding: 0 10px 0 8px; gap: 6px; }
+            .pull-btn-sub { display: none; }
+            .pull-btn-when { font-size: 0.75rem; }
+        }
+        @media (max-width: 360px) {
+            .pull-btn-text { display: none; }
+            .pull-btn { padding: 0 10px; height: 36px; }
         }
 
-        .pull-tomorrow-btn:hover {
-            background: rgba(245, 158, 11, 0.25);
-        }
-
-        .pull-tomorrow-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .pull-tomorrow-btn.pulling {
-            animation: spin 0.8s linear infinite;
-        }
+        /* Legacy .pull-today-btn / .pull-tomorrow-btn rules removed —
+           replaced by the unified .pull-btn pill styling above. */
 
         @keyframes spin {
             from { transform: rotate(0deg); }
@@ -2338,6 +2366,180 @@
             .board-container.cols-6 { grid-template-columns: repeat(6, 1fr); }
         }
     </style>
+
+    <!-- ================================================================
+         POLISH LAYER — additive only.
+         Apple-grade mobile feel + behaviour marker (1-5) intuitive colours.
+         All operational JS is untouched.
+         ================================================================ -->
+    <style>
+        /* ---------------- Behaviour marker (1-5) ----------------
+           Intuitive traffic-light scale: 1 = calm/green, 5 = red.
+           Replaces the flat amber tint with a clear, glanceable chip. */
+        .behaviour-select {
+            background-image: none;
+            font-weight: 800 !important;
+            font-variant-numeric: tabular-nums;
+            transition: background 160ms ease, border-color 160ms ease,
+                        color 160ms ease, transform 120ms ease,
+                        box-shadow 160ms ease;
+        }
+        .behaviour-select:active { transform: scale(0.94); }
+
+        /* Empty state: a quiet "—" suggestion */
+        .behaviour-select:not(.has-value) {
+            background: rgba(120,120,128,0.08);
+            border-color: rgba(60,60,67,0.18);
+            color: rgba(60,60,67,0.55);
+        }
+
+        /* Per-level themes (override the generic .has-value amber) */
+        .behaviour-select.has-value[data-bhv="1"],
+        .behaviour-select.has-value option:checked[value="1"] ~ * { /* fallback for old browsers */ }
+        .behaviour-select.bhv-1 {
+            background: rgba(52,199,89,0.16) !important;
+            border-color: rgba(52,199,89,0.55) !important;
+            color: #1E8E3E !important;
+        }
+        .behaviour-select.bhv-2 {
+            background: rgba(175,200,90,0.20) !important;
+            border-color: rgba(175,200,90,0.65) !important;
+            color: #557A1F !important;
+        }
+        .behaviour-select.bhv-3 {
+            background: rgba(255,204,0,0.22) !important;
+            border-color: rgba(255,204,0,0.70) !important;
+            color: #8A6D00 !important;
+        }
+        .behaviour-select.bhv-4 {
+            background: rgba(255,149,0,0.20) !important;
+            border-color: rgba(255,149,0,0.70) !important;
+            color: #B45A00 !important;
+        }
+        .behaviour-select.bhv-5 {
+            background: rgba(255,59,48,0.18) !important;
+            border-color: rgba(255,59,48,0.70) !important;
+            color: #C41E1E !important;
+            box-shadow: 0 0 0 0.5px rgba(255,59,48,0.35) inset;
+        }
+
+        /* ---------------- Apple-grade mobile polish ---------------- */
+        @media (max-width: 767px) {
+            html, body {
+                font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                             "Roboto", "Segoe UI", system-ui, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                text-rendering: optimizeLegibility;
+                background: #F2F2F7;
+                -webkit-text-size-adjust: 100%;
+            }
+            * { -webkit-tap-highlight-color: transparent; }
+            button, select, input, .dog-row, .tab-btn { touch-action: manipulation; }
+
+            /* Header — glassy, sticky */
+            .header {
+                position: sticky; top: 0; z-index: 100;
+                background: rgba(249,249,249,0.82);
+                -webkit-backdrop-filter: saturate(180%) blur(22px);
+                backdrop-filter: saturate(180%) blur(22px);
+                border-bottom: 0.5px solid rgba(60,60,67,0.18);
+            }
+
+            /* Round 44pt header buttons with springy press */
+            /* Header pull buttons override the round-44pt rule — they are
+               pill-shaped now and need their own min-height. */
+            .pull-btn { height: 38px; }
+            .refresh-btn, .header-right > button:not(.pull-btn) {
+                width: 44px; height: 44px; border-radius: 14px;
+                background: rgba(120,120,128,0.10); border: none;
+                display: inline-flex; align-items: center; justify-content: center;
+                transition: transform 120ms ease, background 160ms ease;
+            }
+            .refresh-btn:active,
+            .header-right > button:active {
+                transform: scale(0.92);
+                background: rgba(120,120,128,0.22);
+            }
+
+            /* Behaviour chip is bigger and rounder on phones */
+            .behaviour-select {
+                width: 44px !important;
+                min-height: 44px !important;
+                border-radius: 12px !important;
+                font-size: 18px !important;
+            }
+
+            /* Dog row: list-cell feel */
+            .dog-row {
+                background: white;
+                border-bottom: 0.5px solid rgba(60,60,67,0.08);
+                transition: background 120ms ease;
+            }
+            .dog-row:active { background: rgba(0,0,0,0.03); }
+            .dog-row:last-child { border-bottom: none; }
+            .dog-name {
+                font-weight: 600;
+                letter-spacing: -0.01em;
+            }
+
+            /* Photo, walk, stop, vp selects share a calm focus ring */
+            .walk-select, .grooming-select, .stop-select, .vp-select,
+            .behaviour-select, .notes-input, .staging-input {
+                transition: border-color 160ms ease, box-shadow 160ms ease,
+                            background 160ms ease;
+            }
+            .walk-select:focus, .grooming-select:focus,
+            .stop-select:focus, .vp-select:focus,
+            .behaviour-select:focus, .notes-input:focus, .staging-input:focus {
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(0,122,255,0.20);
+                border-color: #007AFF;
+            }
+
+            /* Photo check — clean square, green when checked */
+            .photo-check {
+                width: 44px; height: 44px; border-radius: 12px;
+                background: rgba(120,120,128,0.10);
+                transition: background 160ms ease, transform 120ms ease;
+            }
+            .photo-check:active { transform: scale(0.92); }
+            .photo-check.checked { background: rgba(52,199,89,0.18); }
+
+            /* Buttons */
+            .btn {
+                min-height: 44px; border-radius: 12px;
+                font-weight: 600; letter-spacing: -0.01em;
+                transition: transform 120ms ease, opacity 160ms ease;
+            }
+            .btn:active { transform: scale(0.97); }
+
+            /* Modal as bottom-sheet */
+            .modal-overlay.active {
+                align-items: flex-end;
+                background: rgba(0,0,0,0.40);
+                -webkit-backdrop-filter: blur(2px);
+                backdrop-filter: blur(2px);
+            }
+            .modal {
+                width: 100%; max-width: 100%; margin: 0;
+                border-radius: 20px 20px 0 0;
+                padding: 22px 20px max(22px, env(safe-area-inset-bottom));
+                animation: ftSheetUp 280ms cubic-bezier(0.32, 0.72, 0, 1);
+            }
+            @keyframes ftSheetUp {
+                from { transform: translateY(100%); }
+                to   { transform: translateY(0); }
+            }
+            .modal-actions { flex-direction: column-reverse; gap: 10px; }
+            .modal-actions .btn { width: 100%; }
+
+            @media (prefers-reduced-motion: reduce) {
+                .modal { animation: none; }
+                * { transition-duration: 0.01ms !important; }
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -2351,8 +2553,19 @@
         </div>
         <div class="header-right">
             <div class="current-time" id="currentTime">--:--</div>
-            <button class="pull-today-btn" id="pullTodayBtn" onclick="pullToday()" title="Pull today's dogs from Acuity (manual fallback)">
-                📥
+            <button class="pull-btn pull-btn-today" id="pullTodayBtn" onclick="pullToday()" title="Pull today's dogs from Acuity (manual fallback)">
+                <span class="pull-btn-icon">📥</span>
+                <span class="pull-btn-text">
+                    <span class="pull-btn-when">Today</span>
+                    <span class="pull-btn-sub">Pull from Acuity</span>
+                </span>
+            </button>
+            <button class="pull-btn pull-btn-tomorrow" id="pullTomorrowBtn" onclick="pullTomorrow()" title="Pull tomorrow's dogs from Acuity (manual fallback in case the 2:05 PM automation fails)">
+                <span class="pull-btn-icon">📆</span>
+                <span class="pull-btn-text">
+                    <span class="pull-btn-when">Tomorrow</span>
+                    <span class="pull-btn-sub">Pull from Acuity</span>
+                </span>
             </button>
             <button class="refresh-btn" onclick="manualRefresh()" title="Refresh from Google Sheets">
                 🔄
@@ -2496,17 +2709,8 @@
 
     <!-- Tomorrow Tab -->
     <div class="tab-content" id="tomorrow-tab">
-        <!-- Pull Tomorrow's Appointments — manual fallback for the 14:05
-             daily automation. Visible only when the Tomorrow tab is active.
-             Added 2026-04-25. -->
-        <div class="pull-tomorrow-row">
-            <button class="pull-tomorrow-btn"
-                    id="pullTomorrowBtn"
-                    onclick="pullTomorrow()"
-                    title="Pull tomorrow's dogs from Acuity (manual fallback in case the 2:05 PM automation fails)">
-                📆 Pull Tomorrow's Appointments
-            </button>
-        </div>
+        <!-- Pull Tomorrow button moved into header next to Pull Today.
+             Functionality preserved; only placement and styling changed. -->
 
         <!-- Staging Area — Collapsible -->
         <div class="staging-area" id="tomorrow-staging-area">
