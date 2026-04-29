@@ -1423,6 +1423,17 @@
             font-size: 16px;
         }
 
+        .dog-row.boarding-school .behaviour-select.bs-behaviour {
+            grid-column: 4;
+            grid-row: 2;
+            justify-self: center;
+            align-self: center;
+            margin-top: 4px;
+            margin-left: 0;
+            padding-top: 8px;
+            border-top: 0.5px solid var(--separator);
+        }
+
         /* ================================================================
            FORM CONTROLS — Clean, borderless, iOS-like
            ================================================================ */
@@ -1593,6 +1604,43 @@
             background: var(--bg-primary);
             color: var(--text-tertiary);
             cursor: not-allowed;
+        }
+
+        /* Behaviour marker selector (1-5) */
+        .behaviour-select {
+            width: 44px;
+            min-height: 44px;
+            margin-left: auto;
+            padding: 6px 2px;
+            border: 1.5px solid var(--separator-opaque);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-family: inherit;
+            font-weight: 700;
+            text-align: center;
+            background: white;
+            color: var(--text-primary);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            flex-shrink: 0;
+        }
+
+        .behaviour-select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+            z-index: 1;
+        }
+
+        .behaviour-select.has-value {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.5);
+            color: #92400e;
+        }
+
+        /* Boarding rows: behaviour-select sits next to AM controls (no margin-left:auto so it stays close) */
+        .dog-row.boarding .behaviour-select {
+            margin-left: 4px;
         }
 
         .stop-select.has-value:not(:disabled) {
@@ -2865,6 +2913,7 @@
                     stopAM: '',
                     stop: '',
                     notes: '',
+                    behaviour: '',
                     crate: '',
                     serviceType: serviceType,
                     pickup: '',
@@ -2922,7 +2971,7 @@
         // Board Rendering
         // =====================
         function createDogRow(dog, sectionClass = '') {
-            const { id, name, photo, walk, vpAM, vpPM, stopAM, stop, notes } = dog;
+            const { id, name, photo, walk, vpAM, vpPM, stopAM, stop, notes, behaviour } = dog;
 
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
@@ -2998,11 +3047,21 @@
                             <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
                             <option value="XV" ${vpPM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
-                        <select class="stop-select stop-pm ${stop ? 'has-value' : ''}" 
+                        <select class="stop-select stop-pm ${stop ? 'has-value' : ''}"
                                ${stopPMDisabled ? 'disabled' : ''}
                                onchange="updateDog('${id}', 'stop', this.value); updateStopStyle(this)"
                                title="PM Stop Number">
                             ${generateStopOptions(stop)}
+                        </select>
+                        <select class="behaviour-select ${behaviour ? 'has-value' : ''}"
+                                onchange="updateDog('${id}', 'behaviour', this.value); this.classList.toggle('has-value', !!this.value)"
+                                title="Behaviour marker (1-5)">
+                            <option value="">-</option>
+                            <option value="1" ${behaviour === '1' ? 'selected' : ''}>1</option>
+                            <option value="2" ${behaviour === '2' ? 'selected' : ''}>2</option>
+                            <option value="3" ${behaviour === '3' ? 'selected' : ''}>3</option>
+                            <option value="4" ${behaviour === '4' ? 'selected' : ''}>4</option>
+                            <option value="5" ${behaviour === '5' ? 'selected' : ''}>5</option>
                         </select>
                     </div>
 
@@ -3022,7 +3081,7 @@
         }
 
         function createBoardingDogRow(dog) {
-            const { id, name, photo, walk, vpAM, stopAM, notes, crate } = dog;
+            const { id, name, photo, walk, vpAM, stopAM, notes, crate, behaviour } = dog;
             const checkIn = normaliseDateStr(dog.checkIn);
             const checkOut = normaliseDateStr(dog.checkOut);
 
@@ -3074,7 +3133,7 @@
                                title="AM Stop Number">
                             ${generateStopOptions(stopAM)}
                         </select>
-                        <select class="vp-select vp-am ${vpAMClass}" 
+                        <select class="vp-select vp-am ${vpAMClass}"
                                 onchange="updateDog('${id}', 'vpAM', this.value); updateVPStyle(this)"
                                 title="AM pickup">
                             <option value="">-</option>
@@ -3085,9 +3144,19 @@
                             <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
                             <option value="XV" ${vpAM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
+                        <select class="behaviour-select ${behaviour ? 'has-value' : ''}"
+                                onchange="updateDog('${id}', 'behaviour', this.value); this.classList.toggle('has-value', !!this.value)"
+                                title="Behaviour marker (1-5)">
+                            <option value="">-</option>
+                            <option value="1" ${behaviour === '1' ? 'selected' : ''}>1</option>
+                            <option value="2" ${behaviour === '2' ? 'selected' : ''}>2</option>
+                            <option value="3" ${behaviour === '3' ? 'selected' : ''}>3</option>
+                            <option value="4" ${behaviour === '4' ? 'selected' : ''}>4</option>
+                            <option value="5" ${behaviour === '5' ? 'selected' : ''}>5</option>
+                        </select>
                     </div>
 
-                    <select class="crate-select ${crate ? 'has-value' : ''}" 
+                    <select class="crate-select ${crate ? 'has-value' : ''}"
                             onchange="updateDog('${id}', 'crate', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Crate type">
                         <option value="">-</option>
@@ -3165,7 +3234,7 @@
         }
 
         function createBoardingSchoolDogRow(dog) {
-            const { id, name, crateSize } = dog;
+            const { id, name, crateSize, behaviour } = dog;
             const checkIn = normaliseDateStr(dog.checkIn);
             const checkOut = normaliseDateStr(dog.checkOut);
 
@@ -3193,11 +3262,22 @@
                         <span class="day-label ${checkOut ? 'visible' : ''}">${getDayName(checkOut)}</span>
                     </div>
 
-                    <select class="bs-crate-select ${crateSize ? 'has-value' : ''}" 
+                    <select class="bs-crate-select ${crateSize ? 'has-value' : ''}"
                             onchange="updateDog('${id}', 'crateSize', this.value); this.classList.toggle('has-value', !!this.value)"
                             title="Crate Size">
                         <option value="">Crate...</option>
                         ${crateSizeOptions.map(opt => `<option value="${opt}" ${crateSize === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+
+                    <select class="behaviour-select bs-behaviour ${behaviour ? 'has-value' : ''}"
+                            onchange="updateDog('${id}', 'behaviour', this.value); this.classList.toggle('has-value', !!this.value)"
+                            title="Behaviour marker (1-5)">
+                        <option value="">-</option>
+                        <option value="1" ${behaviour === '1' ? 'selected' : ''}>1</option>
+                        <option value="2" ${behaviour === '2' ? 'selected' : ''}>2</option>
+                        <option value="3" ${behaviour === '3' ? 'selected' : ''}>3</option>
+                        <option value="4" ${behaviour === '4' ? 'selected' : ''}>4</option>
+                        <option value="5" ${behaviour === '5' ? 'selected' : ''}>5</option>
                     </select>
 
                     <button class="delete-btn" onclick="deleteDog('${id}')" title="Remove dog">×</button>
@@ -3687,7 +3767,10 @@
                 }
             } catch (error) {
                 console.error('Pull Today failed:', error);
-                showToast('❌ Failed to pull from Acuity — check your connection', 'error');
+                const detail = error instanceof TypeError
+                    ? 'network/CORS — n8n unreachable or webhook not registered'
+                    : (error.message || 'unknown error');
+                showToast('❌ Pull Today failed: ' + detail, 'error');
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('pulling');
@@ -3769,7 +3852,10 @@
                 }
             } catch (error) {
                 console.error('Pull Tomorrow failed:', error);
-                showToast('❌ Failed to pull from Acuity — check your connection', 'error');
+                const detail = error instanceof TypeError
+                    ? 'network/CORS — n8n unreachable or webhook not registered'
+                    : (error.message || 'unknown error');
+                showToast('❌ Pull Tomorrow failed: ' + detail, 'error');
             } finally {
                 btn.disabled = false;
                 btn.classList.remove('pulling');
