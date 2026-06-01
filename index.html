@@ -1097,6 +1097,14 @@
             box-shadow: var(--shadow-md);
         }
 
+        /* Grooming "G.D." badge — small teal tag next to the dog name. */
+        .gd-badge {
+            font-size: 0.78em;
+            font-weight: 600;
+            color: #0d9488;
+            white-space: nowrap;
+        }
+
         /* Row 1 placement */
         .dog-row .dog-name {
             grid-column: 1;
@@ -3126,6 +3134,27 @@
         // =====================
         // Board Rendering
         // =====================
+        // ---- Grooming "G.D." detection (display-only badge) ----
+        // Canonical regex — byte-identical to stage2_fuzzy_match.js,
+        // route_sender.js and white_board.js. Matches a trailing G.D./GD./G.D/GD
+        // token (optional dots, case-insensitive). A dog shows the ✂️ (grooming)
+        // badge if its name carries the token, OR the propagated Is_Grooming
+        // marker is set, OR its Acuity Appointment_Type is 'Grooming'. Display
+        // only — never reclassifies the dog's section.
+        function isGroomingName(name) {
+            return /(^|\s)G\.?D\.?$/i.test(String(name == null ? '' : name).trim());
+        }
+        function dogIsGrooming(dog) {
+            return !!(dog && (dog.isGrooming === true
+                || isGroomingName(dog.name)
+                || dog.serviceType === 'Grooming'));
+        }
+        function groomingBadgeHtml(dog) {
+            return dogIsGrooming(dog)
+                ? ' <span class="gd-badge" title="Grooming dog">✂️ (grooming)</span>'
+                : '';
+        }
+
         function createDogRow(dog, sectionClass = '') {
             const { id, name, photo, walk, vpAM, vpPM, stopAM, stop, notes, behaviour } = dog;
 
@@ -3156,7 +3185,7 @@
 
             return `
                 <div class="dog-row section-row ${sectionClass} ${notes ? 'notes-expanded' : ''}" data-id="${id}">
-                    <div class="dog-name">${name}</div>
+                    <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <div class="photo-check">
                         <input type="checkbox" class="photo-checkbox" 
@@ -3265,7 +3294,7 @@
 
             return `
                 <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}" data-id="${id}">
-                    <div class="dog-name">${name}</div>
+                    <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <div class="photo-check">
                         <input type="checkbox" class="photo-checkbox" 
@@ -3341,7 +3370,7 @@
 
             return `
                 <div class="dog-row section-row grooming" data-id="${id}">
-                    <div class="dog-name">${name}</div>
+                    <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <select class="grooming-select grooming-pickup ${pickup ? 'has-value' : ''}" 
                             onchange="updateDog('${id}', 'pickup', this.value); this.classList.toggle('has-value', !!this.value)"
@@ -3376,7 +3405,7 @@
 
             return `
                 <div class="dog-row section-row boarding-school" data-id="${id}">
-                    <div class="dog-name">${name}</div>
+                    <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <select class="bs-crate-select ${crateSize ? 'has-value' : ''}"
                             onchange="updateDog('${id}', 'crateSize', this.value); this.classList.toggle('has-value', !!this.value)"
