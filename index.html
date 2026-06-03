@@ -3797,7 +3797,15 @@
                     if (result.success) {
                         await loadBoard();
                         closeModal();
-                        showToast(`✅ Transferred ${result.transferred} dogs to Today!`, 'success');
+                        const unresolved = Array.isArray(result.vanUnresolved) ? result.vanUnresolved : [];
+                        if (unresolved.length) {
+                            // Some dogs still show "V" — no van type in the roster, or a name
+                            // mismatch. Tell staff exactly which ones so they can set the van.
+                            showToast('⚠️ Transferred ' + result.transferred + ' dogs — ' + unresolved.length +
+                                ' still need a van type (showing "V"): ' + unresolved.join(', '), 'error');
+                        } else {
+                            showToast(`✅ Transferred ${result.transferred} dogs to Today!`, 'success');
+                        }
                         switchTab('today');
                         return;
                     }
