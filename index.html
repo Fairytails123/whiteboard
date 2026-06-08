@@ -4144,16 +4144,74 @@
         // Data Persistence
         // =====================
 
+        // ============================================================
+        // ROUTE-OWNED COLUMN GUARD (dual-writer race fix, 2026-06-08)
+        // ============================================================
+        // The n8n route push (Apps Script updateVanRoute) writes the van + stop
+        // columns DIRECTLY on the sheet for routed dogs. This open page does a
+        // FULL-board overwrite on every autosave (and every edit), which — with
+        // stale in-memory state — silently wipes that route push (route stop
+        // numbers / van codes vanish). Before any full-board save we pull the
+        // remote board and, for these columns, KEEP THE REMOTE value whenever this
+        // page's value is blank. A non-blank local value (staff assigning a van)
+        // still wins, so manual edits are never lost. Matched by dog id.
+        const ROUTE_OWNED_FIELDS = ['vpAM', 'vpPM', 'stopAM', 'stop', 'isGrooming'];
+
+        function mergeRouteOwnedFromRemote(remoteData) {
+            if (!remoteData) return false;
+            let changed = false;
+            ['today', 'tomorrow'].forEach(function (tab) {
+                const remoteDogs = (remoteData[tab] && remoteData[tab].dogs) || [];
+                if (!remoteDogs.length) return;
+                const remoteById = {};
+                remoteDogs.forEach(function (d) { if (d && d.id) remoteById[d.id] = d; });
+                (state[tab].dogs || []).forEach(function (localDog) {
+                    const remoteDog = remoteById[localDog.id];
+                    if (!remoteDog) return;
+                    ROUTE_OWNED_FIELDS.forEach(function (f) {
+                        const lv = localDog[f];
+                        const rv = remoteDog[f];
+                        const localBlank = (lv === '' || lv === undefined || lv === null || lv === false);
+                        const remoteHas = !(rv === '' || rv === undefined || rv === null || rv === false);
+                        if (localBlank && remoteHas) {
+                            // Keep isGrooming boolean; coerce stop/van to string so a merged
+                            // dog matches the string form manual edits store (updateDog saves
+                            // this.value). A route-pushed stop arrives as a number from the sheet.
+                            localDog[f] = (f === 'isGrooming') ? rv : String(rv);
+                            changed = true;
+                        }
+                    });
+                });
+            });
+            return changed;
+        }
+
         async function saveBoard() {
+            // ROUTE-OWNED COLUMN GUARD: pull remote first and keep any van/stop the
+            // n8n route push wrote that this page doesn't have locally, so a manual
+            // "Save to Cloud" can't wipe a route that was just sent.
+            if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                try {
+                    const guardResp = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const guardJson = await guardResp.json();
+                    if (guardJson && guardJson.success && guardJson.data && mergeRouteOwnedFromRemote(guardJson.data)) {
+                        renderBoard('today');
+                        renderBoard('tomorrow');
+                    }
+                } catch (guardErr) {
+                    console.error('saveBoard: route-column guard skipped:', guardErr);
+                }
+            }
+
             const dataToSave = {
                 action: 'save',
-                today: { 
-                    dogs: state.today.dogs, 
+                today: {
+                    dogs: state.today.dogs,
                     staging: state.today.staging,
                     vanTimes: state.today.vanTimes
                 },
-                tomorrow: { 
-                    dogs: state.tomorrow.dogs, 
+                tomorrow: {
+                    dogs: state.tomorrow.dogs,
                     staging: state.tomorrow.staging,
                     vanTimes: state.tomorrow.vanTimes
                 }
@@ -4336,6 +4394,17 @@
                                 console.warn(`⚠️ BLOCKED SAVE: Local is empty but remote has ${remoteTotal} dogs`);
                                 await loadBoardSilent();
                                 return;
+                            }
+
+                            // ROUTE-OWNED COLUMN GUARD: keep any van/stop the n8n route
+                            // push wrote that this (possibly stale) page doesn't have
+                            // locally, so this full-board autosave can't wipe a route
+                            // that was just sent. Re-uses this same remote read.
+                            if (mergeRouteOwnedFromRemote(result.data)) {
+                                localStorage.setItem('fairyTailsStaffBoard', JSON.stringify(dataToSave));
+                                renderBoard('today');
+                                renderBoard('tomorrow');
+                                console.log('🛟 Restored route-owned columns (VP/Stop) from remote before save');
                             }
                         }
                     } catch (checkError) {
