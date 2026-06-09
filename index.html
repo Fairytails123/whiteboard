@@ -2838,6 +2838,21 @@
         </div>
     </div>
 
+    <!-- Transfer to Load Plan chooser — Full Day / Half Day (added 2026-06-09).
+         Replaces the old native confirm() so the transfer can offer a separate
+         Half Day (afternoon ~12:30) run alongside the Full Day evening run. -->
+    <div class="modal-overlay" id="transferLoadPlanModal">
+        <div class="modal">
+            <div class="modal-title">🚐 Transfer to Load Plan</div>
+            <div class="modal-text" id="transferLoadPlanText"></div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeTransferLoadPlanModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmTransferLoadPlan('full')">☀️ Full Day</button>
+                <button class="btn btn-primary" id="transferLoadPlanHalfBtn" onclick="confirmTransferLoadPlan('half')">🌗 Half Day</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -4446,6 +4461,10 @@
         const LOAD_PLAN_STORAGE_PREFIX = 'van_v5_';
         const LOAD_PLAN_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUeIiIJQZZeoo3aXHDdqVZNNqFKLhWhi_WhPVb6GUIvkMlfNxTKsOXyCTGdvAEsMLC/exec';
 
+        // Holds the dogs computed by transferToLoadPlan() until the user picks
+        // Full Day / Half Day in the chooser modal. Read by confirmTransferLoadPlan().
+        let _pendingLoadPlanTransfer = null;
+
         async function transferToLoadPlan() {
             const tab = state.currentTab;
             const dogs = state[tab].dogs;
@@ -4455,6 +4474,7 @@
             const planLabel = tab === 'today' ? 'PM' : 'Next Day AM';
             const storageKey = LOAD_PLAN_STORAGE_PREFIX + planId;
 
+            // --- Full Day buckets (the original behaviour) ---
             const vanDogs = { bv: [], sv: [], dv: [] };
             const trayDogs = [];
             let skippedCount = 0;
@@ -4473,8 +4493,9 @@
                     return;
                 }
 
-                // Half Day AM excluded from Today's PM plan (they leave at noon),
-                // but included in Tomorrow's Next Day AM plan (they need morning pickup)
+                // Half Day AM excluded from Today's PM (full-day) plan — they leave
+                // ~12:30 on the separate Half Day afternoon run (the 🌗 Half Day
+                // button) — but included in Tomorrow's Next Day AM plan.
                 if (serviceType === 'Half Day AM' && tab === 'today') {
                     skippedCount++;
                     return;
@@ -4496,30 +4517,107 @@
             });
 
             const vanTotal = vanDogs.bv.length + vanDogs.sv.length + vanDogs.dv.length;
-            const totalToTransfer = vanTotal + trayDogs.length;
+            const fullDayTotal = vanTotal + trayDogs.length;
 
-            if (totalToTransfer === 0) {
+            // --- Half Day list (Today tab only) ---
+            // Dogs in the Half Day section that have a PM van assignment. They leave
+            // ~12:30 on the afternoon Half Day run and are staged into the SV (Small
+            // Van) with run-type HD. 'Half Day PM' is a retired service, so the Half
+            // Day section is exactly the 'Half Day AM' dogs.
+            const halfDayNames = [];
+            if (tab === 'today') {
+                dogs.forEach(dog => {
+                    if (!dog.name || !dog.name.trim()) return;
+                    const serviceType = dog.serviceType || '';
+                    if (serviceType.indexOf('Half Day') === -1) return;
+                    const van = dog.vpPM || '';
+                    if (van === 'BV' || van === 'SV' || van === 'DV' || van === 'V') {
+                        halfDayNames.push(dog.name);
+                    }
+                });
+            }
+
+            if (fullDayTotal === 0 && halfDayNames.length === 0) {
                 showToast('No dogs to transfer to Load Plan', 'error');
                 return;
             }
 
-            const confirmMsg = 
-                `Transfer ${totalToTransfer} dogs to ${planLabel} Load Plan?\n\n` +
-                `This will CLEAR the existing ${planLabel} plan.\n\n` +
-                `🚐 BV: ${vanDogs.bv.length}\n` +
-                `🚗 SV: ${vanDogs.sv.length}\n` +
-                `📦 DV: ${vanDogs.dv.length}\n` +
-                `📋 Tray: ${trayDogs.length}\n` +
-                `⏭️ Skipped: ${skippedCount}`;
+            // Stash for the modal button handlers, then show the Full/Half chooser.
+            _pendingLoadPlanTransfer = {
+                tab, planId, planLabel, storageKey,
+                vanDogs, trayDogs, halfDayNames
+            };
 
-            if (!confirm(confirmMsg)) return;
+            const textEl = document.getElementById('transferLoadPlanText');
+            if (textEl) {
+                textEl.innerHTML =
+                    `Transfer dogs to the <strong>${planLabel}</strong> Load Plan? ` +
+                    `This <strong>clears</strong> the existing ${planLabel} plan.<br><br>` +
+                    `☀️ <strong>Full Day</strong> — ${fullDayTotal} dog${fullDayTotal === 1 ? '' : 's'}<br>` +
+                    `&nbsp;&nbsp;🚐 BV ${vanDogs.bv.length} · 🚗 SV ${vanDogs.sv.length} · 📦 DV ${vanDogs.dv.length} · 📋 Tray ${trayDogs.length} · ⏭️ Skipped ${skippedCount}` +
+                    (tab === 'today'
+                        ? `<br><br>🌗 <strong>Half Day</strong> — ${halfDayNames.length} dog${halfDayNames.length === 1 ? '' : 's'} (PM van → SV, departs 12:30)`
+                        : '');
+            }
 
-            const loadPlanState = {
+            // Half Day applies to Today's PM run only — hide the button on Tomorrow.
+            const halfBtn = document.getElementById('transferLoadPlanHalfBtn');
+            if (halfBtn) halfBtn.style.display = (tab === 'today') ? '' : 'none';
+
+            document.getElementById('transferLoadPlanModal').classList.add('active');
+        }
+
+        function closeTransferLoadPlanModal() {
+            document.getElementById('transferLoadPlanModal').classList.remove('active');
+        }
+
+        // User picked Full Day or Half Day in the chooser modal.
+        function confirmTransferLoadPlan(choice) {
+            const p = _pendingLoadPlanTransfer;
+            closeTransferLoadPlanModal();
+            if (!p) return;
+
+            if (choice === 'half') {
+                if (!p.halfDayNames.length) {
+                    showToast('No Half Day dogs with a PM van to transfer', 'error');
+                    return;
+                }
+                // Half Day: every dog into the SV (Small Van), run-type HD, depart
+                // 12:30. Reuses the PM plan tab. The HD run-type rides the route
+                // pipeline so the whiteboard write-back only touches the Half Day
+                // section (not the full-day evening route's stop numbers).
+                commitLoadPlanTransfer(
+                    'PM', LOAD_PLAN_STORAGE_PREFIX + 'PM', 'Half Day (SV)',
+                    [{ dogNames: p.halfDayNames, boxes: LOAD_PLAN_BOX_ORDER.sv }],
+                    [],
+                    { runTypes: { bv: 'FD', sv: 'HD', dv: 'FD' }, departures: { sv: '12:30' } }
+                );
+            } else {
+                // Full Day: the original transfer (BV/SV/DV + tray, current tab).
+                commitLoadPlanTransfer(
+                    p.planId, p.storageKey, p.planLabel,
+                    [
+                        { dogNames: p.vanDogs.bv, boxes: LOAD_PLAN_BOX_ORDER.bv },
+                        { dogNames: p.vanDogs.sv, boxes: LOAD_PLAN_BOX_ORDER.sv },
+                        { dogNames: p.vanDogs.dv, boxes: LOAD_PLAN_BOX_ORDER.dv }
+                    ],
+                    p.trayDogs,
+                    null
+                );
+            }
+        }
+
+        // Build the Load Plan state and save it (localStorage + cloud). Shared by
+        // the Full Day and Half Day paths. fillSpecs = [{ dogNames, boxes }];
+        // trayDogs = loose tiles (no box); extraState merges extra top-level keys
+        // the Load Plan applies on load (runTypes for FD/HD, departures for 12:30).
+        async function commitLoadPlanTransfer(planId, storageKey, planLabel, fillSpecs, trayDogs, extraState) {
+            const loadPlanState = Object.assign({
                 tiles: {},
                 placements: {},
                 stops: {},
                 departures: {}
-            };
+            }, extraState || {});
 
             let tileCounter = 0;
             function generateLoadPlanTileId() {
@@ -4559,13 +4657,16 @@
                 }
             }
 
-            fillVanBoxes(vanDogs.bv, LOAD_PLAN_BOX_ORDER.bv);
-            fillVanBoxes(vanDogs.sv, LOAD_PLAN_BOX_ORDER.sv);
-            fillVanBoxes(vanDogs.dv, LOAD_PLAN_BOX_ORDER.dv);
+            let totalToTransfer = 0;
+            (fillSpecs || []).forEach(spec => {
+                fillVanBoxes(spec.dogNames, spec.boxes);
+                totalToTransfer += spec.dogNames.length;
+            });
 
-            trayDogs.forEach(name => {
+            (trayDogs || []).forEach(name => {
                 const id = generateLoadPlanTileId();
                 loadPlanState.tiles[id] = { id: id, text: name };
+                totalToTransfer++;
             });
 
             try {
@@ -4589,7 +4690,6 @@
 
                 showToast(`🚐 ${totalToTransfer} dogs → ${planLabel} Load Plan (synced to cloud)`, 'success');
                 console.log(`✅ Load Plan cloud sync complete for ${planId}`);
-                console.log(`   BV: ${vanDogs.bv.length}, SV: ${vanDogs.sv.length}, DV: ${vanDogs.dv.length}, Tray: ${trayDogs.length}`);
 
             } catch (e) {
                 console.error('❌ Failed to sync Load Plan to cloud:', e);
