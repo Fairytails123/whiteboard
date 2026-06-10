@@ -4202,19 +4202,54 @@
         }
 
         async function saveBoard() {
+            // WIPE GUARD: never save a board that hasn't finished its initial load —
+            // the in-memory state is still the empty boot state and would erase the
+            // sheet for everyone (this is how the Today tab got wiped, 2026-06-10).
+            if (!state.initialLoadComplete) {
+                showToast('⏳ Board still loading — not saved. Try again in a moment.', 'warning');
+                return;
+            }
+
             // ROUTE-OWNED COLUMN GUARD: pull remote first and keep any van/stop the
             // n8n route push wrote that this page doesn't have locally, so a manual
-            // "Save to Cloud" can't wipe a route that was just sent.
+            // "Save to Cloud" can't wipe a route that was just sent. The same remote
+            // read feeds the empty-tab wipe guard below.
+            let remoteCounts = null;
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
                     const guardResp = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
                     const guardJson = await guardResp.json();
-                    if (guardJson && guardJson.success && guardJson.data && mergeRouteOwnedFromRemote(guardJson.data)) {
-                        renderBoard('today');
-                        renderBoard('tomorrow');
+                    if (guardJson && guardJson.success && guardJson.data) {
+                        remoteCounts = {
+                            today: guardJson.data.today?.dogs?.length || 0,
+                            tomorrow: guardJson.data.tomorrow?.dogs?.length || 0
+                        };
+                        if (mergeRouteOwnedFromRemote(guardJson.data)) {
+                            renderBoard('today');
+                            renderBoard('tomorrow');
+                        }
                     }
                 } catch (guardErr) {
                     console.error('saveBoard: route-column guard skipped:', guardErr);
+                }
+            }
+
+            // EMPTY-TAB WIPE GUARD: a tab that is empty here but has dogs on the
+            // sheet is almost always stale/unloaded state, not a deliberate clear.
+            // Confirm before clearing it for everyone — the backend refuses an
+            // empty overwrite unless allowEmpty is sent.
+            const allowEmpty = { today: false, tomorrow: false };
+            if (remoteCounts) {
+                const emptyTabs = ['today', 'tomorrow'].filter(t => state[t].dogs.length === 0 && remoteCounts[t] > 0);
+                if (emptyTabs.length) {
+                    const detail = emptyTabs.map(t => `${t.toUpperCase()} has ${remoteCounts[t]} dogs on the sheet`).join(', ');
+                    const ok = confirm(`⚠️ Your ${emptyTabs.join(' and ')} board is EMPTY but the cloud is not (${detail}).\n\nSave anyway and CLEAR it for everyone?`);
+                    if (!ok) {
+                        showToast('💾 Save cancelled — refreshing from cloud instead', 'warning');
+                        await loadBoardSilent();
+                        return;
+                    }
+                    emptyTabs.forEach(t => { allowEmpty[t] = true; });
                 }
             }
 
@@ -4223,12 +4258,14 @@
                 today: {
                     dogs: state.today.dogs,
                     staging: state.today.staging,
-                    vanTimes: state.today.vanTimes
+                    vanTimes: state.today.vanTimes,
+                    allowEmpty: allowEmpty.today
                 },
                 tomorrow: {
                     dogs: state.tomorrow.dogs,
                     staging: state.tomorrow.staging,
-                    vanTimes: state.tomorrow.vanTimes
+                    vanTimes: state.tomorrow.vanTimes,
+                    allowEmpty: allowEmpty.tomorrow
                 }
             };
 
@@ -4390,7 +4427,7 @@
                 try {
                     const localTodayCount = state.today.dogs.length;
                     const localTomorrowCount = state.tomorrow.dogs.length;
-                    const localTotal = localTodayCount + localTomorrowCount;
+                    let droppedTab = false;
 
                     console.log(`Checking remote before saving (local: Today=${localTodayCount}, Tomorrow=${localTomorrowCount})...`);
 
@@ -4401,12 +4438,25 @@
                         if (result.success && result.data) {
                             const remoteTodayCount = result.data.today?.dogs?.length || 0;
                             const remoteTomorrowCount = result.data.tomorrow?.dogs?.length || 0;
-                            const remoteTotal = remoteTodayCount + remoteTomorrowCount;
 
-                            // Only block save if local is completely empty but remote has data
-                            // (protects against page-load race, but allows normal edits/deletes)
-                            if (localTotal === 0 && remoteTotal > 0) {
-                                console.warn(`⚠️ BLOCKED SAVE: Local is empty but remote has ${remoteTotal} dogs`);
+                            // PER-TAB EMPTY GUARD (was a combined-total check, which let
+                            // an empty Today through whenever Tomorrow had dogs — that is
+                            // what wiped the Today tab, 2026-06-10). An empty local tab
+                            // while the sheet has dogs = stale/unloaded state: drop that
+                            // tab's dogs from this save (the backend also refuses empty
+                            // overwrites) and resync from the cloud afterwards.
+                            if (localTodayCount === 0 && remoteTodayCount > 0) {
+                                console.warn(`⚠️ BLOCKED Today save: local empty but remote has ${remoteTodayCount} dogs`);
+                                dataToSave.today = { vanTimes: state.today.vanTimes }; // no dogs key → backend skips this tab
+                                droppedTab = true;
+                            }
+                            if (localTomorrowCount === 0 && remoteTomorrowCount > 0) {
+                                console.warn(`⚠️ BLOCKED Tomorrow save: local empty but remote has ${remoteTomorrowCount} dogs`);
+                                dataToSave.tomorrow = { vanTimes: state.tomorrow.vanTimes };
+                                droppedTab = true;
+                            }
+                            if (droppedTab && !dataToSave.today.dogs && !dataToSave.tomorrow.dogs) {
+                                // Nothing left to save — pull the truth down instead.
                                 await loadBoardSilent();
                                 return;
                             }
@@ -4437,6 +4487,10 @@
                     });
 
                     console.log(`✅ Saved to Google Sheets (Today: ${localTodayCount}, Tomorrow: ${localTomorrowCount})`);
+
+                    // A tab was held back as stale — adopt the cloud copy so this
+                    // page stops carrying the empty state around.
+                    if (droppedTab) loadBoardSilent();
 
                 } catch (error) {
                     console.error('Auto-save to Google Sheets failed:', error);
