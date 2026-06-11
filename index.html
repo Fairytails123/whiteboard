@@ -3824,11 +3824,25 @@
                         switchTab('today');
                         return;
                     }
+
+                    // Server refused (already transferred today / Tomorrow empty).
+                    // HARD STOP — never fall back to a local transfer + full save:
+                    // this page's in-memory board may be stale, and re-saving it is
+                    // exactly what overwrote the live board on 2026-06-10/11. Adopt
+                    // the server's truth and surface the reason instead.
+                    await loadBoard();
+                    closeModal();
+                    showToast('❌ Transfer refused: ' + (result.error || 'unknown reason'), 'error');
+                    return;
                 } catch (error) {
                     console.error('Failed to transfer via Google Sheets:', error);
+                    closeModal();
+                    showToast('❌ Transfer failed (network/server error) — nothing was changed. Please try again.', 'error');
+                    return;
                 }
             }
 
+            // LOCAL-ONLY MODE (no Google Sheets backend configured): transfer in-page.
             state.today.dogs = JSON.parse(JSON.stringify(state.tomorrow.dogs));
             state.today.vanTimes = JSON.parse(JSON.stringify(state.tomorrow.vanTimes));
 
