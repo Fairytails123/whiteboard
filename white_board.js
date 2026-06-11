@@ -122,16 +122,16 @@ function doPost(e) {
         result = saveAllData(data);
         break;
       case 'saveToday':
-        result = saveBoardData(TABS.TODAY, data.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.allowEmpty });
+        result = saveBoardData(TABS.TODAY, data.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.allowEmpty, blockStaleOverwrite: !data.allowStale });
         break;
       case 'saveTomorrow':
-        result = saveBoardData(TABS.TOMORROW, data.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.allowEmpty });
+        result = saveBoardData(TABS.TOMORROW, data.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.allowEmpty, blockStaleOverwrite: !data.allowStale });
         break;
       case 'saveVanTimes':
         result = saveVanTimes(data.vanTimes);
         break;
       case 'transfer':
-        result = transferTomorrowToToday();
+        result = transferTomorrowToToday(data.force === true);
         break;
       case 'resolveTodayVans':
         // On-demand fail-safe sweep of the Today tab (force = bypass throttle).
@@ -359,6 +359,24 @@ function saveBoardData(tabName, dogs, opts) {
   opts = opts || {};
   const sheet = getOrCreateSheet(tabName);
 
+  // SCRIPT LOCK — hoisted ABOVE the guards 2026-06-11 (was acquired just before
+  // the route-owned merge). Both wipe guards below read the sheet and then this
+  // function rewrites it; without the lock a concurrent writer's deleteRows→write
+  // gap (another save, the transfer's Today rewrite) could make a stale save
+  // misclassify the tab as empty and slip through. Acquire whenever any guard or
+  // the route merge needs read+write atomicity. Fail-open with a log, as before.
+  var _routeLock = null;
+  var _needLock = !!(opts.preserveRouteColumns || opts.blockEmptyOverwrite || opts.blockStaleOverwrite || opts.serialiseWrite);
+  if (_needLock) {
+    try { _routeLock = LockService.getScriptLock(); _routeLock.waitLock(10000); }
+    catch (e) {
+      _routeLock = null;
+      // Lock busy (another writer mid-flight). Guards + merge still run best-effort
+      // against a re-read of the sheet, but LOG the unserialised window.
+      try { getOrCreateSheet(TABS.IMPORT_LOG).appendRow([new Date().toISOString(), 'Route Guard', 0, 'Lock busy', tabName + ': save proceeded without the script lock']); } catch (e2) {}
+    }
+  }
+
   // EMPTY-SAVE WIPE GUARD (server-side, authoritative) — added 2026-06-10.
   // A website full-board save arriving with NO dogs for a tab that currently has
   // rows is almost always a broken client (page saved before its initial load
@@ -378,6 +396,7 @@ function saveBoardData(tabName, dogs, opts) {
           tabName + ': empty save refused — sheet has ' + existingRows + ' row(s)'
         ]);
       } catch (e) {}
+      if (_routeLock) { try { _routeLock.releaseLock(); } catch (e3) {} _routeLock = null; }
       return {
         success: false, blocked: true, count: existingRows,
         error: 'Empty save blocked: ' + tabName + ' still has ' + existingRows
@@ -386,20 +405,96 @@ function saveBoardData(tabName, dogs, opts) {
     }
   }
 
-  // ROUTE-OWNED COLUMN GUARD: keep sheet van/stop values where the page's are blank,
-  // under a best-effort script lock that serialises this read+write vs updateVanRoute.
-  var _routeLock = null;
-  if (opts.preserveRouteColumns) {
-    try { _routeLock = LockService.getScriptLock(); _routeLock.waitLock(10000); }
-    catch (e) {
-      _routeLock = null;
-      // Lock busy (updateVanRoute likely mid-write). We still merge best-effort —
-      // the merge re-reads the sheet, so an ALREADY-committed route push is still
-      // preserved — but this is the one narrow window where a push committing
-      // between our read and write could be clobbered, so LOG it (don't fail the
-      // save: the front-end posts no-cors and would show a false "Saved").
-      try { getOrCreateSheet(TABS.IMPORT_LOG).appendRow([new Date().toISOString(), 'Route Guard', 0, 'Lock busy', tabName + ': save proceeded without the route-guard lock']); } catch (e2) {}
+  // STALE-SAVE WIPE GUARD (server-side, authoritative) — added 2026-06-11.
+  // A website save whose dogs share NO row ID with what is currently on the tab
+  // comes from a client that never loaded the current board — i.e. a stale page
+  // holding an old day's plan in memory. Letting it through replaces a fresh
+  // Acuity import (or the morning transfer) with old data: on 2026-06-11 a stale
+  // client re-saved the pre-transfer June-11 Tomorrow board over the freshly
+  // imported June-12 dogs (the 14:05 import itself had run perfectly), making
+  // Today and Tomorrow identical on the TV. The empty-save guard above cannot
+  // catch this (the payload is not empty), so:
+  //   1. tab has rows + ZERO ID overlap with the payload          -> refuse
+  //   2. tab is EMPTY after a deliberate clear (transfer/clearTomorrow) and the
+  //      payload's newest embedded batch-timestamp predates that clear -> refuse
+  //      (stops a stale page re-filling the cleared tab with yesterday's plan)
+  // A legitimate editing session always overlaps (it loaded the current rows,
+  // and the per-edit autosave keeps it converged), so staff are unaffected.
+  // Send allowStale:true for that tab to overwrite deliberately. Transfer,
+  // clearBoard and the n8n imports do not pass blockStaleOverwrite. Fails OPEN
+  // on internal error (a guard bug must never freeze saving) but logs loudly.
+  if (opts.blockStaleOverwrite && dogs && dogs.length > 0) {
+    try {
+      var staleReason = '';
+      var lastRowStale = sheet.getLastRow();
+      if (lastRowStale > 1) {
+        // Col A is structurally the ID column (saveBoardData rewrites
+        // BOARD_HEADERS on every save, ID first).
+        var sheetIds = {};
+        var sheetIdCount = 0;
+        var idVals = sheet.getRange(2, COLS.ID + 1, lastRowStale - 1, 1).getValues();
+        for (var si = 0; si < idVals.length; si++) {
+          var sid = String(idVals[si][0] == null ? '' : idVals[si][0]).trim();
+          if (sid && !sheetIds[sid]) { sheetIds[sid] = true; sheetIdCount++; }
+        }
+        if (sheetIdCount > 0) {
+          var overlap = false;
+          for (var di = 0; di < dogs.length; di++) {
+            var dId = (dogs[di] && dogs[di].id) ? String(dogs[di].id).trim() : '';
+            if (dId && sheetIds[dId]) { overlap = true; break; }
+          }
+          if (!overlap) {
+            staleReason = 'none of the ' + dogs.length + ' incoming dog(s) match any of the '
+              + sheetIdCount + ' row(s) currently on the sheet — the client never loaded the current board';
+          }
+        }
+      } else {
+        // Honour the clear stamp only while fresh (48 h) and with a 15-minute
+        // grace window: website IDs embed the CLIENT device's clock, so modest
+        // clock skew must not block the first dog added to a cleared tab.
+        var clearedAt = Number(PropertiesService.getScriptProperties()
+          .getProperty('BOARD_CLEARED_AT_' + tabName) || 0);
+        if (clearedAt > 0 && (Date.now() - clearedAt) < 48 * 3600 * 1000) {
+          var newestMs = 0;
+          for (var dj = 0; dj < dogs.length; dj++) {
+            var ms = idBatchMs_(dogs[dj] && dogs[dj].id);
+            if (ms > newestMs) newestMs = ms;
+          }
+          if (newestMs > 0 && newestMs < clearedAt - 15 * 60 * 1000) {
+            staleReason = 'tab was deliberately cleared at ' + new Date(clearedAt).toISOString()
+              + ' and every incoming dog predates that clear — stale page re-posting the old board';
+          }
+        }
+      }
+      if (staleReason) {
+        try {
+          getOrCreateSheet(TABS.IMPORT_LOG).appendRow([
+            new Date().toISOString(), 'Save Guard', dogs.length, 'Blocked (stale)',
+            tabName + ': stale save refused — ' + staleReason
+          ]);
+        } catch (e) {}
+        if (_routeLock) { try { _routeLock.releaseLock(); } catch (e3) {} _routeLock = null; }
+        return {
+          success: false, blocked: true, stale: true, count: dogs.length,
+          error: 'Stale save blocked: ' + tabName + ' — ' + staleReason
+            + '. Reload the board, or send allowStale:true to overwrite deliberately.'
+        };
+      }
+    } catch (gErr) {
+      try {
+        getOrCreateSheet(TABS.IMPORT_LOG).appendRow([
+          new Date().toISOString(), 'Save Guard', 0, 'Error',
+          tabName + ': stale-guard check failed (save allowed through): '
+            + String((gErr && gErr.message) || gErr)
+        ]);
+      } catch (e2) {}
     }
+  }
+
+  // ROUTE-OWNED COLUMN GUARD: keep sheet van/stop values where the page's are blank.
+  // (Runs under the script lock acquired at the top of this function, which
+  // serialises this read+write vs updateVanRoute and other saves.)
+  if (opts.preserveRouteColumns) {
     try { mergeRouteOwnedIntoDogs_(sheet, dogs); } catch (mErr) {
       try { getOrCreateSheet(TABS.IMPORT_LOG).appendRow([new Date().toISOString(), 'Route Merge', 0, 'Error', String((mErr && mErr.message) || mErr)]); } catch (e2) {}
     }
@@ -447,8 +542,18 @@ function saveBoardData(tabName, dogs, opts) {
     sheet.getRange(2, 1, rows.length, BOARD_HEADERS.length).setValues(rows);
   }
 
-  // Release the route-owned-column guard lock (if held). On a thrown error above,
-  // Apps Script auto-releases the script lock when the execution ends.
+  // A save that leaves the tab EMPTY (the allowEmpty deliberate-clear path) is a
+  // clear too — stamp it so the stale-save guard's empty-tab branch can refuse a
+  // stale page resurrecting the old board afterwards.
+  if (!dogs || dogs.length === 0) {
+    try {
+      PropertiesService.getScriptProperties()
+        .setProperty('BOARD_CLEARED_AT_' + tabName, String(Date.now()));
+    } catch (e) {}
+  }
+
+  // Release the script lock (if held). On a thrown error above, Apps Script
+  // auto-releases the lock when the execution ends.
   if (_routeLock) _routeLock.releaseLock();
 
   return { success: true, count: dogs ? dogs.length : 0 };
@@ -459,15 +564,24 @@ function saveBoardData(tabName, dogs, opts) {
  */
 function saveAllData(data) {
   const results = {};
-  
+  let attempted = 0, blockedCount = 0;
+
   if (data.today && data.today.dogs) {
-    results.today = saveBoardData(TABS.TODAY, data.today.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.today.allowEmpty });
+    results.today = saveBoardData(TABS.TODAY, data.today.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.today.allowEmpty, blockStaleOverwrite: !data.today.allowStale });
+    attempted++; if (results.today && results.today.blocked) blockedCount++;
   }
 
   if (data.tomorrow && data.tomorrow.dogs) {
-    results.tomorrow = saveBoardData(TABS.TOMORROW, data.tomorrow.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.tomorrow.allowEmpty });
+    results.tomorrow = saveBoardData(TABS.TOMORROW, data.tomorrow.dogs, { preserveRouteColumns: true, blockEmptyOverwrite: !data.tomorrow.allowEmpty, blockStaleOverwrite: !data.tomorrow.allowStale });
+    attempted++; if (results.tomorrow && results.tomorrow.blocked) blockedCount++;
   }
-  
+
+  // If EVERY dogs-save in this request was refused by a wipe guard, the client
+  // is stale/broken — don't let its vanTimes through either, and say so.
+  if (attempted > 0 && blockedCount === attempted) {
+    return { success: false, blocked: true, results: results };
+  }
+
   // Handle vanTimes - can be at root level or nested in today/tomorrow
   if (data.vanTimes) {
     results.vanTimes = saveVanTimes(data.vanTimes);
@@ -551,11 +665,36 @@ function saveVanTimes(vanTimes) {
  * UPDATED: Preserves Check_In for continuing boarding stays (matched by dog name)
  *          Check_Out is updated daily from Boarding Planner data
  */
-function transferTomorrowToToday() {
+function transferTomorrowToToday(force) {
+  // SAME-DAY TRANSFER GUARD — added 2026-06-11. A second transfer on the same
+  // calendar day is almost always a stale page whose UI still shows yesterday's
+  // populated Tomorrow board (the real transfer already ran that morning).
+  // After the 14:05 import it would copy TOMORROW'S freshly imported dogs onto
+  // Today and clear Tomorrow — silently trashing both tabs. Refuse unless the
+  // caller explicitly sends force:true.
+  if (force !== true) {
+    try {
+      const lastT = getSetting_('Last_Transfer');
+      if (lastT) {
+        const lastDate = new Date(lastT);
+        if (!isNaN(lastDate.getTime())) {
+          const tz = 'Europe/London';
+          if (Utilities.formatDate(lastDate, tz, 'yyyy-MM-dd') === Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd')) {
+            return {
+              success: false, alreadyTransferred: true,
+              error: 'Already transferred today at ' + Utilities.formatDate(lastDate, tz, 'HH:mm')
+                + ' — reload the board. Send force:true to repeat deliberately.'
+            };
+          }
+        }
+      }
+    } catch (e) { /* guard must never stop a legitimate first transfer */ }
+  }
+
   // Load tomorrow's data
   const tomorrowData = loadBoardData(TABS.TOMORROW);
   const vanTimes = loadVanTimes();
-  
+
   if (!tomorrowData.dogs || tomorrowData.dogs.length === 0) {
     return { success: false, error: 'No dogs in Tomorrow board to transfer' };
   }
@@ -627,8 +766,9 @@ function transferTomorrowToToday() {
     return mapped;
   });
   
-  // Save to Today
-  saveBoardData(TABS.TODAY, todayDogs);
+  // Save to Today (serialiseWrite: take the script lock so the clear+rewrite
+  // can't interleave with a concurrent save's guard reads)
+  saveBoardData(TABS.TODAY, todayDogs, { serialiseWrite: true });
   
   // Transfer van times
   if (vanTimes.data) {
@@ -668,6 +808,18 @@ function transferTomorrowToToday() {
 }
 
 /**
+ * Read a setting value from the Settings tab ('' when absent)
+ */
+function getSetting_(settingName) {
+  const sheet = getOrCreateSheet(TABS.SETTINGS);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === settingName) return data[i][1];
+  }
+  return '';
+}
+
+/**
  * Update a setting value
  */
 function updateSetting(settingName, value) {
@@ -692,12 +844,36 @@ function updateSetting(settingName, value) {
 function clearBoard(tabName) {
   const sheet = getOrCreateSheet(tabName);
   const lastRow = sheet.getLastRow();
-  
+
   if (lastRow > 1) {
     sheet.deleteRows(2, lastRow - 1);
   }
-  
+
+  // Stamp the deliberate clear so the stale-save guard can refuse an old page
+  // re-posting the pre-clear board onto the (legitimately) empty tab.
+  try {
+    PropertiesService.getScriptProperties()
+      .setProperty('BOARD_CLEARED_AT_' + tabName, String(Date.now()));
+  } catch (e) {}
+
   return { success: true };
+}
+
+/**
+ * Extract the embedded creation batch epoch-ms from a board row ID.
+ * IDs are dog_<acuityId>_<batchMs> (n8n import / transfer) or
+ * dog_<ms>_<random> (added on the website). Acuity IDs (~1.7e9) sit far
+ * below the 2020-01-01 epoch-ms floor, so the largest qualifying numeric
+ * segment is the batch timestamp. Returns 0 when none is found.
+ */
+function idBatchMs_(id) {
+  var best = 0;
+  var parts = String(id == null ? '' : id).split('_');
+  for (var i = 0; i < parts.length; i++) {
+    var n = Number(parts[i]);
+    if (isFinite(n) && n >= 1577836800000 && n > best) best = n;
+  }
+  return best;
 }
 
 // =====================
