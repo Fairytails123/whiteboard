@@ -3799,11 +3799,14 @@
         async function confirmTransfer() {
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
+                    // NO Content-Type header: 'application/json' forces a CORS
+                    // preflight (OPTIONS), which Apps Script answers 405 — the POST
+                    // then never sends ("network/server error"). A string body
+                    // defaults to text/plain (CORS-simple, no preflight) and doPost
+                    // JSON.parses e.postData.contents regardless of content type.
+                    // Same pattern as the working savePlan POST below.
                     const response = await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                         body: JSON.stringify({ action: 'transfer' })
                     });
 
