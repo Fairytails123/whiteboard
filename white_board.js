@@ -191,12 +191,12 @@ function loadAllData() {
       today: {
         dogs: today.dogs || [],
         staging: [],
-        vanTimes: vanTimes.data?.today || { BV: '07:30', DV: '08:00', SV: '08:30' }
+        vanTimes: vanTimes.data?.today || { BV: '07:30', BVX: '08:00', SV: '08:30' }
       },
       tomorrow: {
         dogs: tomorrow.dogs || [],
         staging: [],
-        vanTimes: vanTimes.data?.tomorrow || { BV: '07:30', DV: '08:00', SV: '08:30' }
+        vanTimes: vanTimes.data?.tomorrow || { BV: '07:30', BVX: '08:00', SV: '08:30' }
       }
     },
     timestamp: new Date().toISOString()
@@ -587,12 +587,33 @@ function saveAllData(data) {
     results.vanTimes = saveVanTimes(data.vanTimes);
   } else if (data.today?.vanTimes || data.tomorrow?.vanTimes) {
     results.vanTimes = saveVanTimes({
-      today: data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' },
-      tomorrow: data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
+      today: data.today?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' },
+      tomorrow: data.tomorrow?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' }
     });
   }
   
   return { success: true, results: results };
+}
+
+/**
+ * One-time, idempotent self-heal of the van-departure Settings rows for the DV→BVX cutover
+ * (2026-06-13). The retired Dispatch Van's time slot transfers to BVX ("Big Van Xray"), so the
+ * Settings rows 'DV_Time_Today'/'DV_Time_Tomorrow' are renamed in-place to 'BVX_Time_*' (their
+ * 08:00 value is preserved — only column A, the key name, is rewritten). Once renamed it no-ops,
+ * so it costs a single one-time write on the next load and nothing thereafter. This is the
+ * paired "Stage 3" data step for the DV_Time_*→BVX_Time_* key rename elsewhere in this file —
+ * done server-side so no orphaned Settings row is left and the BVX time can persist.
+ * `data` is mutated in-memory too so the caller's current-run parse loop sees the new key.
+ */
+function healBvxSettingsKeys_(sheet, data) {
+  const renames = { 'DV_Time_Today': 'BVX_Time_Today', 'DV_Time_Tomorrow': 'BVX_Time_Tomorrow' };
+  for (let i = 1; i < data.length; i++) {
+    const name = String(data[i][0] || '').trim();
+    if (renames.hasOwnProperty(name)) {
+      sheet.getRange(i + 1, 1).setValue(renames[name]);  // data[i] = sheet row i+1 (row 1 is the header)
+      data[i][0] = renames[name];
+    }
+  }
 }
 
 /**
@@ -601,10 +622,11 @@ function saveAllData(data) {
 function loadVanTimes() {
   const sheet = getOrCreateSheet(TABS.SETTINGS);
   const data = sheet.getDataRange().getValues();
-  
+  healBvxSettingsKeys_(sheet, data);  // DV→BVX cutover: rename legacy DV_Time_* rows once (idempotent)
+
   const vanTimes = {
-    today: { BV: '07:30', DV: '08:00', SV: '08:30' },
-    tomorrow: { BV: '07:30', DV: '08:00', SV: '08:30' }
+    today: { BV: '07:30', BVX: '08:00', SV: '08:30' },
+    tomorrow: { BV: '07:30', BVX: '08:00', SV: '08:30' }
   };
   
   // Parse settings rows (Setting | Value format)
@@ -622,10 +644,10 @@ function loadVanTimes() {
     }
     
     if (setting === 'BV_Time_Today') vanTimes.today.BV = value || '07:30';
-    if (setting === 'DV_Time_Today') vanTimes.today.DV = value || '08:00';
+    if (setting === 'BVX_Time_Today') vanTimes.today.BVX = value || '08:00';
     if (setting === 'SV_Time_Today') vanTimes.today.SV = value || '08:30';
     if (setting === 'BV_Time_Tomorrow') vanTimes.tomorrow.BV = value || '07:30';
-    if (setting === 'DV_Time_Tomorrow') vanTimes.tomorrow.DV = value || '08:00';
+    if (setting === 'BVX_Time_Tomorrow') vanTimes.tomorrow.BVX = value || '08:00';
     if (setting === 'SV_Time_Tomorrow') vanTimes.tomorrow.SV = value || '08:30';
   }
   
@@ -642,10 +664,10 @@ function saveVanTimes(vanTimes) {
   // Find and update van time settings
   const updates = {
     'BV_Time_Today': vanTimes.today?.BV || '07:30',
-    'DV_Time_Today': vanTimes.today?.DV || '08:00',
+    'BVX_Time_Today': vanTimes.today?.BVX || '08:00',
     'SV_Time_Today': vanTimes.today?.SV || '08:30',
     'BV_Time_Tomorrow': vanTimes.tomorrow?.BV || '07:30',
-    'DV_Time_Tomorrow': vanTimes.tomorrow?.DV || '08:00',
+    'BVX_Time_Tomorrow': vanTimes.tomorrow?.BVX || '08:00',
     'SV_Time_Tomorrow': vanTimes.tomorrow?.SV || '08:30'
   };
   
@@ -773,7 +795,7 @@ function transferTomorrowToToday(force) {
   // Transfer van times
   if (vanTimes.data) {
     vanTimes.data.today = { ...vanTimes.data.tomorrow };
-    vanTimes.data.tomorrow = { BV: '07:30', DV: '08:00', SV: '08:30' };
+    vanTimes.data.tomorrow = { BV: '07:30', BVX: '08:00', SV: '08:30' };
     saveVanTimes(vanTimes.data);
   }
   
@@ -885,7 +907,7 @@ function idBatchMs_(id) {
  *
  * Called via doPost action 'updateRoute'. The Load Planner's n8n
  * "Whiteboard — Update" node POSTs:
- *   { action:'updateRoute', van:'BV'|'SV'|'DV', period:'PM'|'NEXT_AM'|'AM',
+ *   { action:'updateRoute', van:'BV'|'SV'|'DV'|'BVX', period:'PM'|'NEXT_AM'|'AM',
  *     stops:[ { name:'<dog>', stop:1 }, ... ] }
  *
  * Period → tab/field mapping (locked with Kam 2026-05-27):
@@ -1149,7 +1171,7 @@ function routeSimilarity_(a, b) {
 // never ran or failed.
 var VAN_ROSTER_SHEET_ID = '1OD8SQR2WxgO0nncXwBKYAkNv-qAhw018CXaH4kWgTDU';
 var VAN_ROSTER_TAB_GID = 0;
-var VAN_VALID_CODES = ['BV', 'SV', 'DV'];
+var VAN_VALID_CODES = ['BV', 'SV', 'DV', 'BVX'];  // BVX (Big Van Xray) added 2026-06-13; DV kept (additive) so legacy roster cells still heal during cutover
 
 /**
  * Load the per-dog van roster as { normalisedName -> 'BV'|'SV'|'DV' }.
@@ -1503,10 +1525,10 @@ function getOrCreateSheet(tabName) {
       sheet.getRange(1, 1, 1, 2).setValues([['Setting', 'Value']]);
       sheet.getRange(2, 1, 8, 2).setValues([
         ['BV_Time_Today', '07:30'],
-        ['DV_Time_Today', '08:00'],
+        ['BVX_Time_Today', '08:00'],
         ['SV_Time_Today', '08:30'],
         ['BV_Time_Tomorrow', '07:30'],
-        ['DV_Time_Tomorrow', '08:00'],
+        ['BVX_Time_Tomorrow', '08:00'],
         ['SV_Time_Tomorrow', '08:30'],
         ['Last_Import', ''],
         ['Last_Transfer', '']
