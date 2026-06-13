@@ -821,6 +821,7 @@
         }
 
         .van-badge.bv { background: rgba(0, 122, 255, 0.1); color: #007AFF; }
+        .van-badge.bvx { background: rgba(0, 122, 255, 0.1); color: #007AFF; } /* BVX = BV blue (Big Van Xray) */
         .van-badge.dv { background: rgba(255, 149, 0, 0.1); color: #FF9500; }
         .van-badge.sv { background: rgba(52, 199, 89, 0.1); color: #34C759; }
 
@@ -1525,6 +1526,12 @@
         /* Van pickup styles */
         .vp-select.van-pickup,
         .vp-select.van-bv {
+            background: rgba(0, 122, 255, 0.1);
+            border-color: rgba(0, 122, 255, 0.4);
+            color: #007AFF;
+            z-index: 1;
+        }
+        .vp-select.van-bvx {
             background: rgba(0, 122, 255, 0.1);
             border-color: rgba(0, 122, 255, 0.4);
             color: #007AFF;
@@ -2638,9 +2645,9 @@
                         </select>
                     </div>
                     <div class="van-item">
-                        <span class="van-badge dv">DV</span>
-                        <span>Dispatch Van</span>
-                        <select class="van-time-select" id="today-dv-time" onchange="updateVanTime('today', 'DV', this.value)">
+                        <span class="van-badge bvx">BVX</span>
+                        <span>Big Van Xray</span>
+                        <select class="van-time-select" id="today-bvx-time" onchange="updateVanTime('today', 'BVX', this.value)">
                         </select>
                     </div>
                     <div class="van-item">
@@ -2747,9 +2754,9 @@
                         </select>
                     </div>
                     <div class="van-item">
-                        <span class="van-badge dv">DV</span>
-                        <span>Dispatch Van</span>
-                        <select class="van-time-select" id="tomorrow-dv-time" onchange="updateVanTime('tomorrow', 'DV', this.value)">
+                        <span class="van-badge bvx">BVX</span>
+                        <span>Big Van Xray</span>
+                        <select class="van-time-select" id="tomorrow-bvx-time" onchange="updateVanTime('tomorrow', 'BVX', this.value)">
                         </select>
                     </div>
                     <div class="van-item">
@@ -2879,12 +2886,12 @@
             today: { 
                 dogs: [], 
                 staging: [],
-                vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
+                vanTimes: { BV: '07:30', BVX: '08:00', SV: '08:30' }
             },
             tomorrow: { 
                 dogs: [], 
                 staging: [],
-                vanTimes: { BV: '07:30', DV: '08:00', SV: '08:30' }
+                vanTimes: { BV: '07:30', BVX: '08:00', SV: '08:30' }
             },
             currentTab: 'today',
             initialLoadComplete: false,
@@ -2933,7 +2940,7 @@
             const optionsHTML = timeOptions.map(t => `<option value="${t}">${t}</option>`).join('');
 
             ['today', 'tomorrow'].forEach(tab => {
-                ['bv', 'dv', 'sv'].forEach(van => {
+                ['bv', 'bvx', 'sv'].forEach(van => {
                     const select = document.getElementById(`${tab}-${van}-time`);
                     if (select) {
                         select.innerHTML = optionsHTML;
@@ -3176,6 +3183,7 @@
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
                 if (val === 'SV') return 'van-sv';
+                if (val === 'BVX') return 'van-bvx';
                 if (val === 'DV') return 'van-dv';
                 if (val === 'XV') return 'priority-pickup';
                 if (val === 'P') return 'parent-pickup';
@@ -3185,7 +3193,7 @@
             const vpAMClass = getVPClass(vpAM);
             const vpPMClass = getVPClass(vpPM);
 
-            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
+            const vanOptions = ['V', 'BV', 'SV', 'BVX', 'XV'];
             const stopAMDisabled = !vanOptions.includes(vpAM);
             const stopPMDisabled = !vanOptions.includes(vpPM);
 
@@ -3231,7 +3239,7 @@
                             <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
                             <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
-                            <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="BVX" ${vpAM === 'BVX' ? 'selected' : ''}>BVX</option>
                             <option value="XV" ${vpAM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                         <div class="vp-divider"></div>
@@ -3244,7 +3252,7 @@
                             <option value="P" ${vpPM === 'P' ? 'selected' : ''}>P</option>
                             <option value="BV" ${vpPM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpPM === 'SV' ? 'selected' : ''}>SV</option>
-                            <option value="DV" ${vpPM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="BVX" ${vpPM === 'BVX' ? 'selected' : ''}>BVX</option>
                             <option value="XV" ${vpPM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                         <select class="stop-select stop-pm ${stop ? 'has-value' : ''}"
@@ -3286,6 +3294,7 @@
             const getVPClass = (val) => {
                 if (val === 'V' || val === 'BV') return 'van-bv';
                 if (val === 'SV') return 'van-sv';
+                if (val === 'BVX') return 'van-bvx';
                 if (val === 'DV') return 'van-dv';
                 if (val === 'XV') return 'priority-pickup';
                 if (val === 'P') return 'parent-pickup';
@@ -3293,7 +3302,7 @@
             };
 
             const vpAMClass = getVPClass(vpAM);
-            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
+            const vanOptions = ['V', 'BV', 'SV', 'BVX', 'XV'];
             const stopAMDisabled = !vanOptions.includes(vpAM);
 
             const generateStopOptions = (selectedValue) => {
@@ -3339,7 +3348,7 @@
                             <option value="P" ${vpAM === 'P' ? 'selected' : ''}>P</option>
                             <option value="BV" ${vpAM === 'BV' ? 'selected' : ''}>BV</option>
                             <option value="SV" ${vpAM === 'SV' ? 'selected' : ''}>SV</option>
-                            <option value="DV" ${vpAM === 'DV' ? 'selected' : ''}>DV</option>
+                            <option value="BVX" ${vpAM === 'BVX' ? 'selected' : ''}>BVX</option>
                             <option value="XV" ${vpAM === 'XV' ? 'selected' : ''}>XV</option>
                         </select>
                         <select class="behaviour-select ${behaviour ? 'has-value' : ''}"
@@ -3381,7 +3390,7 @@
 
             const pickupOptions = ['AM Pick Up', 'AM Drop Off', 'PM Pick Up', 'PM Drop Off'];
             const dropoffOptions = ['AM Pick Up', 'AM Drop Off', 'PM Pick Up', 'PM Drop Off'];
-            const vanTypeOptions = ['BV', 'SV', 'DV'];
+            const vanTypeOptions = ['BV', 'SV', 'BVX'];
 
             return `
                 <div class="dog-row section-row grooming" data-id="${id}">
@@ -3679,7 +3688,7 @@
             document.getElementById(`${tab}-walk-count`).textContent = 
                 dogs.filter(d => d.walk).length;
 
-            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
+            const vanOptions = ['V', 'BV', 'SV', 'BVX', 'XV'];
             document.getElementById(`${tab}-van-count`).textContent = 
                 dogs.filter(d => vanOptions.includes(d.vpAM) || vanOptions.includes(d.vpPM)).length;
         }
@@ -3733,14 +3742,15 @@
             const vpAMSelect = row.querySelector('.vp-am');
             const vpPMSelect = row.querySelector('.vp-pm');
 
-            select.classList.remove('van-pickup', 'van-bv', 'van-sv', 'van-dv', 'priority-pickup', 'parent-pickup');
+            select.classList.remove('van-pickup', 'van-bv', 'van-sv', 'van-bvx', 'van-dv', 'priority-pickup', 'parent-pickup');
             if (select.value === 'V' || select.value === 'BV') select.classList.add('van-bv');
             if (select.value === 'SV') select.classList.add('van-sv');
+            if (select.value === 'BVX') select.classList.add('van-bvx');
             if (select.value === 'DV') select.classList.add('van-dv');
             if (select.value === 'XV') select.classList.add('priority-pickup');
             if (select.value === 'P') select.classList.add('parent-pickup');
 
-            const vanOptions = ['V', 'BV', 'SV', 'DV', 'XV'];
+            const vanOptions = ['V', 'BV', 'SV', 'BVX', 'XV'];
 
             if (vpAMSelect && stopAMSelect) {
                 const isAMVan = vanOptions.includes(vpAMSelect.value);
@@ -3859,7 +3869,7 @@
 
             state.tomorrow.dogs = [];
             state.tomorrow.staging = [];
-            state.tomorrow.vanTimes = { BV: '07:30', DV: '08:00', SV: '08:30' };
+            state.tomorrow.vanTimes = { BV: '07:30', BVX: '08:00', SV: '08:30' };
 
             populateVanTimeDropdowns();
             renderBoard('today');
@@ -4066,10 +4076,10 @@
 
                         state.today.dogs = result.data.today?.dogs || [];
                         state.today.staging = result.data.today?.staging || [];
-                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
                         state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
                         state.tomorrow.staging = result.data.tomorrow?.staging || [];
-                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
 
                         populateVanTimeDropdowns();
                         renderStaging('today');
@@ -4140,12 +4150,12 @@
             const newToday = {
                 dogs: data.today?.dogs || [],
                 staging: data.today?.staging || [],
-                vanTimes: data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
+                vanTimes: data.today?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' }
             };
             const newTomorrow = {
                 dogs: data.tomorrow?.dogs || [],
                 staging: data.tomorrow?.staging || [],
-                vanTimes: data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' }
+                vanTimes: data.tomorrow?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' }
             };
 
             const newData = JSON.stringify({
@@ -4319,10 +4329,10 @@
                     if (result.success && result.data) {
                         state.today.dogs = result.data.today?.dogs || [];
                         state.today.staging = result.data.today?.staging || [];
-                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.today.vanTimes = result.data.today?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
                         state.tomorrow.dogs = result.data.tomorrow?.dogs || [];
                         state.tomorrow.staging = result.data.tomorrow?.staging || [];
-                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.vanTimes = result.data.tomorrow?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
                         loadedFromSheets = true;
                         console.log('✅ Loaded from Google Sheets:', {
                             today: state.today.dogs.length,
@@ -4342,10 +4352,10 @@
                         const data = JSON.parse(saved);
                         state.today.dogs = data.today?.dogs || [];
                         state.today.staging = data.today?.staging || [];
-                        state.today.vanTimes = data.today?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.today.vanTimes = data.today?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
                         state.tomorrow.dogs = data.tomorrow?.dogs || [];
                         state.tomorrow.staging = data.tomorrow?.staging || [];
-                        state.tomorrow.vanTimes = data.tomorrow?.vanTimes || { BV: '07:30', DV: '08:00', SV: '08:30' };
+                        state.tomorrow.vanTimes = data.tomorrow?.vanTimes || { BV: '07:30', BVX: '08:00', SV: '08:30' };
                         console.log('📦 Loaded from localStorage (temporary)');
                     } catch (e) {
                         console.error('Failed to load saved data:', e);
@@ -4526,7 +4536,8 @@
                  'bv-b1', 'bv-b2', 'bv-b3', 'bv-b4', 'bv-b5', 'bv-b6', 'bv-b7', 'bv-b8'],
             sv: ['sv-c1', 'sv-c2', 'sv-c3', 'sv-c4', 'sv-c5',
                  'sv-b1', 'sv-b2', 'sv-b3', 'sv-b4', 'sv-b5'],
-            dv: ['dv-l1', 'dv-l2', 'dv-m1', 'dv-m2', 'dv-m3', 'dv-m-xl', 'dv-r1', 'dv-r2']
+            bvx: ['bvx-c1', 'bvx-c2', 'bvx-c3', 'bvx-c4', 'bvx-c5', 'bvx-c6', 'bvx-c7',
+                  'bvx-b1', 'bvx-b2', 'bvx-b3', 'bvx-b4', 'bvx-b5', 'bvx-b6', 'bvx-b7', 'bvx-b8']
         };
 
         const LOAD_PLAN_STORAGE_PREFIX = 'van_v5_';
@@ -4546,7 +4557,7 @@
             const storageKey = LOAD_PLAN_STORAGE_PREFIX + planId;
 
             // --- Full Day buckets (the original behaviour) ---
-            const vanDogs = { bv: [], sv: [], dv: [] };
+            const vanDogs = { bv: [], sv: [], bvx: [] };
             const trayDogs = [];
             let skippedCount = 0;
 
@@ -4578,8 +4589,8 @@
                     vanDogs.bv.push(dog.name);
                 } else if (vanAssignment === 'SV') {
                     vanDogs.sv.push(dog.name);
-                } else if (vanAssignment === 'DV') {
-                    vanDogs.dv.push(dog.name);
+                } else if (vanAssignment === 'BVX') {
+                    vanDogs.bvx.push(dog.name);
                 } else if (vanAssignment === 'V') {
                     trayDogs.push(dog.name);
                 } else {
@@ -4587,7 +4598,7 @@
                 }
             });
 
-            const vanTotal = vanDogs.bv.length + vanDogs.sv.length + vanDogs.dv.length;
+            const vanTotal = vanDogs.bv.length + vanDogs.sv.length + vanDogs.bvx.length;
             const fullDayTotal = vanTotal + trayDogs.length;
 
             // --- Half Day list (Today tab only) ---
@@ -4602,7 +4613,7 @@
                     const serviceType = dog.serviceType || '';
                     if (serviceType.indexOf('Half Day') === -1) return;
                     const van = dog.vpPM || '';
-                    if (van === 'BV' || van === 'SV' || van === 'DV' || van === 'V') {
+                    if (van === 'BV' || van === 'SV' || van === 'BVX' || van === 'DV' || van === 'V') {
                         halfDayNames.push(dog.name);
                     }
                 });
@@ -4625,7 +4636,7 @@
                     `Transfer dogs to the <strong>${planLabel}</strong> Load Plan? ` +
                     `This <strong>clears</strong> the existing ${planLabel} plan.<br><br>` +
                     `☀️ <strong>Full Day</strong> — ${fullDayTotal} dog${fullDayTotal === 1 ? '' : 's'}<br>` +
-                    `&nbsp;&nbsp;🚐 BV ${vanDogs.bv.length} · 🚗 SV ${vanDogs.sv.length} · 📦 DV ${vanDogs.dv.length} · 📋 Tray ${trayDogs.length} · ⏭️ Skipped ${skippedCount}` +
+                    `&nbsp;&nbsp;🚐 BV ${vanDogs.bv.length} · 🚗 SV ${vanDogs.sv.length} · 🚐 BVX ${vanDogs.bvx.length} · 📋 Tray ${trayDogs.length} · ⏭️ Skipped ${skippedCount}` +
                     (tab === 'today'
                         ? `<br><br>🌗 <strong>Half Day</strong> — ${halfDayNames.length} dog${halfDayNames.length === 1 ? '' : 's'} (PM van → SV, departs 12:30)`
                         : '');
@@ -4661,7 +4672,7 @@
                     'PM', LOAD_PLAN_STORAGE_PREFIX + 'PM', 'Half Day (SV)',
                     [{ dogNames: p.halfDayNames, boxes: LOAD_PLAN_BOX_ORDER.sv }],
                     [],
-                    { runTypes: { bv: 'FD', sv: 'HD', dv: 'FD' }, departures: { sv: '12:30' } }
+                    { runTypes: { bv: 'FD', sv: 'HD', bvx: 'FD' }, departures: { sv: '12:30' } }
                 );
             } else {
                 // Full Day: the original transfer (BV/SV/DV + tray, current tab).
@@ -4670,7 +4681,7 @@
                     [
                         { dogNames: p.vanDogs.bv, boxes: LOAD_PLAN_BOX_ORDER.bv },
                         { dogNames: p.vanDogs.sv, boxes: LOAD_PLAN_BOX_ORDER.sv },
-                        { dogNames: p.vanDogs.dv, boxes: LOAD_PLAN_BOX_ORDER.dv }
+                        { dogNames: p.vanDogs.bvx, boxes: LOAD_PLAN_BOX_ORDER.bvx }
                     ],
                     p.trayDogs,
                     null
