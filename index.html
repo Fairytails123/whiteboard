@@ -475,6 +475,14 @@
             background: #E6352B;
         }
 
+        /* Working/disabled state — shown while a transfer request is in flight so
+           staff get clear feedback the press registered (Apps Script can be slow). */
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: progress;
+            filter: saturate(0.8);
+        }
+
         .btn-small {
             padding: 6px 14px;
             font-size: 0.8rem;
@@ -2806,12 +2814,28 @@
     <div class="modal-overlay" id="transferModal">
         <div class="modal">
             <div class="modal-title">⚠️ Transfer Tomorrow to Today?</div>
-            <div class="modal-text">
+            <div class="modal-text" id="transferModalText">
                 This will replace all of Today's data with Tomorrow's data, and clear Tomorrow's board. This action cannot be undone.
             </div>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmTransfer()">Yes, Transfer</button>
+                <button class="btn btn-danger" id="confirmTransferBtn" onclick="confirmTransfer()">Yes, Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Already-transferred override (informed re-transfer) modal. Shown when the
+         server refuses because a transfer already ran today, so staff are never
+         left stuck — they can deliberately re-transfer after seeing the details. -->
+    <div class="modal-overlay" id="transferAgainModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ Already transferred today</div>
+            <div class="modal-text" id="transferAgainText">
+                The board was already transferred today. Transfer again only if you're sure.
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" id="confirmTransferAgainBtn" onclick="confirmTransfer(true)">Transfer Again</button>
             </div>
         </div>
     </div>
@@ -3803,11 +3827,76 @@
                 showToast('Tomorrow\'s board is empty — nothing to transfer', 'error');
                 return;
             }
+            // Show how many dogs are about to move so staff can sanity-check the
+            // list before confirming (count comes from the loaded Tomorrow board).
+            const n = state.tomorrow.dogs.length;
+            const txt = document.getElementById('transferModalText');
+            if (txt) {
+                txt.innerHTML = 'This will replace Today\'s board with the <b>' + n + ' dog' +
+                    (n === 1 ? '' : 's') + ' currently on Tomorrow</b>, and clear Tomorrow\'s board. ' +
+                    'This cannot be undone.';
+            }
             document.getElementById('transferModal').classList.add('active');
         }
 
-        async function confirmTransfer() {
+        // Disable + spin the transfer confirm button(s) while a transfer request is
+        // in flight, so staff get clear feedback the press registered (Apps Script
+        // cold starts take a few seconds). Always restored in confirmTransfer's
+        // finally, so a button can never get stuck disabled.
+        function setTransferBtnsWorking(working) {
+            ['confirmTransferBtn', 'confirmTransferAgainBtn'].forEach(function (id) {
+                const b = document.getElementById(id);
+                if (!b) return;
+                if (working) {
+                    if (!b.dataset.label) b.dataset.label = b.textContent;
+                    b.disabled = true;
+                    b.textContent = '⏳ Transferring…';
+                } else {
+                    b.disabled = false;
+                    if (b.dataset.label) { b.textContent = b.dataset.label; delete b.dataset.label; }
+                }
+            });
+        }
+
+        // Server refused because a transfer already ran today. Offer an INFORMED
+        // override (never a dead end): show when it ran + how many dogs are on
+        // Tomorrow right now, then let the staffer deliberately re-transfer.
+        function openTransferAgainModal(lastTime, tomorrowCount) {
+            const n = (typeof tomorrowCount === 'number')
+                ? tomorrowCount
+                : ((state.tomorrow && state.tomorrow.dogs) ? state.tomorrow.dogs.length : 0);
+            const txt = document.getElementById('transferAgainText');
+            const againBtn = document.getElementById('confirmTransferAgainBtn');
+            if (n === 0) {
+                // The morning transfer clears Tomorrow before it stamps Last_Transfer,
+                // so a same-day re-tap before the next import finds Tomorrow EMPTY —
+                // there is genuinely nothing to re-transfer. Reassure staff it's done
+                // and hide the force button (forcing would just refuse "no dogs").
+                if (txt) {
+                    txt.innerHTML = 'The board was already transferred today' +
+                        (lastTime ? ' at <b>' + lastTime + '</b>' : '') + ', and Tomorrow is now ' +
+                        'empty — so there\'s <b>nothing left to transfer</b>. Today\'s board is up to date.';
+                }
+                if (againBtn) againBtn.style.display = 'none';
+            } else {
+                // Tomorrow has dogs again (the daily import has run) — a forced
+                // re-transfer would REPLACE today's board with this (likely next-day)
+                // list. Warn precisely and require a deliberate second tap.
+                if (txt) {
+                    txt.innerHTML = 'The board was already transferred today' +
+                        (lastTime ? ' at <b>' + lastTime + '</b>' : '') + '.<br><br>' +
+                        'Transferring again will <b>replace today\'s board</b> with the <b>' + n +
+                        ' dog' + (n === 1 ? '' : 's') + ' currently on Tomorrow</b> — which may be a ' +
+                        'different day\'s list. Only do this if the earlier transfer was wrong.';
+                }
+                if (againBtn) againBtn.style.display = '';
+            }
+            document.getElementById('transferAgainModal').classList.add('active');
+        }
+
+        async function confirmTransfer(force = false) {
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
+                setTransferBtnsWorking(true);
                 try {
                     // NO Content-Type header: 'application/json' forces a CORS
                     // preflight (OPTIONS), which Apps Script answers 405 — the POST
@@ -3817,7 +3906,7 @@
                     // Same pattern as the working savePlan POST below.
                     const response = await fetch(CONFIG.SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ action: 'transfer' })
+                        body: JSON.stringify({ action: 'transfer', force: force === true })
                     });
 
                     const result = await response.json();
@@ -3838,11 +3927,22 @@
                         return;
                     }
 
-                    // Server refused (already transferred today / Tomorrow empty).
-                    // HARD STOP — never fall back to a local transfer + full save:
-                    // this page's in-memory board may be stale, and re-saving it is
-                    // exactly what overwrote the live board on 2026-06-10/11. Adopt
-                    // the server's truth and surface the reason instead.
+                    // Already transferred today → offer an INFORMED override instead
+                    // of leaving the staffer stuck with the old dead-end "send
+                    // force:true" message they couldn't act on. Reload to adopt the
+                    // server's true state, then show the re-transfer confirm.
+                    if (result.alreadyTransferred && force !== true) {
+                        await loadBoard();
+                        closeModal();
+                        openTransferAgainModal(result.lastTransferTime, result.tomorrowCount);
+                        return;
+                    }
+
+                    // Other refusal (Tomorrow empty, etc.) — adopt the server's truth
+                    // and surface the reason. HARD STOP — never fall back to a local
+                    // transfer + full save: this page's in-memory board may be stale,
+                    // and re-saving it is exactly what overwrote the live board on
+                    // 2026-06-10/11.
                     await loadBoard();
                     closeModal();
                     showToast('❌ Transfer refused: ' + (result.error || 'unknown reason'), 'error');
@@ -3852,6 +3952,8 @@
                     closeModal();
                     showToast('❌ Transfer failed (network/server error) — nothing was changed. Please try again.', 'error');
                     return;
+                } finally {
+                    setTransferBtnsWorking(false);
                 }
             }
 
