@@ -1571,6 +1571,20 @@
             z-index: 1;
         }
 
+        /* XV priority pickup — Tomorrow tab ONLY: the whole tile goes red so a
+           next-day priority pickup can't be missed. Scoped to #tomorrow-board, so
+           the same class on a Today row paints nothing (the usual colours return
+           once the dog moves to Today). */
+        #tomorrow-board .dog-row.xv-priority {
+            background: rgba(255, 59, 48, 0.16);
+            border-left: 4px solid #FF3B30;
+            box-shadow: inset 0 0 0 2px rgba(255, 59, 48, 0.55), var(--shadow-xs);
+        }
+        #tomorrow-board .dog-row.xv-priority .dog-name {
+            color: #C1271A;
+            font-weight: 800;
+        }
+
         /* Stop selects */
         .stop-select {
             width: 40px;
@@ -3201,6 +3215,12 @@
                 : '';
         }
 
+        // XV priority-pickup detector — trim/uppercase so hand-edited sheet
+        // values like 'xv' or 'XV ' still count (matches the TV board's isXVDog).
+        function isXVValue(v) {
+            return String(v || '').trim().toUpperCase() === 'XV';
+        }
+
         function createDogRow(dog, sectionClass = '') {
             const { id, name, photo, walk, vpAM, vpPM, stopAM, stop, notes, behaviour } = dog;
 
@@ -3231,7 +3251,7 @@
             };
 
             return `
-                <div class="dog-row section-row ${sectionClass} ${notes ? 'notes-expanded' : ''}" data-id="${id}">
+                <div class="dog-row section-row ${sectionClass} ${notes ? 'notes-expanded' : ''}${(isXVValue(vpAM) || isXVValue(vpPM)) ? ' xv-priority' : ''}" data-id="${id}">
                     <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <div class="photo-check">
@@ -3341,7 +3361,7 @@
             const crateOptions = ['HLL', 'HLM', 'HLS', 'HSB', 'HST'];
 
             return `
-                <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}" data-id="${id}">
+                <div class="dog-row section-row boarding ${notes ? 'notes-expanded' : ''}${isXVValue(vpAM) ? ' xv-priority' : ''}" data-id="${id}">
                     <div class="dog-name">${name}${groomingBadgeHtml(dog)}</div>
 
                     <div class="photo-check">
@@ -3773,6 +3793,13 @@
             if (select.value === 'DV') select.classList.add('van-dv');
             if (select.value === 'XV') select.classList.add('priority-pickup');
             if (select.value === 'P') select.classList.add('parent-pickup');
+
+            // XV priority pickup — keep the whole-row flag live when staff change
+            // a van dropdown (updateDog doesn't re-render the board). The red
+            // styling only paints on the Tomorrow tab (CSS scoped to #tomorrow-board).
+            const rowIsXV = (vpAMSelect && isXVValue(vpAMSelect.value)) ||
+                            (vpPMSelect && isXVValue(vpPMSelect.value));
+            row.classList.toggle('xv-priority', rowIsXV);
 
             const vanOptions = ['V', 'BV', 'SV', 'BVX', 'XV'];
 
@@ -4662,6 +4689,7 @@
             const vanDogs = { bv: [], sv: [], bvx: [] };
             const trayDogs = [];
             let skippedCount = 0;
+            let xvCount = 0;
 
             dogs.forEach(dog => {
                 if (!dog.name || !dog.name.trim()) {
@@ -4685,7 +4713,10 @@
                     return;
                 }
 
-                const vanAssignment = dog[vpField] || '';
+                // Normalised (trim + uppercase) so hand-edited sheet values like
+                // 'xv' or 'bv ' still route correctly (matches the server-side
+                // fail-safes' normalisation and the TV board's isXVDog).
+                const vanAssignment = String(dog[vpField] || '').trim().toUpperCase();
 
                 if (vanAssignment === 'BV') {
                     vanDogs.bv.push(dog.name);
@@ -4695,6 +4726,11 @@
                     vanDogs.bvx.push(dog.name);
                 } else if (vanAssignment === 'V') {
                     trayDogs.push(dog.name);
+                } else if (vanAssignment === 'XV') {
+                    // XV = priority pickup: never auto-assigned to a van — staged
+                    // in the tray so staff place it manually after confirming.
+                    trayDogs.push(dog.name);
+                    xvCount++;
                 } else {
                     skippedCount++;
                 }
@@ -4709,19 +4745,22 @@
             // Van) with run-type HD. 'Half Day PM' is a retired service, so the Half
             // Day section is exactly the 'Half Day AM' dogs.
             const halfDayNames = [];
+            const halfDayTray = [];   // XV priority pickups — tray, never a van
             if (tab === 'today') {
                 dogs.forEach(dog => {
                     if (!dog.name || !dog.name.trim()) return;
                     const serviceType = dog.serviceType || '';
                     if (serviceType.indexOf('Half Day') === -1) return;
-                    const van = dog.vpPM || '';
-                    if (van === 'BV' || van === 'SV' || van === 'BVX' || van === 'DV' || van === 'V') {
+                    const van = String(dog.vpPM || '').trim().toUpperCase();
+                    if (van === 'XV') {
+                        halfDayTray.push(dog.name);
+                    } else if (van === 'BV' || van === 'SV' || van === 'BVX' || van === 'DV' || van === 'V') {
                         halfDayNames.push(dog.name);
                     }
                 });
             }
 
-            if (fullDayTotal === 0 && halfDayNames.length === 0) {
+            if (fullDayTotal === 0 && halfDayNames.length === 0 && halfDayTray.length === 0) {
                 showToast('No dogs to transfer to Load Plan', 'error');
                 return;
             }
@@ -4729,18 +4768,19 @@
             // Stash for the modal button handlers, then show the Full/Half chooser.
             _pendingLoadPlanTransfer = {
                 tab, planId, planLabel, storageKey,
-                vanDogs, trayDogs, halfDayNames
+                vanDogs, trayDogs, halfDayNames, halfDayTray
             };
 
             const textEl = document.getElementById('transferLoadPlanText');
             if (textEl) {
+                const halfDayTotal = halfDayNames.length + halfDayTray.length;
                 textEl.innerHTML =
                     `Transfer dogs to the <strong>${planLabel}</strong> Load Plan? ` +
                     `This <strong>clears</strong> the existing ${planLabel} plan.<br><br>` +
                     `☀️ <strong>Full Day</strong> — ${fullDayTotal} dog${fullDayTotal === 1 ? '' : 's'}<br>` +
-                    `&nbsp;&nbsp;🚐 BV ${vanDogs.bv.length} · 🚗 SV ${vanDogs.sv.length} · 🚐 BVX ${vanDogs.bvx.length} · 📋 Tray ${trayDogs.length} · ⏭️ Skipped ${skippedCount}` +
+                    `&nbsp;&nbsp;🚐 BV ${vanDogs.bv.length} · 🚗 SV ${vanDogs.sv.length} · 🚐 BVX ${vanDogs.bvx.length} · 📋 Tray ${trayDogs.length}${xvCount ? ` (incl. ${xvCount} XV priority)` : ''} · ⏭️ Skipped ${skippedCount}` +
                     (tab === 'today'
-                        ? `<br><br>🌗 <strong>Half Day</strong> — ${halfDayNames.length} dog${halfDayNames.length === 1 ? '' : 's'} (PM van → SV, departs 12:30)`
+                        ? `<br><br>🌗 <strong>Half Day</strong> — ${halfDayTotal} dog${halfDayTotal === 1 ? '' : 's'} (PM van → SV, departs 12:30${halfDayTray.length ? `; ${halfDayTray.length} XV → tray` : ''})`
                         : '');
             }
 
@@ -4762,18 +4802,21 @@
             if (!p) return;
 
             if (choice === 'half') {
-                if (!p.halfDayNames.length) {
+                const halfDayTray = p.halfDayTray || [];
+                if (!p.halfDayNames.length && !halfDayTray.length) {
                     showToast('No Half Day dogs with a PM van to transfer', 'error');
                     return;
                 }
                 // Half Day: every dog into the SV (Small Van), run-type HD, depart
-                // 12:30. Reuses the PM plan tab. The HD run-type rides the route
-                // pipeline so the whiteboard write-back only touches the Half Day
-                // section (not the full-day evening route's stop numbers).
+                // 12:30. Reuses the PM plan tab. XV priority pickups go to the
+                // staging tray instead of the SV — staff place them manually. The
+                // HD run-type rides the route pipeline so the whiteboard write-back
+                // only touches the Half Day section (not the full-day evening
+                // route's stop numbers).
                 commitLoadPlanTransfer(
                     'PM', LOAD_PLAN_STORAGE_PREFIX + 'PM', 'Half Day (SV)',
                     [{ dogNames: p.halfDayNames, boxes: LOAD_PLAN_BOX_ORDER.sv }],
-                    [],
+                    halfDayTray,
                     { runTypes: { bv: 'FD', sv: 'HD', bvx: 'FD' }, departures: { sv: '12:30' } }
                 );
             } else {
