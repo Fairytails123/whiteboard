@@ -4195,9 +4195,11 @@
                 const count = result.count || result.dogsCount || result.totalFound || result.dogs_imported || '';
 
                 if (isSuccess) {
-                    // Wait a moment for Google Sheets to update, then reload
+                    // Wait a moment for Google Sheets to update, then reload.
+                    // forceFresh: n8n wrote the sheet directly, so the backend cache still holds
+                    // the pre-pull board and a normal reload would show it under a success toast.
                     await new Promise(resolve => setTimeout(resolve, 3000));
-                    await loadBoard();
+                    await loadBoard(true);
                     switchTab('today');
                     const msg = count === 0
                         ? '⚠️ No appointments found for today in Acuity'
@@ -4281,8 +4283,9 @@
                 const count = result.count || result.dogsCount || result.totalFound || result.dogs_imported || '';
 
                 if (isSuccess) {
+                    // forceFresh — same reason as Pull Today: n8n wrote the sheet directly.
                     await new Promise(resolve => setTimeout(resolve, 3000));
-                    await loadBoard();
+                    await loadBoard(true);
                     switchTab('tomorrow');
                     const msg = count === 0
                         ? '⚠️ No appointments found for tomorrow in Acuity'
@@ -4314,7 +4317,9 @@
 
             try {
                 if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
-                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    // A human tapping refresh is explicitly asking for current truth — bypass
+                    // the backend read cache rather than handing them a board up to 10s old.
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load&nocache=1`);
                     const result = await response.json();
 
                     if (result.success && result.data) {
@@ -4491,7 +4496,11 @@
             let remoteCounts = null;
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
-                    const guardResp = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    // nocache=1 is REQUIRED: this read feeds the route-column merge and the
+                    // empty-tab wipe guard. Both exist to consult GROUND TRUTH before a
+                    // destructive replace-on-save; letting them read a cached board would
+                    // demote two anti-wipe guards into cache consumers.
+                    const guardResp = await fetch(`${CONFIG.SCRIPT_URL}?action=load&nocache=1`);
                     const guardJson = await guardResp.json();
                     if (guardJson && guardJson.success && guardJson.data) {
                         remoteCounts = {
@@ -4565,12 +4574,16 @@
             }
         }
 
-        async function loadBoard() {
+        // forceFresh=true bypasses the backend's read cache. Required after any write that did
+        // NOT go through the Apps Script (the n8n Pull webhooks write the sheet directly and
+        // cannot invalidate the cache), otherwise this reload can show the PRE-pull board right
+        // under a "✅ Pulled N dogs" toast — and, worse, enable autosave against it.
+        async function loadBoard(forceFresh) {
             let loadedFromSheets = false;
 
             if (CONFIG.USE_GOOGLE_SHEETS && CONFIG.SCRIPT_URL) {
                 try {
-                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                    const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load${forceFresh ? '&nocache=1' : ''}`);
                     const result = await response.json();
 
                     if (result.success && result.data) {
@@ -4706,7 +4719,10 @@
                     console.log(`Checking remote before saving (local: Today=${localTodayCount}, Tomorrow=${localTomorrowCount})...`);
 
                     try {
-                        const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load`);
+                        // nocache=1 is REQUIRED — same reasoning as the manual-save guard: this
+                        // is the autosave's pre-flight check against ground truth before a
+                        // destructive replace-on-save. It must never read a cached board.
+                        const response = await fetch(`${CONFIG.SCRIPT_URL}?action=load&nocache=1`);
                         const result = await response.json();
 
                         if (result.success && result.data) {
