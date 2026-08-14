@@ -4963,7 +4963,8 @@
                     'PM', LOAD_PLAN_STORAGE_PREFIX + 'PM', 'Half Day (SV)',
                     [{ dogNames: p.halfDayNames, boxes: LOAD_PLAN_BOX_ORDER.sv }],
                     halfDayTray,
-                    { runTypes: { bv: 'FD', sv: 'HD', bvx: 'FD' }, departures: { sv: '12:30' } }
+                    { runTypes: { bv: 'FD', sv: 'HD', bvx: 'FD' }, departures: { sv: '12:30' } },
+                    'HD'
                 );
             } else {
                 // Full Day: the original transfer (BV/SV/DV + tray, current tab).
@@ -4984,7 +4985,7 @@
         // the Full Day and Half Day paths. fillSpecs = [{ dogNames, boxes }];
         // trayDogs = loose tiles (no box); extraState merges extra top-level keys
         // the Load Plan applies on load (runTypes for FD/HD, departures for 12:30).
-        async function commitLoadPlanTransfer(planId, storageKey, planLabel, fillSpecs, trayDogs, extraState) {
+        async function commitLoadPlanTransfer(planId, storageKey, planLabel, fillSpecs, trayDogs, extraState, laneTag) {
             const loadPlanState = Object.assign({
                 tiles: {},
                 placements: {},
@@ -4998,12 +4999,17 @@
                 return 't_lp_' + Date.now() + '_' + tileCounter + '_' + Math.random().toString(36).substr(2, 4);
             }
 
+            function createLoadPlanTile(name) {
+                const id = generateLoadPlanTileId();
+                // The Van Manager treats untagged tiles as FD, so HD transfers need rt:'HD' to stay visible under its HD toggle.
+                loadPlanState.tiles[id] = laneTag
+                    ? { id: id, text: name, rt: laneTag }
+                    : { id: id, text: name };
+                return id;
+            }
+
             function fillVanBoxes(dogNames, boxes) {
-                const tileIds = dogNames.map(name => {
-                    const id = generateLoadPlanTileId();
-                    loadPlanState.tiles[id] = { id: id, text: name };
-                    return id;
-                });
+                const tileIds = dogNames.map(name => createLoadPlanTile(name));
 
                 let dogIndex = 0;
                 for (let i = 0; i < boxes.length && dogIndex < tileIds.length; i++) {
@@ -5037,8 +5043,7 @@
             });
 
             (trayDogs || []).forEach(name => {
-                const id = generateLoadPlanTileId();
-                loadPlanState.tiles[id] = { id: id, text: name };
+                createLoadPlanTile(name);
                 totalToTransfer++;
             });
 
