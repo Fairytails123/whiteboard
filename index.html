@@ -4981,6 +4981,95 @@
             }
         }
 
+        // Best-effort guard against one PM lane silently replacing the other.
+        // An unreadable cloud plan is visible to staff but never blocks transfer.
+        async function confirmLoadPlanLaneReplacement(planId, laneTag) {
+            if (planId !== 'PM') return true;
+
+            const londonDay = value => {
+                const date = new Date(value);
+                if (isNaN(date.getTime())) return '';
+                return new Intl.DateTimeFormat('en-GB', {
+                    timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit'
+                }).format(date);
+            };
+
+            let timeout = null;
+            try {
+                const controller = new AbortController();
+                timeout = setTimeout(() => controller.abort(), 5000);
+                const response = await fetch(LOAD_PLAN_SCRIPT_URL + '?planId=' + planId, {
+                    cache: 'no-cache',
+                    signal: controller.signal
+                });
+                if (!response || response.ok !== true) throw new Error('Load Plan read failed');
+
+                const cloud = await response.json();
+                const pinnedDay = londonDay(cloud && cloud.pinned_at);
+                const todayLondonDay = londonDay(Date.now());
+                if (!pinnedDay || pinnedDay !== todayLondonDay) return true;
+
+                const state = typeof cloud.state === 'string' ? JSON.parse(cloud.state) : cloud.state;
+                if (!state || typeof state !== 'object' || Array.isArray(state)) {
+                    throw new Error('Load Plan state unavailable');
+                }
+
+                const incomingLane = laneTag === 'HD' ? 'HD' : 'FD';
+                const victimLane = incomingLane === 'HD' ? 'FD' : 'HD';
+                const victimStops = victimLane === 'HD' ? state.stopsHd : state.stops;
+                const tiles = state.tiles && typeof state.tiles === 'object' ? state.tiles : {};
+                const placements = state.placements && typeof state.placements === 'object'
+                    ? state.placements : {};
+                const routedNames = [];
+
+                if (victimStops && typeof victimStops === 'object') {
+                    Object.keys(victimStops).forEach(boxId => {
+                        const stopEntry = victimStops[boxId];
+                        const hasStopNumber = typeof stopEntry === 'string'
+                            ? stopEntry.trim() !== ''
+                            : !!(stopEntry && typeof stopEntry === 'object' &&
+                                (String(stopEntry.primary || '').trim() || String(stopEntry.secondary || '').trim()));
+                        if (!hasStopNumber) return;
+
+                        const tileIds = Array.isArray(placements[boxId]) ? placements[boxId] : [];
+                        tileIds.forEach(tileId => {
+                            const tile = tiles[tileId];
+                            if (!tile) return;
+                            const tileLane = tile.rt === 'HD' ? 'HD' : 'FD';
+                            const name = String(tile.text || '').trim();
+                            if (tileLane === victimLane && name && routedNames.indexOf(name) === -1) {
+                                routedNames.push(name);
+                            }
+                        });
+                    });
+                }
+
+                if (!routedNames.length) return true;
+
+                const victimLabel = victimLane === 'HD' ? 'Half Day' : 'Full Day';
+                const shownNames = routedNames.slice(0, 8);
+                let message = `The existing ${victimLabel} route will be cleared:\n${shownNames.join(', ')}`;
+                if (routedNames.length > shownNames.length) {
+                    message += `\n+${routedNames.length - shownNames.length} more`;
+                }
+
+                if (cloud.source === 'final-send' && pinnedDay === todayLondonDay) {
+                    message += '\n\nThis route was sent today.';
+                }
+
+                message += '\n\nTransfer anyway?';
+                return confirm(message);
+            } catch (e) {
+                try { console.warn('Could not check the other Load Plan lane before transfer:', e); } catch (logError) {}
+                try {
+                    showToast('⚠️ Could not check the other Load Plan route — transferring without the check', 'error');
+                } catch (toastError) {}
+                return true;
+            } finally {
+                if (timeout !== null) clearTimeout(timeout);
+            }
+        }
+
         // Build the Load Plan state and save it (localStorage + cloud). Shared by
         // the Full Day and Half Day paths. fillSpecs = [{ dogNames, boxes }];
         // trayDogs = loose tiles (no box); extraState merges extra top-level keys
@@ -5048,6 +5137,18 @@
             });
 
             try {
+                const transferApproved = await confirmLoadPlanLaneReplacement(planId, laneTag).catch(guardError => {
+                    try { console.warn('Could not check the other Load Plan lane before transfer:', guardError); } catch (logError) {}
+                    try {
+                        showToast('⚠️ Could not check the other Load Plan route — transferring without the check', 'error');
+                    } catch (toastError) {}
+                    return true;
+                });
+                if (!transferApproved) {
+                    try { showToast('Transfer cancelled — the existing plan was kept', 'info'); } catch (toastError) {}
+                    return;
+                }
+
                 localStorage.setItem(storageKey, JSON.stringify(loadPlanState));
                 console.log(`📦 Load Plan written to localStorage key: ${storageKey}`);
 
